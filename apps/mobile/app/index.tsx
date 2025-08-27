@@ -51,8 +51,8 @@ export default function Screen() {
           <Image source={LOGO[colorScheme ?? 'light']} style={LOGO_STYLE} resizeMode="contain" />
         </View>
         <View className="max-w-sm gap-2 px-4">
-          <Text variant="h1" className="text-3xl font-medium">
-            Make it yours{user?.firstName ? `, ${user.firstName}` : ''}.
+          <Text variant="h1" className="text-3xl">
+            Chào mừng đến với Nam Việt Make it yours{user?.firstName ? `, ${user.firstName}` : ''}.
           </Text>
           <Text className="ios:text-foreground text-center font-mono text-sm text-muted-foreground">
             Update the screens and components to match your design and logic.
@@ -61,7 +61,7 @@ export default function Screen() {
         <View className="gap-2">
           <Link href="https://go.clerk.com/8e6CCee" asChild>
             <Button size="sm">
-              <Text>Explore Clerk Docs</Text>
+              <Text className=''>Explore Clerk Docs</Text>
             </Button>
           </Link>
         </View>

@@ -10,6 +10,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
+import { useFonts } from 'expo-font';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -34,14 +35,27 @@ SplashScreen.preventAutoHideAsync();
 
 function Routes() {
   const { isSignedIn, isLoaded } = useAuth();
+  const [fontsLoaded] = useFonts({
+    // 'AirbnbCereal-Black': require('@/assets/fonts/AirbnbCereal-Black.ttf'),
+    // 'AirbnbCereal-Bold': require('@/assets/fonts/AirbnbCereal-Bold.ttf'),
+    // 'AirbnbCereal-Book': require('@/assets/fonts/AirbnbCereal-Book.ttf'),
+    // 'AirbnbCereal-ExtraBold': require('@/assets/fonts/AirbnbCereal-ExtraBold.ttf'),
+    // 'AirbnbCereal-Light': require('@/assets/fonts/AirbnbCereal-Light.ttf'),
+    // 'AirbnbCereal-Medium': require('@/assets/fonts/AirbnbCereal-Medium.ttf'),
+    'Gilroy-Regular': require('@/assets/fonts/SVN-Gilroy Regular.otf'),
+    'Gilroy-Bold': require('@/assets/fonts/SVN-Gilroy Bold.otf'),
+    'Gilroy-Medium': require('@/assets/fonts/SVN-Gilroy Medium.otf'),
+    'Gilroy-SemiBold': require('@/assets/fonts/SVN-Gilroy SemiBold.otf'),
+    'Gilroy-Black': require('@/assets/fonts/SVN-Gilroy Black.otf'),
+  });
 
   React.useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [isLoaded]);
+  }, [isLoaded, fontsLoaded]);
 
-  if (!isLoaded) {
+  if (!isLoaded || !fontsLoaded) {
     return null;
   }
 
