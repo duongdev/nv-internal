@@ -1,14 +1,27 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
+import { except } from "hono/combine";
+import { compress } from "hono/compress";
+import { logger } from "hono/logger";
+import { prettyJSON } from "hono/pretty-json";
+import { requestId } from "hono/request-id";
+import { trimTrailingSlash } from "hono/trailing-slash";
+import { hono as appV1 } from "./v1/index";
+import { log } from "./lib/log";
 
-const app = new Hono()
+const IS_VERCEL = process.env.VERCEL === "1";
 
-const welcomeStrings = [
-  'Hello Hono!',
-  'To learn more about Hono on Vercel, visit https://vercel.com/docs/frameworks/hono'
-]
+const app = new Hono({ strict: true })
+  // * Global middlewares
+  .use(logger())
+  .use(compress())
+  .use(requestId())
+  .use(trimTrailingSlash())
+  .use(prettyJSON({ space: 2 }))
+  // .use(except(() => IS_VERCEL, logger(log.info.bind(log))))
 
-app.get('/', (c) => {
-  return c.text(welcomeStrings.join('\n\n'))
-})
+  // * Mounting versioned APIs
+  .route("/v1", appV1);
 
-export default app
+export { app };
+export type AppType = typeof app;
+export default app;
