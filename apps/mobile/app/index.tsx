@@ -2,8 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { UserMenu } from '@/components/user-menu';
+import { useUserRole } from '@/hooks/use-user-role';
 import { useUser } from '@clerk/clerk-expo';
-import { Link, Stack } from 'expo-router';
+import { Link, Stack, useRouter } from 'expo-router';
 import { MoonStarIcon, XIcon, SunIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
@@ -36,6 +37,15 @@ const SCREEN_OPTIONS = {
 export default function Screen() {
   const { colorScheme } = useColorScheme();
   const { user } = useUser();
+  const { isAdmin } = useUserRole();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (isAdmin) {
+      // If the user is an admin, redirect to the admin dashboard
+      router.replace('/admin');
+    }
+  }, [isAdmin, router]);
 
   return (
     <>
@@ -61,7 +71,7 @@ export default function Screen() {
         <View className="gap-2">
           <Link href="https://go.clerk.com/8e6CCee" asChild>
             <Button size="sm">
-              <Text className=''>Explore Clerk Docs</Text>
+              <Text className="">Explore Clerk Docs</Text>
             </Button>
           </Link>
         </View>

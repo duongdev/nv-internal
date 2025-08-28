@@ -71,6 +71,7 @@ module.exports = {
         // 'airbnb-extrabold': ['AirbnbCereal-ExtraBold', 'ui-sans-serif'],
         // 'airbnb-light': ['AirbnbCereal-Light', 'ui-sans-serif'],
         // 'airbnb-medium': ['AirbnbCereal-Medium', 'ui-sans-serif'],
+        system: ['Gilroy-Regular', 'ui-sans-serif'],
         gilroy: ['Gilroy-Regular', 'ui-sans-serif'],
         'gilroy-bold': ['Gilroy-Bold', 'ui-sans-serif'],
         'gilroy-medium': ['Gilroy-Medium', 'ui-sans-serif'],

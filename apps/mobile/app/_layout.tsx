@@ -1,6 +1,6 @@
 import '@/global.css';
 
-import { NAV_THEME } from '@/lib/theme';
+import { FONT_FAMILY, NAV_THEME } from '@/lib/theme';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
@@ -11,11 +11,14 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { useFonts } from 'expo-font';
+import { Appearance, View } from 'react-native';
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
+
+Appearance.setColorScheme('light');
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -23,9 +26,11 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Routes />
-        <PortalHost />
+        <View className="flex-1 font-gilroy">
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <Routes />
+          <PortalHost />
+        </View>
       </ThemeProvider>
     </ClerkProvider>
   );
@@ -71,7 +76,16 @@ function Routes() {
 
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="admin/(tabs)" options={ADMIN_SCREEN_OPTIONS} />
+        <Stack.Screen
+          name="admin/users/create"
+          options={{
+            presentation: 'modal',
+            gestureEnabled: false,
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
+          }}
+        />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
@@ -95,4 +109,8 @@ const DEFAULT_AUTH_SCREEN_OPTIONS = {
   title: '',
   headerShadowVisible: false,
   headerTransparent: true,
+};
+
+const ADMIN_SCREEN_OPTIONS = {
+  headerShown: false,
 };

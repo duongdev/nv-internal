@@ -6,7 +6,7 @@ import { Platform, Text as RNText, type Role } from 'react-native';
 
 const textVariants = cva(
   cn(
-    'text-base text-foreground font-gilroy',
+    'mt-[2px] font-gilroy text-base text-foreground',
     Platform.select({
       web: 'select-text',
     })
@@ -64,16 +64,13 @@ const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
 
 const TextClassContext = React.createContext<string | undefined>(undefined);
 
-function Text({
-  className,
-  asChild = false,
-  variant = 'default',
-  ...props
-}: React.ComponentProps<typeof RNText> &
+type TextProps = React.ComponentProps<typeof RNText> &
   TextVariantProps &
   React.RefAttributes<RNText> & {
     asChild?: boolean;
-  }) {
+  };
+
+function Text({ className, asChild = false, variant = 'default', ...props }: TextProps) {
   const textClass = React.useContext(TextClassContext);
   const Component = asChild ? Slot.Text : RNText;
   return (
@@ -86,4 +83,4 @@ function Text({
   );
 }
 
-export { Text, TextClassContext };
+export { Text, TextClassContext, TextProps };
