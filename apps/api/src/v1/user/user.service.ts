@@ -1,7 +1,6 @@
 import type { ClerkClient, User } from '@clerk/backend'
+import type { z, zCreateUser } from '@nv-internal/validation'
 import { getLogger } from '../../lib/log'
-import type { z } from '../../lib/zod'
-import type { zCreateUser } from '../validators/user.zod'
 import { UserRole } from './user.const'
 
 export function doesUserHaveRole({

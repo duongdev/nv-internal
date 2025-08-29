@@ -1,8 +1,8 @@
 import { zValidator } from '@hono/zod-validator'
+import { zCreateUser } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getAuthUserStrict } from '../middlewares/auth'
-import { zCreateUser } from '../validators/user.zod'
 import {
   canUserListUsers,
   createClerkUser,

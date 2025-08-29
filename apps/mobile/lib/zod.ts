@@ -1,5 +1,1 @@
-import * as z from 'zod'
-
-z.config(z.locales.vi())
-
-export default z
+export { z } from '@nv-internal/validation'
