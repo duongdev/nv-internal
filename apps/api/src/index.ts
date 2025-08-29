@@ -23,3 +23,7 @@ const app = new Hono({ strict: true })
 export { app }
 export type AppType = typeof app
 export default app
+
+// Shared exports
+// export * from './lib/zod'
+// export * from './v1/validators/user.zod'

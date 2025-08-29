@@ -9,8 +9,6 @@ import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 import z from '@/lib/zod'
 
-z.config(z.locales.vi())
-
 const createUserSchema = z.object({
   firstName: z
     .string()

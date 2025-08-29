@@ -6,9 +6,9 @@ import { getHonoClient } from '@/lib/api-client'
 const fetchHealth = async () => {
   console.log('fetching health status...', process.env.EXPO_PUBLIC_API_URL)
   const client = await getHonoClient()
-  const res = await client.v1.health.$get()
+  const res = await client.v1.user.$get()
   console.log('🚀 ~ fetchHealth ~ res:', res.url)
-  console.log('🚀 ~ fetchHealth ~ res:', await res.text())
+  console.log('🚀 ~ fetchHealth ~ res:', await res.json())
 }
 
 export default function AdminSettingsScreen() {

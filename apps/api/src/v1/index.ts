@@ -5,4 +5,5 @@ import userApp from './user/user.route'
 export const hono = new Hono()
   .get('/health', (c) => c.text('ok'))
   .use('*', authMiddleware)
+
   .route('/user', userApp)
