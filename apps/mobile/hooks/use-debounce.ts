@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react'
 
 /**
  * useDebounce hook
@@ -8,22 +8,24 @@ import { useEffect, useRef } from 'react';
  * @param delay Delay in milliseconds
  * @param deps Dependency array
  */
+
+// biome-ignore lint/suspicious/noExplicitAny: <just use any here>
 export function useDebounce(callback: () => void, delay: number, deps: any[]) {
-  const callbackRef = useRef(callback);
+  const callbackRef = useRef(callback)
 
   // Update callback ref if it changes
   useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
+    callbackRef.current = callback
+  }, [callback])
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      callbackRef.current();
-    }, delay);
+      callbackRef.current()
+    }, delay)
 
     return () => {
-      clearTimeout(handler);
-    };
+      clearTimeout(handler)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, delay]);
+  }, [...deps, delay])
 }

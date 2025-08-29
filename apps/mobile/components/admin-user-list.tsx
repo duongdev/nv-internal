@@ -1,69 +1,78 @@
-import { cn } from '@/lib/utils';
-import { useState, type FC } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
-import { Text } from './ui/text';
-import { EmptyState } from './ui/empty-state';
-import { orderBy } from 'lodash-es';
+import { orderBy } from 'lodash-es'
+import { type FC, useState } from 'react'
+import { FlatList, RefreshControl, View } from 'react-native'
+import { cn } from '@/lib/utils'
+import { EmptyState } from './ui/empty-state'
+import { Text } from './ui/text'
 
 export type AdminUserListProps = {
-  contentContainerClassName?: string;
-};
+  contentContainerClassName?: string
+}
 
-export const AdminUserList: FC<AdminUserListProps> = ({ contentContainerClassName }) => {
-  const [refreshing, setRefreshing] = useState(false);
-  const users = orderBy(MOCK_USERS, ['firstName'], ['asc']);
+export const AdminUserList: FC<AdminUserListProps> = ({
+  contentContainerClassName,
+}) => {
+  const [refreshing, setRefreshing] = useState(false)
+  const users = orderBy(MOCK_USERS, ['firstName'], ['asc'])
   // const users = [] as typeof MOCK_USERS;
 
   const onRefresh = async () => {
-    setRefreshing(true);
+    setRefreshing(true)
     // Fetch new data here
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setRefreshing(false);
-  };
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    setRefreshing(false)
+  }
 
   return (
     <FlatList
-      data={users}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <UserListItem user={item} />}
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
       contentContainerClassName={cn(contentContainerClassName)}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      contentInsetAdjustmentBehavior="automatic"
+      data={users}
+      keyboardShouldPersistTaps="handled"
+      keyExtractor={(item) => item.id}
       ListEmptyComponent={
         <EmptyState
           image="laziness"
-          messageTitle="Chưa có nhân viên"
           messageDescription="Hãy tạo nhân viên mới để bắt đầu làm việc."
+          messageTitle="Chưa có nhân viên"
         />
       }
+      refreshControl={
+        <RefreshControl onRefresh={onRefresh} refreshing={refreshing} />
+      }
+      renderItem={({ item }) => <UserListItem user={item} />}
     />
-  );
-};
+  )
+}
 
 export type UserListItemProps = {
   user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-};
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
+}
 
 export const UserListItem: FC<UserListItemProps> = ({ user }) => {
   return (
-    <View className="border-b border-muted py-2">
-      <Text className="text-lg font-semibold">
+    <View className="border-muted border-b py-2">
+      <Text className="font-semibold text-lg">
         {user.firstName} {user.lastName}
       </Text>
-      <Text className="text-sm text-muted-foreground">{user.email}</Text>
+      <Text className="text-muted-foreground text-sm">{user.email}</Text>
     </View>
-  );
-};
+  )
+}
 
 const MOCK_USERS = [
   { id: '1', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
   { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com' },
-  { id: '3', firstName: 'Alice', lastName: 'Johnson', email: 'alice@example.com' },
+  {
+    id: '3',
+    firstName: 'Alice',
+    lastName: 'Johnson',
+    email: 'alice@example.com',
+  },
   { id: '4', firstName: 'Bob', lastName: 'Brown', email: 'bob@example.com' },
-];
+]

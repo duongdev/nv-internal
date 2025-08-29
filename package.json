@@ -28,5 +28,8 @@
     "overrides": {
       "react": "19.0.0"
     }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.2"
   }
 }

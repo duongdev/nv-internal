@@ -1,3 +1,3 @@
-import { Hono } from "hono";
+import { Hono } from 'hono'
 
-export const hono = new Hono().get("/health", (c) => c.text("ok"));
+export const hono = new Hono().get('/health', (c) => c.text('ok'))

@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
-import * as LabelPrimitive from '@rn-primitives/label';
-import { Platform } from 'react-native';
+import * as LabelPrimitive from '@rn-primitives/label'
+import { Platform } from 'react-native'
+import { cn } from '@/lib/utils'
 
 function Label({
   className,
@@ -18,23 +18,24 @@ function Label({
         Platform.select({
           web: 'cursor-default leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50',
         }),
-        disabled && 'opacity-50'
+        disabled && 'opacity-50',
       )}
-      onPress={onPress}
+      disabled={disabled}
       onLongPress={onLongPress}
+      onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      disabled={disabled}>
+    >
       <LabelPrimitive.Text
         className={cn(
-          'text-sm font-medium text-foreground font-gilroy',
+          'font-gilroy font-medium text-foreground text-sm',
           Platform.select({ web: 'leading-none' }),
-          className
+          className,
         )}
         {...props}
       />
     </LabelPrimitive.Root>
-  );
+  )
 }
 
-export { Label };
+export { Label }

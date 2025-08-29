@@ -2,9 +2,8 @@
 // The code is licensed under the MIT License.
 // https://github.com/shadcn-ui/ui
 
-import * as React from 'react';
+import * as React from 'react'
 import {
-  type Control,
   Controller,
   type ControllerProps,
   type FieldPath,
@@ -13,41 +12,34 @@ import {
   type Noop,
   useFormContext,
   useFormState,
-} from 'react-hook-form';
-import { type TextInput, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+} from 'react-hook-form'
+import { type TextInput, View } from 'react-native'
+import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated'
 // import { Calendar as CalendarIcon } from '../../lib/icons/Calendar';
 // import { X } from '../../lib/icons/X';
-import { cn } from '../../lib/utils';
-// import {
-//   BottomSheet,
-//   BottomSheetCloseTrigger,
-//   BottomSheetContent,
-//   BottomSheetOpenTrigger,
-//   BottomSheetView,
-// } from '../deprecated-ui/bottom-sheet';
-// import { Calendar } from '../deprecated-ui/calendar';
-// import { Combobox, type ComboboxOption } from '../deprecated-ui/combobox';
-import { Button, buttonTextVariants } from './button';
+import { cn } from '../../lib/utils'
 // import { Checkbox } from './checkbox';
-import { Input } from './input';
-import { Label } from './label';
+import { Input } from './input'
+import { Label } from './label'
 // import { RadioGroup } from './radio-group';
 // import { type Option, Select } from './select';
 // import { Switch } from './switch';
-import { Text } from './text';
+import { Text } from './text'
+
 // import { Textarea } from './textarea';
 
-const Form = FormProvider;
+const Form = FormProvider
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > = {
-  name: TName;
-};
+  name: TName
+}
 
-const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue);
+const FormFieldContext = React.createContext<FormFieldContextValue>(
+  {} as FormFieldContextValue,
+)
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -59,21 +51,21 @@ const FormField = <
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
     </FormFieldContext.Provider>
-  );
-};
+  )
+}
 
 const useFormField = () => {
-  const fieldContext = React.useContext(FormFieldContext);
-  const itemContext = React.useContext(FormItemContext);
-  const { getFieldState } = useFormContext();
-  const formState = useFormState({ name: fieldContext.name });
-  const fieldState = getFieldState(fieldContext.name, formState);
+  const fieldContext = React.useContext(FormFieldContext)
+  const itemContext = React.useContext(FormItemContext)
+  const { getFieldState } = useFormContext()
+  const formState = useFormState({ name: fieldContext.name })
+  const fieldState = getFieldState(fieldContext.name, formState)
 
   if (!fieldContext) {
-    throw new Error('useFormField should be used within <FormField>');
+    throw new Error('useFormField should be used within <FormField>')
   }
 
-  const { nativeID } = itemContext;
+  const { nativeID } = itemContext
 
   return {
     nativeID,
@@ -82,25 +74,31 @@ const useFormField = () => {
     formDescriptionNativeID: `${nativeID}-form-item-description`,
     formMessageNativeID: `${nativeID}-form-item-message`,
     ...fieldState,
-  };
-};
+  }
+}
 
 type FormItemContextValue = {
-  nativeID: string;
-};
+  nativeID: string
+}
 
-const FormItemContext = React.createContext<FormItemContextValue>({} as FormItemContextValue);
+const FormItemContext = React.createContext<FormItemContextValue>(
+  {} as FormItemContextValue,
+)
 
-function FormItem({ ref, className, ...props }: React.CustomComponentPropsWithRef<typeof View>) {
-  const nativeID = React.useId();
+function FormItem({
+  ref,
+  className,
+  ...props
+}: React.CustomComponentPropsWithRef<typeof View>) {
+  const nativeID = React.useId()
 
   return (
     <FormItemContext.Provider value={{ nativeID }}>
-      <View ref={ref} className={cn('space-y-2', className)} {...props} />
+      <View className={cn('space-y-2', className)} ref={ref} {...props} />
     </FormItemContext.Provider>
-  );
+  )
 }
-FormItem.displayName = 'FormItem';
+FormItem.displayName = 'FormItem'
 
 function FormLabel({
   ref,
@@ -108,36 +106,39 @@ function FormLabel({
   nativeID: _nativeID,
   ...props
 }: React.CustomComponentPropsWithRef<typeof Label>) {
-  const { error, formItemNativeID } = useFormField();
+  const { error, formItemNativeID } = useFormField()
 
   return (
     <Label
-      ref={ref}
       className={cn('px-px pb-0.5', error && 'text-destructive', className)}
       nativeID={formItemNativeID}
+      ref={ref}
       {...props}
     />
-  );
+  )
 }
-FormLabel.displayName = 'FormLabel';
+FormLabel.displayName = 'FormLabel'
 
 function FormDescription({
   ref,
   className,
   ...props
 }: React.CustomComponentPropsWithRef<typeof Text>) {
-  const { formDescriptionNativeID } = useFormField();
+  const { formDescriptionNativeID } = useFormField()
 
   return (
     <Text
-      ref={ref}
+      className={cn(
+        'pt-1 font-gilroy text-muted-foreground text-sm',
+        className,
+      )}
       nativeID={formDescriptionNativeID}
-      className={cn('pt-1 font-gilroy text-sm text-muted-foreground', className)}
+      ref={ref}
       {...props}
     />
-  );
+  )
 }
-FormDescription.displayName = 'FormDescription';
+FormDescription.displayName = 'FormDescription'
 
 function FormMessage({
   ref,
@@ -145,45 +146,50 @@ function FormMessage({
   children,
   ...props
 }: React.CustomComponentPropsWithRef<typeof Animated.Text>) {
-  const { error, formMessageNativeID } = useFormField();
-  const body = error ? String(error?.message) : children;
+  const { error, formMessageNativeID } = useFormField()
+  const body = error ? String(error?.message) : children
 
   if (!body) {
-    return null;
+    return null
   }
 
   return (
     <Animated.Text
+      className={cn(
+        'mt-0.5 font-gilroy font-medium text-destructive text-sm',
+        className,
+      )}
       entering={FadeInDown}
       exiting={FadeOut.duration(275)}
-      ref={ref}
       nativeID={formMessageNativeID}
-      className={cn('mt-0.5 font-gilroy text-sm font-medium text-destructive', className)}
-      {...props}>
+      ref={ref}
+      {...props}
+    >
       {body}
     </Animated.Text>
-  );
+  )
 }
-FormMessage.displayName = 'FormMessage';
+FormMessage.displayName = 'FormMessage'
 
-type Override<T, U> = Omit<T, keyof U> & U;
+type Override<T, U> = Omit<T, keyof U> & U
 
 interface FormFieldFieldProps<T> {
-  name: string;
-  onBlur: Noop;
-  onChange: (val: T) => void;
-  value: T;
-  disabled?: boolean;
+  name: string
+  onBlur: Noop
+  onChange: (val: T) => void
+  value: T
+  disabled?: boolean
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: <just use any here>
 type FormItemProps<T extends React.ComponentType<any>, U> = Override<
   React.CustomComponentPropsWithRef<T>,
   FormFieldFieldProps<U>
 > & {
-  label?: string;
-  description?: string;
-  withAsterisk?: boolean;
-};
+  label?: string
+  description?: string
+  withAsterisk?: boolean
+}
 
 function FormInput({
   ref,
@@ -194,24 +200,29 @@ function FormInput({
   withAsterisk,
   ...props
 }: FormItemProps<typeof Input, string | undefined>) {
-  const inputRef = React.useRef<TextInput>(null);
-  const { error, formItemNativeID, formDescriptionNativeID, formMessageNativeID } = useFormField();
+  const inputRef = React.useRef<TextInput>(null)
+  const {
+    error,
+    formItemNativeID,
+    formDescriptionNativeID,
+    formMessageNativeID,
+  } = useFormField()
 
   React.useImperativeHandle(ref, () => {
     if (!inputRef.current) {
-      return {} as React.ComponentRef<typeof Input>;
+      return {} as React.ComponentRef<typeof Input>
     }
-    return inputRef.current;
-  }, []);
+    return inputRef.current
+  }, [])
 
   function handleOnLabelPress() {
     if (!inputRef.current) {
-      return;
+      return
     }
     if (inputRef.current.isFocused()) {
-      inputRef.current?.blur();
+      inputRef.current?.blur()
     } else {
-      inputRef.current?.focus();
+      inputRef.current?.focus()
     }
   }
 
@@ -225,25 +236,25 @@ function FormInput({
       )}
 
       <Input
-        ref={inputRef}
-        aria-labelledby={formItemNativeID}
         aria-describedby={
           !error
             ? `${formDescriptionNativeID}`
             : `${formDescriptionNativeID} ${formMessageNativeID}`
         }
         aria-invalid={!!error}
+        aria-labelledby={formItemNativeID}
         onChangeText={onChange}
+        ref={inputRef}
         value={value}
         {...props}
       />
       {!!description && <FormDescription>{description}</FormDescription>}
       <FormMessage />
     </FormItem>
-  );
+  )
 }
 
-FormInput.displayName = 'FormInput';
+FormInput.displayName = 'FormInput'
 
 // function FormTextarea({
 //   ref,
@@ -720,4 +731,4 @@ export {
   // FormSwitch,
   // FormTextarea,
   useFormField,
-};
+}

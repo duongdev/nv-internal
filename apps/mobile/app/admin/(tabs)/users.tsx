@@ -1,14 +1,14 @@
-import { Stack, useRouter } from 'expo-router';
-import { ScrollView, View } from 'react-native';
-import { PlusIcon } from 'lucide-react-native';
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
-import * as Haptics from 'expo-haptics';
-import { SearchBox } from '@/components/ui/search-box';
-import { AdminUserList } from '@/components/admin-user-list';
+import * as Haptics from 'expo-haptics'
+import { Stack, useRouter } from 'expo-router'
+import { PlusIcon } from 'lucide-react-native'
+import { View } from 'react-native'
+import { AdminUserList } from '@/components/admin-user-list'
+import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/ui/icon'
+import { SearchBox } from '@/components/ui/search-box'
 
 export default function AdminUsersScreen() {
-  const router = useRouter();
+  const router = useRouter()
   return (
     <>
       <Stack.Screen
@@ -18,13 +18,14 @@ export default function AdminUsersScreen() {
           headerLargeTitleShadowVisible: true,
           headerRight: () => (
             <Button
+              className="mr-2 mb-1 flex-row items-center"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                router.push('/admin/users/create')
+              }}
               size="icon-sm"
               variant="ghost"
-              className="mb-1 mr-2 flex-row items-center"
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/admin/users/create');
-              }}>
+            >
               <Icon as={PlusIcon} className="size-5" />
             </Button>
           ),
@@ -32,8 +33,8 @@ export default function AdminUsersScreen() {
       />
       <View className="flex-1 py-4">
         <SearchBox className="m-4 mt-0" />
-        <AdminUserList contentContainerClassName="px-4 flex-1" />
+        <AdminUserList contentContainerClassName="flex-1 px-4" />
       </View>
     </>
-  );
+  )
 }

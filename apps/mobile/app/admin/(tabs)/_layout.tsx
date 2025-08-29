@@ -1,10 +1,15 @@
-import { FONT_FAMILY, THEME } from '@/lib/theme';
-import { Stack, Tabs } from 'expo-router';
-import { HouseIcon, ListTodoIcon, SettingsIcon, UsersIcon } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
+import { Stack, Tabs } from 'expo-router'
+import {
+  HouseIcon,
+  ListTodoIcon,
+  SettingsIcon,
+  UsersIcon,
+} from 'lucide-react-native'
+import { useColorScheme } from 'nativewind'
+import { FONT_FAMILY, THEME } from '@/lib/theme'
 
 export default function AdminTabLayout() {
-  const { colorScheme } = useColorScheme();
+  const { colorScheme } = useColorScheme()
   return (
     <>
       <Stack.Screen options={{ title: 'Quản lý', headerShown: false }} />
@@ -12,7 +17,8 @@ export default function AdminTabLayout() {
         screenOptions={{
           tabBarActiveTintColor: THEME[colorScheme ?? 'light'].primary,
           tabBarLabelStyle: { fontFamily: FONT_FAMILY.bold },
-        }}>
+        }}
+      >
         <Tabs.Screen
           name="index"
           options={{
@@ -47,5 +53,5 @@ export default function AdminTabLayout() {
         />
       </Tabs>
     </>
-  );
+  )
 }

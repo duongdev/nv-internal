@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, type Theme } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, type Theme } from '@react-navigation/native'
 
 export const THEME = {
   light: {
@@ -53,7 +53,7 @@ export const THEME = {
     chart4: 'hsl(280 65% 60%)',
     chart5: 'hsl(340 75% 55%)',
   },
-};
+}
 
 export const NAV_THEME: Record<'light' | 'dark', Theme> = {
   light: {
@@ -78,11 +78,11 @@ export const NAV_THEME: Record<'light' | 'dark', Theme> = {
       text: THEME.dark.foreground,
     },
   },
-};
+}
 
 export const FONT_FAMILY = {
   regular: 'Gilroy-Regular',
   medium: 'Gilroy-Medium',
   semi: 'Gilroy-SemiBold',
   bold: 'Gilroy-Bold',
-};
+}

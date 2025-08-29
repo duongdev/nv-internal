@@ -1,5 +1,5 @@
-import * as z from 'zod';
+import * as z from 'zod'
 
-z.config(z.locales.zhCN());
+z.config(z.locales.zhCN())
 
-export default z;
+export default z
