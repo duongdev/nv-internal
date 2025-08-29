@@ -4,6 +4,7 @@ import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
 import { tokenCache } from '@clerk/clerk-expo/token-cache'
 import { ThemeProvider } from '@react-navigation/native'
 import { PortalHost } from '@rn-primitives/portal'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -11,6 +12,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
 import * as React from 'react'
 import { Appearance, View } from 'react-native'
+import { queryClient } from '@/lib/api-client'
 import { FONT_FAMILY, NAV_THEME } from '@/lib/theme'
 
 export {
@@ -26,11 +28,13 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <View className="flex-1 font-gilroy">
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-          <Routes />
-          <PortalHost />
-        </View>
+        <QueryClientProvider client={queryClient}>
+          <View className="flex-1 font-gilroy">
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <Routes />
+            <PortalHost />
+          </View>
+        </QueryClientProvider>
       </ThemeProvider>
     </ClerkProvider>
   )
