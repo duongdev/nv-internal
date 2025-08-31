@@ -1,7 +1,7 @@
 import { getClerkInstance } from '@clerk/clerk-expo'
 import type { AppType } from '@nv-internal/api'
 import { QueryClient } from '@tanstack/react-query'
-import { hc } from 'hono/client'
+import { type ClientResponse, hc } from 'hono/client'
 import { tokenCache } from './token-cache'
 
 export const clerk = getClerkInstance({
@@ -21,6 +21,32 @@ export const getHonoClient = async () => {
   return hc<AppType>(process.env.EXPO_PUBLIC_API_URL!, {
     headers,
   })
+}
+
+type CallHonoApiResult<T, Throw extends boolean> = Throw extends true
+  ? { data: T; error: null }
+  : { data: T | null; error: string | null }
+
+export async function callHonoApi<T, Throw extends boolean = true>(
+  fn: (
+    client: Awaited<ReturnType<typeof getHonoClient>>,
+  ) => Promise<ClientResponse<T>>,
+  options?: { throwOnError?: Throw },
+): Promise<CallHonoApiResult<T, Throw>> {
+  const { throwOnError = true as Throw } = options || {}
+  const client = await getHonoClient()
+  const response = await fn(client)
+
+  if (!response.ok) {
+    const error = await response.text()
+    if (throwOnError) {
+      throw new Error(error)
+    }
+    return { data: null, error } as CallHonoApiResult<T, Throw>
+  }
+
+  const data = await response.json()
+  return { data, error: null } as CallHonoApiResult<T, Throw>
 }
 
 export const queryClient = new QueryClient({

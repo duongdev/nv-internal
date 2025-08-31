@@ -3,11 +3,14 @@ import { type z, zCreateUser } from '@nv-internal/validation'
 import { Stack, useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { ScrollView } from 'react-native'
+import { Keyboard, ScrollView } from 'react-native'
+import Toast from 'react-native-toast-message'
+import { useCreateUser } from '@/api/user/use-create-user'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormInput } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
+import { removeVietnameseAccents } from '@/utils/remove-vn-accents'
 
 export default function CreateUserScreen() {
   const router = useRouter()
@@ -21,30 +24,52 @@ export default function CreateUserScreen() {
     },
     shouldFocusError: true,
   })
+  const { mutateAsync } = useCreateUser({
+    onSuccess() {
+      router.back()
+    },
+    onError(error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Thêm nhân viên không thành công',
+        text2: error.message,
+      })
+    },
+  })
 
-  const { control, handleSubmit, watch, getFieldState, setValue } = form
+  const { control, handleSubmit, watch, getFieldState, setValue, formState } =
+    form
 
-  const onSubmit = (data: z.infer<typeof zCreateUser>) => {
-    console.log(data)
+  const onSubmit = async (data: z.infer<typeof zCreateUser>) => {
+    Keyboard.dismiss()
+    await mutateAsync(data)
   }
 
-  const phoneValue = watch('phone')
+  const firstNameValue = watch('firstName')
+  const lastNameValue = watch('lastName')
 
   // Sync username with phone if it's not touched
   useEffect(() => {
-    if (!getFieldState('username').isTouched) {
-      setValue('username', phoneValue)
+    if (!getFieldState('username').isDirty) {
+      const lastWordOfFirstName = (firstNameValue || '').split(' ').pop()
+      const firstWordOfLastName = (lastNameValue || '').split(' ')[0]
+      const suggestedUsername = removeVietnameseAccents(
+        [lastWordOfFirstName, firstWordOfLastName].join('').toLowerCase(),
+      )
+      setValue('username', suggestedUsername)
     }
-  }, [phoneValue, getFieldState, setValue])
+  }, [firstNameValue, lastNameValue, getFieldState, setValue])
 
   return (
     <>
+      <Toast position="bottom" />
       <Stack.Screen
         options={{
           title: 'Thêm nhân viên mới',
 
           headerLeft: () => (
             <Button
+              disabled={formState.isSubmitting}
               onPress={() => router.dismiss()}
               size="sm"
               variant="outline"
@@ -54,6 +79,7 @@ export default function CreateUserScreen() {
           ),
           headerRight: () => (
             <Button
+              disabled={formState.isSubmitting}
               onPress={handleSubmit(onSubmit)}
               size="sm"
               variant="default"

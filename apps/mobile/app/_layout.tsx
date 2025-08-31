@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
 import * as React from 'react'
 import { Appearance, View } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { queryClient } from '@/lib/api-client'
 import { FONT_FAMILY, NAV_THEME } from '@/lib/theme'
 
@@ -29,6 +30,7 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <QueryClientProvider client={queryClient}>
+          <Toast position="bottom" />
           <View className="flex-1 font-gilroy">
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
             <Routes />

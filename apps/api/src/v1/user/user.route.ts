@@ -35,7 +35,6 @@ const router = new Hono()
       c.status(201)
       return c.json(user)
     } catch (error) {
-      console.error('Error creating user:', error)
       throw new HTTPException(500, {
         message: 'Không thể tạo người dùng.',
         cause: error,

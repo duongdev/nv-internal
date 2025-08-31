@@ -1,18 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
-import { orderBy } from 'lodash-es'
 import type { FC } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
-import { getHonoClient } from '@/lib/api-client'
+import { type User, useUserList } from '@/api/user/use-user-list'
 import { cn } from '@/lib/utils'
 import { EmptyState } from './ui/empty-state'
 import { Text } from './ui/text'
-
-async function getUsers() {
-  const client = await getHonoClient()
-  return await (await client.v1.user.$get()).json()
-}
-
-type User = Awaited<ReturnType<typeof getUsers>>[number]
 
 export type AdminUserListProps = {
   contentContainerClassName?: string
@@ -21,18 +12,7 @@ export type AdminUserListProps = {
 export const AdminUserList: FC<AdminUserListProps> = ({
   contentContainerClassName,
 }) => {
-  const {
-    data: users,
-    isFetching: isLoading,
-    refetch,
-  } = useQuery({
-    queryFn: async () => {
-      const client = await getHonoClient()
-      const users = await (await client.v1.user.$get()).json()
-      return orderBy(users, ['firstName'], ['asc'])
-    },
-    queryKey: ['admin_users'],
-  })
+  const { data: users, isFetching: isLoading, refetch } = useUserList()
 
   const onRefresh = async () => {
     await refetch()
@@ -70,8 +50,8 @@ export type UserListItemProps = {
 export const UserListItem: FC<UserListItemProps> = ({ user }) => {
   return (
     <View className="border-muted border-b py-2">
-      <Text className="font-semibold text-lg">
-        {user.firstName} {user.lastName}
+      <Text className="font-semibold text-lg text-muted-foreground">
+        {user.lastName} <Text>{user.firstName}</Text>
       </Text>
       <Text className="text-muted-foreground text-sm">@{user.username}</Text>
     </View>

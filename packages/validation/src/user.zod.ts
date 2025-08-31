@@ -19,7 +19,7 @@ export const zCreateUser = z.object({
     .trim()
     .min(2, 'Tên đăng nhập phải có ít nhất 2 ký tự')
     .max(100, 'Tên đăng nhập phải có tối đa 100 ký tự')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Tên đăng nhập không hợp lệ'),
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Tên đăng nhập không hợp lệ'),
   password: z
     .union([
       z.literal(''),

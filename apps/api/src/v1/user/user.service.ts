@@ -1,4 +1,5 @@
 import type { ClerkClient, User } from '@clerk/backend'
+import type { ClerkAPIResponseError } from '@clerk/types'
 import type { z, zCreateUser } from '@nv-internal/validation'
 import { getLogger } from '../../lib/log'
 import { UserRole } from './user.const'
@@ -45,30 +46,61 @@ export async function canUserListUsers({ user }: { user: User }) {
 export async function createClerkUser({
   clerkClient,
   data,
+  usernameRetryCount,
 }: {
   clerkClient: ClerkClient
   data: z.infer<typeof zCreateUser>
+  usernameRetryCount?: number
 }) {
   const logger = getLogger('createClerkUser')
 
   logger.trace({ data }, 'Creating user in Clerk')
 
-  // Create the user in Clerk
-  const user = await clerkClient.users.createUser({
-    firstName: data.firstName,
-    lastName: data.lastName,
-    emailAddress: data.email ? [data.email] : undefined,
-    username: data.username,
-    password: data.password || data.username,
-    publicMetadata: {
-      phoneNumber: data.phone,
-      roles: [UserRole.nvInternalWorker],
-    },
-  })
+  try {
+    // Create the user in Clerk
+    const username = usernameRetryCount
+      ? `${data.username}${usernameRetryCount}`
+      : data.username
+    const user = await clerkClient.users.createUser({
+      skipPasswordChecks: true,
 
-  logger.trace({ user }, 'User created in Clerk')
+      firstName: data.firstName,
+      lastName: data.lastName,
+      emailAddress: data.email ? [data.email] : undefined,
+      username,
+      password: data.password || username,
+      publicMetadata: {
+        phoneNumber: data.phone,
+        roles: [UserRole.nvInternalWorker],
+      },
+    })
 
-  return user
+    logger.trace({ user }, 'User created in Clerk')
+
+    return user
+  } catch (error) {
+    // If the username is taken, try again appending a number
+    const clerkError = error as ClerkAPIResponseError
+
+    const isUsernameTaken = clerkError.errors.some(
+      (e) => e.code === 'form_identifier_exists',
+    )
+
+    if (isUsernameTaken) {
+      logger.warn(
+        { error, data },
+        'Username is already taken, trying again with a different username',
+      )
+      return createClerkUser({
+        clerkClient,
+        data,
+        usernameRetryCount: (usernameRetryCount ?? 0) + 1,
+      })
+    }
+
+    logger.error({ error, data }, 'Error creating user in Clerk')
+    throw error
+  }
 }
 
 export async function getAllUsers({

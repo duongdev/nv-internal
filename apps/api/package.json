@@ -3,6 +3,7 @@
   "main": "src/index.ts",
   "private": true,
   "dependencies": {
+    "@clerk/types": "^4.83.0",
     "@hono/clerk-auth": "^3.0.3",
     "@hono/zod-validator": "^0.7.2",
     "@nv-internal/validation": "workspace:*",
