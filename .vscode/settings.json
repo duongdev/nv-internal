@@ -20,7 +20,8 @@
     "posthog",
     "revenuecat",
     "svix",
-    "tanstack"
+    "tanstack",
+    "unban"
   ],
   "emeraldwalk.runonsave": {
     "commands": [

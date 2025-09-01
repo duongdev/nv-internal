@@ -1,13 +1,16 @@
 import { zValidator } from '@hono/zod-validator'
-import { zCreateUser } from '@nv-internal/validation'
+import { z, zCreateUser } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getAuthUserStrict } from '../middlewares/auth'
 import {
+  banUser,
+  canUserBanUnbanUser,
   canUserListUsers,
   createClerkUser,
   getAllUsers,
   isUserAdmin,
+  unbanUser,
 } from './user.service'
 
 const router = new Hono()
@@ -56,5 +59,30 @@ const router = new Hono()
     const users = await getAllUsers({ clerkClient })
     return c.json(users)
   })
+  // Ban/unban user
+  .post(
+    '/:id/ban',
+    zValidator('param', z.object({ id: z.string() })),
+    zValidator('json', z.object({ ban: z.boolean() })),
+    async (c) => {
+      const user = getAuthUserStrict(c)
+      const clerkClient = c.get('clerk')
+      const { id: userId } = c.req.valid('param')
+      const { ban } = c.req.valid('json')
+
+      if (!canUserBanUnbanUser({ user })) {
+        throw new HTTPException(403, {
+          message: 'Bạn không có quyền khoá người dùng.',
+          cause: 'Permission denied',
+        })
+      }
+
+      const updatedUser = ban
+        ? await banUser({ clerkClient, userId })
+        : await unbanUser({ clerkClient, userId })
+
+      return c.json(updatedUser)
+    },
+  )
 
 export default router

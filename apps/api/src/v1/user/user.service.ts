@@ -40,6 +40,10 @@ export async function canUserListUsers({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
+export async function canUserBanUnbanUser({ user }: { user: User }) {
+  return isUserAdmin({ user })
+}
+
 // ---
 
 export async function createClerkUser({
@@ -120,4 +124,50 @@ export async function getAllUsers({
   )
 
   return pages.map((p) => p.data).flat()
+}
+
+export async function banUser({
+  clerkClient,
+  userId,
+}: {
+  clerkClient: ClerkClient
+  userId: string
+}) {
+  const logger = getLogger('banUser')
+
+  logger.trace({ userId }, 'Banning user in Clerk')
+
+  try {
+    const updatedUser = await clerkClient.users.banUser(userId)
+
+    logger.trace({ userId, updatedUser }, 'User banned in Clerk')
+
+    return updatedUser
+  } catch (error) {
+    logger.error({ error, userId }, 'Error banning user in Clerk')
+    throw error
+  }
+}
+
+export async function unbanUser({
+  clerkClient,
+  userId,
+}: {
+  clerkClient: ClerkClient
+  userId: string
+}) {
+  const logger = getLogger('unbanUser')
+
+  logger.trace({ userId }, 'Unbanning user in Clerk')
+
+  try {
+    const updatedUser = await clerkClient.users.unbanUser(userId)
+
+    logger.trace({ userId, updatedUser }, 'User unbanned in Clerk')
+
+    return updatedUser
+  } catch (error) {
+    logger.error({ error, userId }, 'Error unbanning user in Clerk')
+    throw error
+  }
 }
