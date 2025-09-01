@@ -1,5 +1,7 @@
 import { DarkTheme, DefaultTheme, type Theme } from '@react-navigation/native'
 
+export type ColorKey = keyof typeof THEME.light
+
 export const THEME = {
   light: {
     background: 'hsl(0 0% 100%)',

@@ -2,6 +2,7 @@ import '@/global.css'
 
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
 import { tokenCache } from '@clerk/clerk-expo/token-cache'
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { ThemeProvider } from '@react-navigation/native'
 import { PortalHost } from '@rn-primitives/portal'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -11,7 +12,8 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
 import * as React from 'react'
-import { Appearance, View } from 'react-native'
+import { Appearance } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Toast from 'react-native-toast-message'
 import { queryClient } from '@/lib/api-client'
 import { FONT_FAMILY, NAV_THEME } from '@/lib/theme'
@@ -21,6 +23,7 @@ export {
   ErrorBoundary,
 } from 'expo-router'
 
+// Force appearance to light mode
 Appearance.setColorScheme('light')
 
 export default function RootLayout() {
@@ -31,11 +34,13 @@ export default function RootLayout() {
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <QueryClientProvider client={queryClient}>
           <Toast position="bottom" />
-          <View className="flex-1 font-gilroy">
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            <Routes />
-            <PortalHost />
-          </View>
+          <GestureHandlerRootView className="flex-1 font-gilroy">
+            <BottomSheetModalProvider>
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              <Routes />
+              <PortalHost />
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
         </QueryClientProvider>
       </ThemeProvider>
     </ClerkProvider>

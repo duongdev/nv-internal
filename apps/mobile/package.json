@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.14.14",
+    "@gorhom/bottom-sheet": "^5.2.4",
     "@hookform/resolvers": "^5.2.1",
     "@nv-internal/api": "workspace:*",
     "@nv-internal/validation": "workspace:*",

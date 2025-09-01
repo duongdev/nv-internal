@@ -12,7 +12,7 @@ export type UserRoleBadgeProps = {
 export const UserRoleBadge: FC<UserRoleBadgeProps> = ({ role }) => {
   if (role === UserRole.nvInternalAdmin) {
     return (
-      <Badge className="bg-yellow-500 dark:bg-yellow-600" variant="secondary">
+      <Badge className="bg-yellow-600 dark:bg-yellow-700" variant="secondary">
         <Icon as={CrownIcon} className="text-white" />
         <Text className="text-white">Admin</Text>
       </Badge>

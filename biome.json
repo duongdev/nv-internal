@@ -27,7 +27,11 @@
           "level": "warn",
           "fix": "safe",
           "options": {
-            "attributes": ["className", "contentContainerClassName"],
+            "attributes": [
+              "className",
+              "contentContainerClassName",
+              "contentClassName"
+            ],
             "functions": ["clsx", "cva", "tw", "cn"]
           }
         }
