@@ -26,6 +26,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
   }
   const handleClear = () => {
     handleTextChange('')
+    onChangeTextDebounced?.('')
     inputRef.current?.focus()
   }
 

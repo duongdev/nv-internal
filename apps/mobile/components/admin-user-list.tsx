@@ -1,22 +1,50 @@
-import type { FC } from 'react'
+import Fuse from 'fuse.js'
+import { type FC, useMemo } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { type User, useUserList } from '@/api/user/use-user-list'
 import { cn } from '@/lib/utils'
+import { getUserPhoneNumber, getUserRoles } from '@/utils/user-helper'
 import { EmptyState } from './ui/empty-state'
 import { Text } from './ui/text'
+import { UserRoleBadge } from './user-role-badge'
 
 export type AdminUserListProps = {
   contentContainerClassName?: string
+  searchText?: string
 }
 
 export const AdminUserList: FC<AdminUserListProps> = ({
   contentContainerClassName,
+  searchText,
 }) => {
-  const { data: users, isFetching: isLoading, refetch } = useUserList()
+  const { data, isFetching: isLoading, refetch } = useUserList()
 
   const onRefresh = async () => {
     await refetch()
   }
+
+  const users = useMemo(() => {
+    if (!data) {
+      return []
+    }
+
+    if (!searchText) {
+      return data
+    }
+
+    const fuse = new Fuse(
+      data.map((user) => ({
+        ...user,
+        phoneNumber: getUserPhoneNumber(user),
+      })),
+      {
+        keys: ['firstName', 'lastName', 'phoneNumber', 'username'],
+        threshold: 0.3,
+      },
+    )
+
+    return fuse.search(searchText).map((result) => result.item)
+  }, [data, searchText])
 
   return (
     <FlatList
@@ -48,12 +76,20 @@ export type UserListItemProps = {
 }
 
 export const UserListItem: FC<UserListItemProps> = ({ user }) => {
+  const userRoles = getUserRoles(user)
+
   return (
     <View className="border-muted border-b py-2">
-      <Text className="font-semibold text-lg text-muted-foreground">
-        {user.lastName} <Text>{user.firstName}</Text>
+      <View className="flex-row items-center gap-2">
+        <Text className="font-semibold text-lg text-muted-foreground">
+          {user.lastName} <Text>{user.firstName}</Text>
+        </Text>
+        {userRoles.length > 0 &&
+          userRoles.map((role) => <UserRoleBadge key={role} role={role} />)}
+      </View>
+      <Text className="text-muted-foreground text-sm">
+        {getUserPhoneNumber(user) || 'Chưa có số điện thoại'}
       </Text>
-      <Text className="text-muted-foreground text-sm">@{user.username}</Text>
     </View>
   )
 }

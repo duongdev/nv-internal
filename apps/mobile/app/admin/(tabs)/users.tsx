@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics'
 import { Stack, useRouter } from 'expo-router'
 import { PlusIcon } from 'lucide-react-native'
+import { useState } from 'react'
 import { View } from 'react-native'
 import { AdminUserList } from '@/components/admin-user-list'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { SearchBox } from '@/components/ui/search-box'
 
 export default function AdminUsersScreen() {
   const router = useRouter()
+  const [searchText, setSearchText] = useState('')
   return (
     <>
       <Stack.Screen
@@ -32,8 +34,11 @@ export default function AdminUsersScreen() {
         }}
       />
       <View className="flex-1 py-4">
-        <SearchBox className="m-4 mt-0" />
-        <AdminUserList contentContainerClassName="flex-1 px-4" />
+        <SearchBox className="m-4 mt-0" onChangeTextDebounced={setSearchText} />
+        <AdminUserList
+          contentContainerClassName="flex-1 px-4"
+          searchText={searchText}
+        />
       </View>
     </>
   )
