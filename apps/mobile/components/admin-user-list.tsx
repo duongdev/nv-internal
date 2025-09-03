@@ -1,17 +1,31 @@
+import { useUser } from '@clerk/clerk-expo'
 import { type BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
-import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
+import {
+  ImpactFeedbackStyle,
+  impactAsync,
+  NotificationFeedbackType,
+  notificationAsync,
+} from 'expo-haptics'
 import Fuse from 'fuse.js'
 import {
   CircleSlashIcon,
   CrownIcon,
   EllipsisVerticalIcon,
   InfoIcon,
+  LockKeyholeOpenIcon,
   type LucideIcon,
   PhoneCallIcon,
   SquareArrowOutUpRightIcon,
   SquareAsteriskIcon,
 } from 'lucide-react-native'
-import { type FC, type ReactNode, type RefObject, useMemo, useRef } from 'react'
+import {
+  type FC,
+  type ReactNode,
+  type RefObject,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {
   FlatList,
   Keyboard,
@@ -20,6 +34,7 @@ import {
   RefreshControl,
   View,
 } from 'react-native'
+import { useBanUnbanUser } from '@/api/user/use-ban-unban-user'
 import { type User, useUserList } from '@/api/user/use-user-list'
 import { cn } from '@/lib/utils'
 import {
@@ -31,6 +46,16 @@ import {
   isUserAdmin,
   isUserBanned,
 } from '@/utils/user-helper'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog'
 import { BottomSheet } from './ui/bottom-sheet'
 import { Button, type ButtonProps } from './ui/button'
 import { EmptyState } from './ui/empty-state'
@@ -160,6 +185,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
   const userRoles = getUserRoles(user)
   const isAdmin = isUserAdmin(user)
   const userPhoneNumber = getUserPhoneNumber(user)
+  const currentUser = useUser()
 
   return (
     <BottomSheet enableDynamicSizing ref={ref}>
@@ -219,6 +245,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
           {isAdmin ? (
             <MenuItem
               contentClassName="!text-yellow-600 dark:!text-yellow-700"
+              disabled={currentUser.user?.id === user.id}
               icon={CrownIcon}
               label="Huỷ quyền admin"
             />
@@ -232,12 +259,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
           <View className="px-2">
             <Separator />
           </View>
-          <MenuItem
-            contentClassName="!text-destructive"
-            disabled={isAdmin}
-            icon={CircleSlashIcon}
-            label="Khoá tài khoản"
-          />
+          <BanUserAction bottomSheetRef={ref} user={user} />
         </MenuGroup>
       </BottomSheetView>
     </BottomSheet>
@@ -277,5 +299,76 @@ export const MenuItem: FC<MenuItemProps> = ({
       )) || <View className="mr-5" />}
       <Text className={cn('text-base', contentClassName)}>{label}</Text>
     </Button>
+  )
+}
+
+export type BanUserActionProps = {
+  user: User
+  onSuccess?: () => void
+  bottomSheetRef: RefObject<BottomSheetModal | null>
+}
+
+export const BanUserAction: FC<BanUserActionProps> = ({
+  user,
+  onSuccess,
+  bottomSheetRef,
+}) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const isAdmin = isUserAdmin(user)
+  const isUserCurrentlyBanned = isUserBanned(user)
+  const { mutate: banUnbanUser, isPending } = useBanUnbanUser({
+    onSuccess: () => {
+      notificationAsync(NotificationFeedbackType.Success)
+      setIsOpen(false)
+    },
+  })
+
+  return (
+    <AlertDialog
+      onOpenChange={(open) => {
+        if (open) {
+          notificationAsync(NotificationFeedbackType.Warning)
+        }
+        setIsOpen(open)
+      }}
+      open={isOpen}
+    >
+      <AlertDialogTrigger asChild>
+        <MenuItem
+          contentClassName={cn(
+            isUserCurrentlyBanned ? '' : '!text-destructive',
+          )}
+          disabled={isAdmin}
+          icon={isUserCurrentlyBanned ? LockKeyholeOpenIcon : CircleSlashIcon}
+          label={isUserCurrentlyBanned ? 'Mở khoá tài khoản' : 'Khoá tài khoản'}
+        />
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Bạn có chắc chắn không?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {isUserCurrentlyBanned
+              ? 'Hành động này sẽ mở khoá tài khoản của nhân viên và họ sẽ có thể đăng nhập vào ứng dụng.'
+              : 'Hành động này sẽ khoá tài khoản của nhân viên và họ sẽ không thể đăng nhập vào ứng dụng nữa.'}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>
+            <Text>Huỷ</Text>
+          </AlertDialogCancel>
+          <Button
+            disabled={isPending}
+            onPress={() => {
+              banUnbanUser({ userId: user.id, ban: !isUserCurrentlyBanned })
+            }}
+            variant={isUserCurrentlyBanned ? 'default' : 'destructive'}
+          >
+            <Text>
+              {isUserCurrentlyBanned ? 'Mở khoá tài khoản' : 'Khoá tài khoản'}
+            </Text>
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

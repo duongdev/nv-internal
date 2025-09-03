@@ -43,9 +43,12 @@ export default function Screen() {
   React.useEffect(() => {
     if (isAdmin) {
       // If the user is an admin, redirect to the admin dashboard
+      router.replace('/admin')
+    } else if (!user) {
+      // If the user is not logged in, redirect to the sign-in page
       router.replace('/(auth)/sign-in')
     }
-  }, [isAdmin, router])
+  }, [isAdmin, router, user])
 
   return (
     <>

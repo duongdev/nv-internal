@@ -42,7 +42,12 @@ export async function callHonoApi<T, Throw extends boolean = true>(
      * Sets to `true` to show a toast notification on error
      * @default false
      */
-    toastOnError?: boolean
+    toastOnError?:
+      | boolean
+      | ((error: string) => {
+          text1?: string
+          text2?: string
+        })
   },
 ): Promise<CallHonoApiResult<T, Throw>> {
   const { throwOnError = true as Throw, toastOnError = false } = options || {}
@@ -52,10 +57,13 @@ export async function callHonoApi<T, Throw extends boolean = true>(
   if (!response.ok) {
     const error = await response.text()
     if (toastOnError) {
+      const toastOptions =
+        typeof toastOnError === 'function' ? toastOnError(error) : {}
       Toast.show({
         type: 'error',
         text1: 'Có lỗi xảy ra',
         text2: error,
+        ...toastOptions,
       })
     }
     if (throwOnError) {
