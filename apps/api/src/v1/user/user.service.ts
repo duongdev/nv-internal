@@ -44,6 +44,10 @@ export async function canUserBanUnbanUser({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
+export async function canUserUpdateUserRoles({ user }: { user: User }) {
+  return isUserAdmin({ user })
+}
+
 // ---
 
 export async function createClerkUser({
@@ -168,6 +172,35 @@ export async function unbanUser({
     return updatedUser
   } catch (error) {
     logger.error({ error, userId }, 'Error unbanning user in Clerk')
+    throw error
+  }
+}
+
+export async function updateUserRoles({
+  clerkClient,
+  userId,
+  roles,
+}: {
+  clerkClient: ClerkClient
+  userId: string
+  roles: UserRole[]
+}) {
+  const logger = getLogger('updateUserRoles')
+
+  logger.trace({ userId, roles }, 'Updating user roles in Clerk')
+
+  try {
+    const updatedUser = await clerkClient.users.updateUser(userId, {
+      publicMetadata: {
+        roles,
+      },
+    })
+
+    logger.trace({ userId, updatedUser }, 'User roles updated in Clerk')
+
+    return updatedUser
+  } catch (error) {
+    logger.error({ error, userId, roles }, 'Error updating user roles in Clerk')
     throw error
   }
 }

@@ -1,5 +1,5 @@
 import { zValidator } from '@hono/zod-validator'
-import { z, zCreateUser } from '@nv-internal/validation'
+import { UserRole, z, zCreateUser } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getAuthUserStrict } from '../middlewares/auth'
@@ -7,10 +7,12 @@ import {
   banUser,
   canUserBanUnbanUser,
   canUserListUsers,
+  canUserUpdateUserRoles,
   createClerkUser,
   getAllUsers,
   isUserAdmin,
   unbanUser,
+  updateUserRoles,
 } from './user.service'
 
 const router = new Hono()
@@ -60,7 +62,7 @@ const router = new Hono()
     return c.json(users)
   })
   // Ban/unban user
-  .post(
+  .put(
     '/:id/ban',
     zValidator('param', z.object({ id: z.string() })),
     zValidator('json', z.object({ ban: z.boolean() })),
@@ -81,6 +83,35 @@ const router = new Hono()
         ? await banUser({ clerkClient, userId })
         : await unbanUser({ clerkClient, userId })
 
+      return c.json(updatedUser)
+    },
+  )
+  // Update roles
+  .put(
+    '/:id/roles',
+    zValidator('param', z.object({ id: z.string() })),
+    zValidator(
+      'json',
+      z.object({
+        roles: z.array(
+          z.union(Object.values(UserRole).map((role) => z.literal(role))),
+        ),
+      }),
+    ),
+    async (c) => {
+      const user = getAuthUserStrict(c)
+      const clerkClient = c.get('clerk')
+      const { id: userId } = c.req.valid('param')
+      const { roles } = c.req.valid('json')
+
+      if (!canUserUpdateUserRoles({ user })) {
+        throw new HTTPException(403, {
+          message: 'Bạn không có quyền cập nhật vai trò người dùng.',
+          cause: 'Permission denied',
+        })
+      }
+
+      const updatedUser = await updateUserRoles({ clerkClient, userId, roles })
       return c.json(updatedUser)
     },
   )
