@@ -12,7 +12,6 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
 import * as React from 'react'
-import { Appearance } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Toast from 'react-native-toast-message'
 import { queryClient } from '@/lib/api-client'
@@ -22,9 +21,6 @@ export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router'
-
-// Force appearance to light mode
-Appearance.setColorScheme('light')
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme()
@@ -93,6 +89,15 @@ function Routes() {
           options={{
             presentation: 'modal',
             gestureEnabled: false,
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
+          }}
+        />
+        <Stack.Screen
+          name="(user-settings)/theme-switcher"
+          options={{
+            presentation: 'modal',
+            gestureEnabled: true,
             headerBackButtonDisplayMode: 'minimal',
             headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
           }}

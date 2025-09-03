@@ -9,24 +9,17 @@ import {
 } from 'expo-haptics'
 import Fuse from 'fuse.js'
 import {
+  ChevronRightIcon,
   CircleSlashIcon,
   CrownIcon,
   EllipsisVerticalIcon,
   InfoIcon,
   LockKeyholeOpenIcon,
-  type LucideIcon,
   PhoneCallIcon,
   SquareArrowOutUpRightIcon,
   SquareAsteriskIcon,
 } from 'lucide-react-native'
-import {
-  type FC,
-  type ReactNode,
-  type RefObject,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { type FC, type RefObject, useMemo, useRef, useState } from 'react'
 import {
   FlatList,
   Keyboard,
@@ -59,9 +52,10 @@ import {
   AlertDialogTrigger,
 } from './ui/alert-dialog'
 import { BottomSheet } from './ui/bottom-sheet'
-import { Button, type ButtonProps } from './ui/button'
+import { Button } from './ui/button'
 import { EmptyState } from './ui/empty-state'
 import { Icon } from './ui/icon'
+import { MenuGroup, MenuItem } from './ui/menu'
 import { Separator } from './ui/separator'
 import { Text } from './ui/text'
 import { UserAvatar } from './user-avatar'
@@ -213,21 +207,25 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
         </View>
         <Separator />
         <MenuGroup>
-          <MenuItem icon={InfoIcon} label="Xem thông tin chi tiết" />
+          <MenuItem
+            label="Xem thông tin chi tiết"
+            leftIcon={InfoIcon}
+            rightIcon={ChevronRightIcon}
+          />
         </MenuGroup>
         <MenuGroup>
           <MenuItem
             disabled={!userPhoneNumber}
-            icon={PhoneCallIcon}
             label="Gọi điện thoại"
+            leftIcon={PhoneCallIcon}
             onPress={() => {
               Linking.openURL(`tel:${userPhoneNumber}`)
             }}
           />
           <MenuItem
             disabled={!userPhoneNumber}
-            icon={SquareArrowOutUpRightIcon}
             label="Mở Zalo"
+            leftIcon={SquareArrowOutUpRightIcon}
             onPress={() => {
               Linking.openURL(`https://zalo.me/${userPhoneNumber}`)
             }}
@@ -236,8 +234,9 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
         {/* <Separator /> */}
         <MenuGroup>
           <MenuItem
-            icon={SquareAsteriskIcon}
+            disabled
             label="Đặt lại mật khẩu"
+            leftIcon={SquareAsteriskIcon}
             onPress={() => {
               // Handle button press
             }}
@@ -250,42 +249,6 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
         </MenuGroup>
       </BottomSheetView>
     </BottomSheet>
-  )
-}
-
-export type MenuGroupProps = {
-  children: ReactNode
-}
-
-export const MenuGroup: FC<MenuGroupProps> = ({ children }) => {
-  return <View className="gap-0.5 rounded-lg bg-muted p-2">{children}</View>
-}
-
-export type MenuItemProps = ButtonProps & {
-  label: string
-  contentClassName?: string
-  icon?: LucideIcon
-}
-
-export const MenuItem: FC<MenuItemProps> = ({
-  label,
-  contentClassName,
-  icon,
-  className,
-  ...props
-}) => {
-  return (
-    <Button
-      className={cn('justify-start px-2 active:bg-card', className)}
-      size="lg"
-      variant="ghost"
-      {...props}
-    >
-      {(icon && (
-        <Icon as={icon} className={cn('size-5', contentClassName)} />
-      )) || <View className="mr-5" />}
-      <Text className={cn('text-base', contentClassName)}>{label}</Text>
-    </Button>
   )
 }
 
@@ -326,8 +289,10 @@ export const BanUserAction: FC<BanUserActionProps> = ({
             isUserCurrentlyBanned ? '' : '!text-destructive',
           )}
           disabled={isAdmin}
-          icon={isUserCurrentlyBanned ? LockKeyholeOpenIcon : CircleSlashIcon}
           label={isUserCurrentlyBanned ? 'Mở khoá tài khoản' : 'Khoá tài khoản'}
+          leftIcon={
+            isUserCurrentlyBanned ? LockKeyholeOpenIcon : CircleSlashIcon
+          }
         />
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -380,8 +345,8 @@ export const GrantAdminAction: FC<GrantAdminActionProps> = ({ user }) => {
     <MenuItem
       contentClassName="!text-yellow-600 dark:!text-yellow-700"
       disabled={isCurrentUser || isUserCurrentlyBanned || isPending}
-      icon={CrownIcon}
       label={isAdmin ? 'Huỷ quyền admin' : 'Cấp quyền admin'}
+      leftIcon={CrownIcon}
       onPress={() => {
         updateUserRoles({
           userId: user.id,
