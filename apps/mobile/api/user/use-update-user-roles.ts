@@ -1,3 +1,4 @@
+import type { UserRole } from '@nv-internal/validation'
 import {
   type UseMutationOptions,
   useMutation,
@@ -6,17 +7,17 @@ import {
 import { callHonoApi } from '@/lib/api-client'
 import { userListQueryOptions } from './use-user-list'
 
-export async function banUnbanUser({
+export async function updateUserRoles({
   userId,
-  ban,
+  roles,
 }: {
   userId: string
-  ban: boolean
+  roles: UserRole[]
 }) {
   const { data: user } = await callHonoApi(
     (c) =>
-      c.v1.user[':id'].ban.$put({
-        json: { ban },
+      c.v1.user[':id'].roles.$put({
+        json: { roles },
         param: { id: userId },
       }),
     { toastOnError: true },
@@ -24,18 +25,20 @@ export async function banUnbanUser({
   return user
 }
 
-export type BanUnbanUserResponse = Awaited<ReturnType<typeof banUnbanUser>>
+export type UpdateUserRolesResponse = Awaited<
+  ReturnType<typeof updateUserRoles>
+>
 
-export function useBanUnbanUser(
+export function useUpdateUserRoles(
   mutationOptions?: UseMutationOptions<
-    BanUnbanUserResponse,
+    UpdateUserRolesResponse,
     Error,
-    { userId: string; ban: boolean }
+    { userId: string; roles: UserRole[] }
   >,
 ) {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: banUnbanUser,
+    mutationFn: updateUserRoles,
     ...mutationOptions,
     onSettled: (...args) => {
       mutationOptions?.onSettled?.(...args)

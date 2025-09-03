@@ -1,5 +1,6 @@
 import { useUser } from '@clerk/clerk-expo'
 import { type BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
+import { UserRole } from '@nv-internal/validation'
 import {
   ImpactFeedbackStyle,
   impactAsync,
@@ -35,6 +36,7 @@ import {
   View,
 } from 'react-native'
 import { useBanUnbanUser } from '@/api/user/use-ban-unban-user'
+import { useUpdateUserRoles } from '@/api/user/use-update-user-roles'
 import { type User, useUserList } from '@/api/user/use-user-list'
 import { cn } from '@/lib/utils'
 import {
@@ -183,9 +185,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
   user,
 }) => {
   const userRoles = getUserRoles(user)
-  const isAdmin = isUserAdmin(user)
   const userPhoneNumber = getUserPhoneNumber(user)
-  const currentUser = useUser()
 
   return (
     <BottomSheet enableDynamicSizing ref={ref}>
@@ -242,20 +242,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
               // Handle button press
             }}
           />
-          {isAdmin ? (
-            <MenuItem
-              contentClassName="!text-yellow-600 dark:!text-yellow-700"
-              disabled={currentUser.user?.id === user.id}
-              icon={CrownIcon}
-              label="Huỷ quyền admin"
-            />
-          ) : (
-            <MenuItem
-              contentClassName="!text-yellow-600 dark:!text-yellow-700"
-              icon={CrownIcon}
-              label="Cấp quyền admin"
-            />
-          )}
+          <GrantAdminAction user={user} />
           <View className="px-2">
             <Separator />
           </View>
@@ -370,5 +357,39 @@ export const BanUserAction: FC<BanUserActionProps> = ({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+}
+
+export type GrantAdminActionProps = {
+  user: User
+}
+
+export const GrantAdminAction: FC<GrantAdminActionProps> = ({ user }) => {
+  const currentUser = useUser()
+  const isAdmin = isUserAdmin(user)
+  const isUserCurrentlyBanned = isUserBanned(user)
+  const isCurrentUser = currentUser.user?.id === user.id
+  const currentRoles = getUserRoles(user)
+  const { mutate: updateUserRoles, isPending } = useUpdateUserRoles({
+    onSuccess: () => {
+      notificationAsync(NotificationFeedbackType.Success)
+    },
+  })
+
+  return (
+    <MenuItem
+      contentClassName="!text-yellow-600 dark:!text-yellow-700"
+      disabled={isCurrentUser || isUserCurrentlyBanned || isPending}
+      icon={CrownIcon}
+      label={isAdmin ? 'Huỷ quyền admin' : 'Cấp quyền admin'}
+      onPress={() => {
+        updateUserRoles({
+          userId: user.id,
+          roles: isAdmin
+            ? currentRoles.filter((r) => r !== UserRole.nvInternalAdmin)
+            : [...currentRoles, UserRole.nvInternalAdmin],
+        })
+      }}
+    />
   )
 }
