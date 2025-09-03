@@ -1,6 +1,13 @@
 import type { ClerkClient, User } from '@clerk/backend'
 import type { ClerkAPIResponseError } from '@clerk/types'
-import { UserRole, type z, type zCreateUser } from '@nv-internal/validation'
+import {
+  type UserPublicMetadata,
+  UserRole,
+  type z,
+  type zCreateUser,
+  zUserPublicMetadata,
+} from '@nv-internal/validation'
+import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 
 export function doesUserHaveRole({
@@ -61,7 +68,7 @@ export async function createClerkUser({
 }) {
   const logger = getLogger('createClerkUser')
 
-  logger.trace({ data }, 'Creating user in Clerk')
+  logger.trace({ ...data, password: undefined }, 'Creating user in Clerk')
 
   try {
     // Create the user in Clerk
@@ -79,6 +86,7 @@ export async function createClerkUser({
       publicMetadata: {
         phoneNumber: data.phone,
         roles: [UserRole.nvInternalWorker],
+        defaultPasswordChanged: false,
       },
     })
 
@@ -176,6 +184,66 @@ export async function unbanUser({
   }
 }
 
+async function updateUserPublicMetadata({
+  clerkClient,
+  userId,
+  publicMetadata,
+}: {
+  clerkClient: ClerkClient
+  userId: string
+  publicMetadata: Partial<UserPublicMetadata>
+}) {
+  const logger = getLogger('updateUserPublicMetadata')
+
+  logger.trace(
+    { userId, publicMetadata },
+    'Updating user public metadata in Clerk',
+  )
+
+  try {
+    const currentUser = await clerkClient.users.getUser(userId)
+
+    if (!currentUser) {
+      logger.error({ userId }, 'User not found in Clerk')
+      throw new HTTPException(404, {
+        message: 'User not found',
+        cause: `User with ID ${userId} does not exist`,
+      })
+    }
+
+    const { success, data: newPublicMetadata } =
+      await zUserPublicMetadata.safeParseAsync({
+        ...currentUser.publicMetadata,
+        ...publicMetadata,
+      })
+
+    if (!success) {
+      logger.error({ userId, publicMetadata }, 'Invalid public metadata')
+      throw new HTTPException(400, {
+        message: 'Invalid public metadata',
+        cause: 'Validation failed',
+      })
+    }
+
+    const updatedUser = await clerkClient.users.updateUser(userId, {
+      publicMetadata: newPublicMetadata,
+    })
+
+    logger.trace(
+      { userId, updatedUser },
+      'User public metadata updated in Clerk',
+    )
+
+    return updatedUser
+  } catch (error) {
+    logger.error(
+      { error, userId, publicMetadata },
+      'Error updating user public metadata in Clerk',
+    )
+    throw error
+  }
+}
+
 export async function updateUserRoles({
   clerkClient,
   userId,
@@ -190,7 +258,9 @@ export async function updateUserRoles({
   logger.trace({ userId, roles }, 'Updating user roles in Clerk')
 
   try {
-    const updatedUser = await clerkClient.users.updateUser(userId, {
+    const updatedUser = await updateUserPublicMetadata({
+      clerkClient,
+      userId,
       publicMetadata: {
         roles,
       },

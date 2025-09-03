@@ -1,12 +1,20 @@
-import { UserRole } from '@nv-internal/validation'
+import {
+  type UserPublicMetadata,
+  UserRole,
+  zUserPublicMetadata,
+} from '@nv-internal/validation'
 import type { User } from '@/api/user/use-user-list'
 
+export function getUserPublicMetadata(user: User): UserPublicMetadata {
+  return zUserPublicMetadata.parse(user.publicMetadata) as UserPublicMetadata
+}
+
 export function getUserPhoneNumber(user: User): string | null {
-  return user.publicMetadata?.phoneNumber ?? null
+  return getUserPublicMetadata(user).phoneNumber ?? null
 }
 
 export function getUserRoles(user: User): UserRole[] {
-  return user.publicMetadata?.roles ?? []
+  return getUserPublicMetadata(user).roles ?? []
 }
 
 export function formatPhoneNumber(

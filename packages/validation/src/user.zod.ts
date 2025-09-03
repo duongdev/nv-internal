@@ -34,3 +34,10 @@ export const zCreateUser = z.object({
     ])
     .optional(),
 })
+
+export const zUserPublicMetadata = z.object({
+  phoneNumber: z.string().trim().optional(),
+  roles: z.array(z.enum(UserRole)),
+  defaultPasswordChanged: z.boolean().default(false),
+})
+export type UserPublicMetadata = z.infer<typeof zUserPublicMetadata>

@@ -93,9 +93,7 @@ const router = new Hono()
     zValidator(
       'json',
       z.object({
-        roles: z.array(
-          z.union(Object.values(UserRole).map((role) => z.literal(role))),
-        ),
+        roles: z.array(z.enum(UserRole)),
       }),
     ),
     async (c) => {
