@@ -41,3 +41,21 @@ export const zUserPublicMetadata = z.object({
   defaultPasswordChanged: z.boolean().default(false),
 })
 export type UserPublicMetadata = z.infer<typeof zUserPublicMetadata>
+
+export const zChangeUserPassword = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, 'Vui lòng nhập mật khẩu hiện tại')
+      .max(100),
+    newPassword: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').max(100),
+    confirmPassword: z
+      .string()
+      .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+      .max(100),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  })
+export type ChangeUserPassword = z.infer<typeof zChangeUserPassword>

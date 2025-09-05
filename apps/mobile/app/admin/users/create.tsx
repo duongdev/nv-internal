@@ -4,12 +4,12 @@ import { Stack, useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Keyboard, ScrollView } from 'react-native'
-import Toast from 'react-native-toast-message'
 import { useCreateUser } from '@/api/user/use-create-user'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormInput } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
+import { Toasts, toast } from '@/components/ui/toasts'
 import { removeVietnameseAccents } from '@/utils/remove-vn-accents'
 
 export default function CreateUserScreen() {
@@ -29,10 +29,8 @@ export default function CreateUserScreen() {
       router.back()
     },
     onError(error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Thêm nhân viên không thành công',
-        text2: error.message,
+      toast.error(error.message, {
+        providerKey: ':modal:',
       })
     },
   })
@@ -62,7 +60,6 @@ export default function CreateUserScreen() {
 
   return (
     <>
-      <Toast position="bottom" />
       <Stack.Screen
         options={{
           title: 'Thêm nhân viên mới',
@@ -183,6 +180,7 @@ export default function CreateUserScreen() {
           />
         </ScrollView>
       </Form>
+      <Toasts isInModal />
     </>
   )
 }

@@ -1,11 +1,14 @@
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
-import { Stack } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { CheckIcon, MoonIcon, SunIcon, SunMoonIcon } from 'lucide-react-native'
 import { useColorScheme } from 'nativewind'
 import { View } from 'react-native'
+import { Button } from '@/components/ui/button'
 import { MenuGroup, MenuItem } from '@/components/ui/menu'
+import { Text } from '@/components/ui/text'
 
 export default function ThemeSwitcherScreen() {
+  const router = useRouter()
   const { colorScheme, setColorScheme } = useColorScheme()
 
   const handleSetColorScheme = (scheme: 'light' | 'dark' | 'system') => {
@@ -17,8 +20,11 @@ export default function ThemeSwitcherScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Chọn giao diện',
-          headerBackButtonDisplayMode: 'minimal',
+          headerRight: () => (
+            <Button onPress={() => router.dismiss()} size="sm">
+              <Text>Xong</Text>
+            </Button>
+          ),
         }}
       />
       <View className="flex-1 p-2">

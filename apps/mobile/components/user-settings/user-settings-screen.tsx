@@ -26,7 +26,7 @@ import {
 
 export type UserSettingsProps = {}
 
-export const UserSettings: FC<UserSettingsProps> = () => {
+export const UserSettingsScreen: FC<UserSettingsProps> = () => {
   const { user } = useUser()
   const { signOut } = useAuth()
   const queryClient = useQueryClient()
@@ -70,11 +70,13 @@ export const UserSettings: FC<UserSettingsProps> = () => {
           leftIcon={ShieldUserIcon}
           rightIcon={ChevronRightIcon}
         />
-        <MenuItem
-          label="Đổi mật khẩu"
-          leftIcon={SquareAsteriskIcon}
-          rightIcon={ChevronRightIcon}
-        />
+        <Link asChild href="/(user-settings)/change-password">
+          <MenuItem
+            label="Đổi mật khẩu"
+            leftIcon={SquareAsteriskIcon}
+            rightIcon={ChevronRightIcon}
+          />
+        </Link>
         <Separator />
         <MenuItem
           contentClassName="!text-destructive"

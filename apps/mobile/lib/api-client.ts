@@ -2,7 +2,7 @@ import { getClerkInstance } from '@clerk/clerk-expo'
 import type { AppType } from '@nv-internal/api'
 import { QueryClient } from '@tanstack/react-query'
 import { type ClientResponse, hc } from 'hono/client'
-import Toast from 'react-native-toast-message'
+import { toast } from '@/components/ui/toasts'
 import { tokenCache } from './token-cache'
 
 export const clerk = getClerkInstance({
@@ -42,12 +42,7 @@ export async function callHonoApi<T, Throw extends boolean = true>(
      * Sets to `true` to show a toast notification on error
      * @default false
      */
-    toastOnError?:
-      | boolean
-      | ((error: string) => {
-          text1?: string
-          text2?: string
-        })
+    toastOnError?: boolean | ((error: string) => string)
   },
 ): Promise<CallHonoApiResult<T, Throw>> {
   const { throwOnError = true as Throw, toastOnError = false } = options || {}
@@ -57,13 +52,10 @@ export async function callHonoApi<T, Throw extends boolean = true>(
   if (!response.ok) {
     const error = await response.text()
     if (toastOnError) {
-      const toastOptions =
-        typeof toastOnError === 'function' ? toastOnError(error) : {}
-      Toast.show({
-        type: 'error',
-        text1: 'Có lỗi xảy ra',
-        text2: error,
-        ...toastOptions,
+      const message =
+        typeof toastOnError === 'function' ? toastOnError(error) : error
+      toast.error(message, {
+        providerKey: 'PERSIST',
       })
     }
     if (throwOnError) {
