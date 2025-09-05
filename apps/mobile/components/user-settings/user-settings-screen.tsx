@@ -66,6 +66,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = () => {
       </MenuGroup>
       <MenuGroup>
         <MenuItem
+          disabled
           label="Quản lý tài khoản"
           leftIcon={ShieldUserIcon}
           rightIcon={ChevronRightIcon}

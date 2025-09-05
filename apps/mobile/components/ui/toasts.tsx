@@ -8,6 +8,8 @@ import {
 } from '@backpackapp-io/react-native-toast'
 import type { FC } from 'react'
 
+export { ToastPosition }
+
 const DEFAULT_TOAST_OPTIONS: ToastOptions = {
   duration: 3000,
   position: ToastPosition.BOTTOM,

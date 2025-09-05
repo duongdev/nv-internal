@@ -19,8 +19,9 @@ import {
   SquareArrowOutUpRightIcon,
   SquareAsteriskIcon,
 } from 'lucide-react-native'
-import { type FC, type RefObject, useMemo, useRef, useState } from 'react'
+import { type FC, type RefObject, useMemo, useRef } from 'react'
 import {
+  Alert,
   FlatList,
   Keyboard,
   Linking,
@@ -41,16 +42,6 @@ import {
   isUserAdmin,
   isUserBanned,
 } from '@/utils/user-helper'
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from './ui/alert-dialog'
 import { BottomSheet } from './ui/bottom-sheet'
 import { Button } from './ui/button'
 import { EmptyState } from './ui/empty-state'
@@ -58,6 +49,7 @@ import { Icon } from './ui/icon'
 import { MenuGroup, MenuItem } from './ui/menu'
 import { Separator } from './ui/separator'
 import { Text } from './ui/text'
+import { ToastPosition, toast } from './ui/toasts'
 import { UserAvatar } from './user-avatar'
 import { UserRoleBadge } from './user-role-badge'
 
@@ -245,7 +237,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
           <View className="px-2">
             <Separator />
           </View>
-          <BanUserAction bottomSheetRef={ref} user={user} />
+          <BanUserAction user={user} />
         </MenuGroup>
       </BottomSheetView>
     </BottomSheet>
@@ -254,74 +246,47 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
 
 export type BanUserActionProps = {
   user: User
-  onSuccess?: () => void
-  bottomSheetRef: RefObject<BottomSheetModal | null>
 }
 
-export const BanUserAction: FC<BanUserActionProps> = ({
-  user,
-  onSuccess,
-  bottomSheetRef,
-}) => {
-  const [isOpen, setIsOpen] = useState(false)
+export const BanUserAction: FC<BanUserActionProps> = ({ user }) => {
   const isAdmin = isUserAdmin(user)
   const isUserCurrentlyBanned = isUserBanned(user)
   const { mutate: banUnbanUser, isPending } = useBanUnbanUser({
     onSuccess: () => {
       notificationAsync(NotificationFeedbackType.Success)
-      setIsOpen(false)
+      toast.success('Đã cập nhật trạng thái người dùng thành công', {
+        position: ToastPosition.TOP,
+      })
     },
   })
 
   return (
-    <AlertDialog
-      onOpenChange={(open) => {
-        if (open) {
-          notificationAsync(NotificationFeedbackType.Warning)
-        }
-        setIsOpen(open)
+    <MenuItem
+      contentClassName={cn(isUserCurrentlyBanned ? '' : '!text-destructive')}
+      disabled={isAdmin || isPending}
+      label={isUserCurrentlyBanned ? 'Mở khoá tài khoản' : 'Khoá tài khoản'}
+      leftIcon={isUserCurrentlyBanned ? LockKeyholeOpenIcon : CircleSlashIcon}
+      onPress={() => {
+        Alert.alert(
+          'Xác nhận',
+          isUserCurrentlyBanned
+            ? 'Bạn có chắc chắn muốn mở khoá tài khoản này?'
+            : 'Bạn có chắc chắn muốn khoá tài khoản này?',
+          [
+            { text: 'Huỷ', style: 'cancel' },
+            {
+              text: isUserCurrentlyBanned
+                ? 'Mở khoá tài khoản'
+                : 'Khoá tài khoản',
+              style: 'destructive',
+              onPress: () => {
+                banUnbanUser({ userId: user.id, ban: !isUserCurrentlyBanned })
+              },
+            },
+          ],
+        )
       }}
-      open={isOpen}
-    >
-      <AlertDialogTrigger asChild>
-        <MenuItem
-          contentClassName={cn(
-            isUserCurrentlyBanned ? '' : '!text-destructive',
-          )}
-          disabled={isAdmin}
-          label={isUserCurrentlyBanned ? 'Mở khoá tài khoản' : 'Khoá tài khoản'}
-          leftIcon={
-            isUserCurrentlyBanned ? LockKeyholeOpenIcon : CircleSlashIcon
-          }
-        />
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Bạn có chắc chắn không?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {isUserCurrentlyBanned
-              ? 'Hành động này sẽ mở khoá tài khoản của nhân viên và họ sẽ có thể đăng nhập vào ứng dụng.'
-              : 'Hành động này sẽ khoá tài khoản của nhân viên và họ sẽ không thể đăng nhập vào ứng dụng nữa.'}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>
-            <Text>Huỷ</Text>
-          </AlertDialogCancel>
-          <Button
-            disabled={isPending}
-            onPress={() => {
-              banUnbanUser({ userId: user.id, ban: !isUserCurrentlyBanned })
-            }}
-            variant={isUserCurrentlyBanned ? 'default' : 'destructive'}
-          >
-            <Text>
-              {isUserCurrentlyBanned ? 'Mở khoá tài khoản' : 'Khoá tài khoản'}
-            </Text>
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    />
   )
 }
 
@@ -338,6 +303,9 @@ export const GrantAdminAction: FC<GrantAdminActionProps> = ({ user }) => {
   const { mutate: updateUserRoles, isPending } = useUpdateUserRoles({
     onSuccess: () => {
       notificationAsync(NotificationFeedbackType.Success)
+      toast.success('Đã cập nhật quyền admin thành công', {
+        position: ToastPosition.TOP,
+      })
     },
   })
 
@@ -348,12 +316,27 @@ export const GrantAdminAction: FC<GrantAdminActionProps> = ({ user }) => {
       label={isAdmin ? 'Huỷ quyền admin' : 'Cấp quyền admin'}
       leftIcon={CrownIcon}
       onPress={() => {
-        updateUserRoles({
-          userId: user.id,
-          roles: isAdmin
-            ? currentRoles.filter((r) => r !== UserRole.nvInternalAdmin)
-            : [...currentRoles, UserRole.nvInternalAdmin],
-        })
+        Alert.alert(
+          'Xác nhận',
+          isAdmin
+            ? 'Bạn có chắc chắn muốn huỷ quyền admin cho người dùng này?'
+            : 'Bạn có chắc chắn muốn cấp quyền admin cho người dùng này?',
+          [
+            { text: 'Đóng', style: 'cancel' },
+            {
+              text: isAdmin ? 'Huỷ quyền admin' : 'Cấp quyền admin',
+              style: 'destructive',
+              onPress: () => {
+                updateUserRoles({
+                  userId: user.id,
+                  roles: isAdmin
+                    ? currentRoles.filter((r) => r !== UserRole.nvInternalAdmin)
+                    : [...currentRoles, UserRole.nvInternalAdmin],
+                })
+              },
+            },
+          ],
+        )
       }}
     />
   )

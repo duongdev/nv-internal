@@ -10,6 +10,7 @@ import { forwardRef, useCallback } from 'react'
 import { View } from 'react-native'
 import { FullWindowOverlay } from 'react-native-screens'
 import { useColorPalette } from '@/hooks/use-color-palette'
+import { Toasts } from './toasts'
 
 export const BottomSheet = forwardRef<
   BottomSheetModalMethods,
@@ -31,7 +32,10 @@ export const BottomSheet = forwardRef<
 
   const containerComponent = useCallback(
     (props: { children?: React.ReactNode }) => (
-      <FullWindowOverlay>{props.children}</FullWindowOverlay>
+      <FullWindowOverlay>
+        {props.children}
+        <Toasts />
+      </FullWindowOverlay>
     ),
     [],
   )
