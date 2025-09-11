@@ -20,12 +20,12 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.2",
     "@vercel/node": "^5.3.17",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "vercel": "^46.1.1"
   },
   "resolutions": {
     "lightningcss": "1.27.0",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   },
   "pnpm": {
     "peerDependencyRules": {
@@ -36,8 +36,8 @@
       ]
     },
     "overrides": {
-      "react": "19.0.0",
-      "typescript": "5.8.3"
+      "react": "19.1.0",
+      "typescript": "5.9.2"
     }
   }
 }
