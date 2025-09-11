@@ -84,6 +84,7 @@ function Routes() {
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="admin/(tabs)" options={ADMIN_SCREEN_OPTIONS} />
+        {/* Users */}
         <Stack.Screen
           name="admin/users/create"
           options={{
@@ -93,6 +94,17 @@ function Routes() {
             headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
           }}
         />
+        {/* Tasks */}
+        <Stack.Screen
+          name="admin/tasks/create"
+          options={{
+            // presentation: 'modal',
+            // gestureEnabled: false,
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
+          }}
+        />
+        {/* User settings */}
         <Stack.Screen
           name="(user-settings)/theme-switcher"
           options={{

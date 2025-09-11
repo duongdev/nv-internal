@@ -25,6 +25,7 @@ import { Label } from './label'
 // import { type Option, Select } from './select';
 // import { Switch } from './switch';
 import { Text } from './text'
+import { Textarea } from './textarea'
 
 // import { Textarea } from './textarea';
 
@@ -256,65 +257,66 @@ function FormInput({
 
 FormInput.displayName = 'FormInput'
 
-// function FormTextarea({
-//   ref,
-//   label,
-//   description,
-//   onChange,
-//   ...props
-// }: FormItemProps<typeof Textarea, string>) {
-//   const textareaRef = React.useRef<TextInput>(null);
-//   const { error, formItemNativeID, formDescriptionNativeID, formMessageNativeID } = useFormField();
+export function FormTextarea({
+  ref,
+  label,
+  description,
+  onChange,
+  ...props
+}: FormItemProps<typeof Textarea, string>) {
+  const textareaRef = React.useRef<TextInput>(null)
+  const {
+    error,
+    formItemNativeID,
+    formDescriptionNativeID,
+    formMessageNativeID,
+  } = useFormField()
 
-//   React.useImperativeHandle(
-//     ref,
-//     () => {
-//       if (!textareaRef.current) {
-//         return {} as React.ComponentRef<typeof Textarea>;
-//       }
-//       return textareaRef.current;
-//     },
-//     []
-//   );
+  React.useImperativeHandle(ref, () => {
+    if (!textareaRef.current) {
+      return {} as React.ComponentRef<typeof Textarea>
+    }
+    return textareaRef.current
+  }, [])
 
-//   function handleOnLabelPress() {
-//     if (!textareaRef.current) {
-//       return;
-//     }
-//     if (textareaRef.current.isFocused()) {
-//       textareaRef.current?.blur();
-//     } else {
-//       textareaRef.current?.focus();
-//     }
-//   }
+  function handleOnLabelPress() {
+    if (!textareaRef.current) {
+      return
+    }
+    if (textareaRef.current.isFocused()) {
+      textareaRef.current?.blur()
+    } else {
+      textareaRef.current?.focus()
+    }
+  }
 
-//   return (
-//     <FormItem>
-//       {!!label && (
-//         <FormLabel nativeID={formItemNativeID} onPress={handleOnLabelPress}>
-//           {label}
-//         </FormLabel>
-//       )}
+  return (
+    <FormItem>
+      {!!label && (
+        <FormLabel nativeID={formItemNativeID} onPress={handleOnLabelPress}>
+          {label}
+        </FormLabel>
+      )}
 
-//       <Textarea
-//         ref={textareaRef}
-//         aria-labelledby={formItemNativeID}
-//         aria-describedby={
-//           !error
-//             ? `${formDescriptionNativeID}`
-//             : `${formDescriptionNativeID} ${formMessageNativeID}`
-//         }
-//         aria-invalid={!!error}
-//         onChangeText={onChange}
-//         {...props}
-//       />
-//       {!!description && <FormDescription>{description}</FormDescription>}
-//       <FormMessage />
-//     </FormItem>
-//   );
-// }
+      <Textarea
+        aria-describedby={
+          !error
+            ? `${formDescriptionNativeID}`
+            : `${formDescriptionNativeID} ${formMessageNativeID}`
+        }
+        aria-invalid={!!error}
+        aria-labelledby={formItemNativeID}
+        onChangeText={onChange}
+        ref={textareaRef}
+        {...props}
+      />
+      {!!description && <FormDescription>{description}</FormDescription>}
+      <FormMessage />
+    </FormItem>
+  )
+}
 
-// FormTextarea.displayName = 'FormTextarea';
+FormTextarea.displayName = 'FormTextarea'
 
 // function FormCheckbox({
 //   ref,

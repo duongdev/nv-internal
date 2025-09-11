@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics'
-import { Stack, useRouter } from 'expo-router'
+import { Link, Stack } from 'expo-router'
 import { PlusIcon } from 'lucide-react-native'
 import { useState } from 'react'
 import { View } from 'react-native'
@@ -9,7 +9,6 @@ import { Icon } from '@/components/ui/icon'
 import { SearchBox } from '@/components/ui/search-box'
 
 export default function AdminUsersScreen() {
-  const router = useRouter()
   const [searchText, setSearchText] = useState('')
   return (
     <>
@@ -19,17 +18,18 @@ export default function AdminUsersScreen() {
           headerLargeTitle: true,
           headerLargeTitleShadowVisible: true,
           headerRight: () => (
-            <Button
-              className="mr-2 mb-1 flex-row items-center"
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                router.push('/admin/users/create')
-              }}
-              size="icon-sm"
-              variant="ghost"
-            >
-              <Icon as={PlusIcon} className="size-5" />
-            </Button>
+            <Link asChild href="/admin/users/create">
+              <Button
+                className="mr-2 mb-1 flex-row items-center"
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                }}
+                size="icon-sm"
+                variant="ghost"
+              >
+                <Icon as={PlusIcon} className="size-5" />
+              </Button>
+            </Link>
           ),
         }}
       />
