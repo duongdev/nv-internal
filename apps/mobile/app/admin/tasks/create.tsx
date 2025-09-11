@@ -50,7 +50,7 @@ export default function AdminTaskCreateScreen() {
               size="sm"
               variant="default"
             >
-              <Text className="">Lưu</Text>
+              <Text className="">Tiếp tục</Text>
             </Button>
           ),
         }}
@@ -66,7 +66,6 @@ export default function AdminTaskCreateScreen() {
           render={({ field }) => (
             <FormInput
               autoCapitalize="sentences"
-              autoFocus
               label="Tiêu đề công việc"
               onSubmitEditing={() => form.setFocus('description')}
               placeholder="Nhập tiêu đề công việc"
@@ -115,21 +114,6 @@ export default function AdminTaskCreateScreen() {
               label="Tên khách hàng"
               onSubmitEditing={() => form.setFocus('customerPhone')}
               placeholder="Nhập tên khách hàng"
-              returnKeyType="next"
-              {...field}
-            />
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="customerPhone"
-          render={({ field }) => (
-            <FormInput
-              autoCapitalize="sentences"
-              keyboardType="phone-pad"
-              label="Số điện thoại khách hàng"
-              // onSubmitEditing={() => form.setFocus('description')}
-              placeholder="Nhập số điện thoại khách hàng"
               returnKeyType="next"
               {...field}
             />
