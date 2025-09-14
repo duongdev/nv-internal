@@ -6,11 +6,11 @@ import { getAuthUserStrict } from '../middlewares/auth'
 import {
   banUser,
   canUserBanUnbanUser,
+  canUserCreateUser,
   canUserListUsers,
   canUserUpdateUserRoles,
   createClerkUser,
   getAllUsers,
-  isUserAdmin,
   unbanUser,
   updateUserRoles,
 } from './user.service'
@@ -26,7 +26,7 @@ const router = new Hono()
     const data = c.req.valid('json')
     const user = getAuthUserStrict(c)
     const clerkClient = c.get('clerk')
-    const canCreateUser = isUserAdmin({ user })
+    const canCreateUser = canUserCreateUser({ user })
 
     if (!canCreateUser) {
       throw new HTTPException(403, {
@@ -51,7 +51,7 @@ const router = new Hono()
     const user = getAuthUserStrict(c)
     const clerkClient = c.get('clerk')
 
-    if (!canUserListUsers({ user })) {
+    if (!(await canUserListUsers({ user }))) {
       throw new HTTPException(403, {
         message: 'Bạn không có quyền xem danh sách người dùng.',
         cause: 'Permission denied',
@@ -72,7 +72,7 @@ const router = new Hono()
       const { id: userId } = c.req.valid('param')
       const { ban } = c.req.valid('json')
 
-      if (!canUserBanUnbanUser({ user })) {
+      if (!(await canUserBanUnbanUser({ user }))) {
         throw new HTTPException(403, {
           message: 'Bạn không có quyền khoá người dùng.',
           cause: 'Permission denied',
@@ -102,7 +102,7 @@ const router = new Hono()
       const { id: userId } = c.req.valid('param')
       const { roles } = c.req.valid('json')
 
-      if (!canUserUpdateUserRoles({ user })) {
+      if (!(await canUserUpdateUserRoles({ user }))) {
         throw new HTTPException(403, {
           message: 'Bạn không có quyền cập nhật vai trò người dùng.',
           cause: 'Permission denied',

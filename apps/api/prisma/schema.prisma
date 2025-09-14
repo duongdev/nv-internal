@@ -7,3 +7,32 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum TaskStatus {
+  READY
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+model Task {
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  address     String?
+  customer    Customer?  @relation(fields: [customerId], references: [id])
+  customerId  String?
+  status      TaskStatus @default(READY)
+  assigneeIds String[]
+  startedAt   DateTime?
+  completedAt DateTime?
+}
+
+model Customer {
+  id    String  @id @default(cuid())
+  name  String?
+  phone String?
+  tasks Task[]
+}

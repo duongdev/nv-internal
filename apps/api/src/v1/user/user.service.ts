@@ -66,7 +66,7 @@ export async function createClerkUser({
   data: z.infer<typeof zCreateUser>
   usernameRetryCount?: number
 }) {
-  const logger = getLogger('createClerkUser')
+  const logger = getLogger('user.service:createClerkUser')
 
   logger.trace({ ...data, password: undefined }, 'Creating user in Clerk')
 
@@ -145,7 +145,7 @@ export async function banUser({
   clerkClient: ClerkClient
   userId: string
 }) {
-  const logger = getLogger('banUser')
+  const logger = getLogger('user.service:banUser')
 
   logger.trace({ userId }, 'Banning user in Clerk')
 
@@ -168,7 +168,7 @@ export async function unbanUser({
   clerkClient: ClerkClient
   userId: string
 }) {
-  const logger = getLogger('unbanUser')
+  const logger = getLogger('user.service:unbanUser')
 
   logger.trace({ userId }, 'Unbanning user in Clerk')
 
@@ -193,7 +193,7 @@ async function updateUserPublicMetadata({
   userId: string
   publicMetadata: Partial<UserPublicMetadata>
 }) {
-  const logger = getLogger('updateUserPublicMetadata')
+  const logger = getLogger('user.service:updateUserPublicMetadata')
 
   logger.trace(
     { userId, publicMetadata },
@@ -253,7 +253,7 @@ export async function updateUserRoles({
   userId: string
   roles: UserRole[]
 }) {
-  const logger = getLogger('updateUserRoles')
+  const logger = getLogger('user.service:updateUserRoles')
 
   logger.trace({ userId, roles }, 'Updating user roles in Clerk')
 

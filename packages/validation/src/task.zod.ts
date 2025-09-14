@@ -21,3 +21,9 @@ export const zCreateTask = z.object({
 })
 
 export type CreateTaskValues = z.infer<typeof zCreateTask>
+
+export const zTaskListQuery = z.object({
+  cursor: z.string().optional(),
+  take: z.number().min(1).max(100).default(10).optional(),
+})
+export type TaskListQuery = z.infer<typeof zTaskListQuery>
