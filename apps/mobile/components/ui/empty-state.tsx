@@ -1,6 +1,7 @@
 import { type FC, type ReactNode, useMemo } from 'react'
 import { Image, type ImageProps, View } from 'react-native'
 import { ILLUSTRATION_MAP } from '@/lib/illustrations'
+import { cn } from '@/lib/utils'
 import { Text } from './text'
 
 const IMAGE_MAP = ILLUSTRATION_MAP
@@ -11,6 +12,7 @@ export type EmptyStateProps = {
   messageTitle?: string
   messageDescription?: string
   message?: ReactNode
+  className?: string
 }
 
 export const EmptyState: FC<EmptyStateProps> = ({
@@ -19,6 +21,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
   message,
   messageDescription,
   messageTitle,
+  className,
 }) => {
   const msgEl = useMemo(() => {
     if (message) {
@@ -33,7 +36,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
   }, [message, messageDescription, messageTitle])
 
   return (
-    <View className="flex-1 items-center">
+    <View className={cn('items-center justify-center', className)}>
       <Image
         className="h-64 w-64 rounded-lg"
         source={source || IMAGE_MAP[image]}

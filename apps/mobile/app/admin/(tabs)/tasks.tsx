@@ -2,9 +2,9 @@ import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { Link, Stack } from 'expo-router'
 import { PlusIcon } from 'lucide-react-native'
 import { View } from 'react-native'
+import { AdminTaskList } from '@/components/admin-task-list'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
-import { Text } from '@/components/ui/text'
 
 export default function AdminTasksScreen() {
   return (
@@ -29,8 +29,8 @@ export default function AdminTasksScreen() {
           ),
         }}
       />
-      <View className="flex-1 items-center justify-center">
-        <Text className="font-bold text-2xl">Admin Tasks</Text>
+      <View className="flex-1 py-4">
+        <AdminTaskList contentContainerClassName="flex-1 px-4" />
       </View>
     </>
   )

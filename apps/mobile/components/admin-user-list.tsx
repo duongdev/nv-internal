@@ -101,6 +101,7 @@ export const AdminUserList: FC<AdminUserListProps> = ({
       ListEmptyComponent={
         (!isLoading && (
           <EmptyState
+            className="flex-1"
             image="laziness"
             messageDescription="Hãy tạo nhân viên mới để bắt đầu làm việc."
             messageTitle="Chưa có nhân viên"
