@@ -13,6 +13,10 @@ export async function canUserListTasks({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
+export async function canUserViewTask({ user }: { user: User }) {
+  return isUserAdmin({ user })
+}
+
 export async function createTask({
   data,
   user,
@@ -105,4 +109,15 @@ export async function getTaskList({
     nextCursor,
     hasNextPage,
   }
+}
+
+export async function getTaskById({ id }: { id: number }) {
+  const prisma = getPrisma()
+
+  const task = await prisma.task.findUnique({
+    where: { id },
+    include: { customer: true },
+  })
+
+  return task
 }

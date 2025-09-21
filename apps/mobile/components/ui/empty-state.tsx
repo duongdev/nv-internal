@@ -29,8 +29,12 @@ export const EmptyState: FC<EmptyStateProps> = ({
     }
     return (
       <View className="items-center">
-        <Text variant="h4">{messageTitle}</Text>
-        <Text variant="muted">{messageDescription}</Text>
+        <Text className="text-center" variant="h4">
+          {messageTitle}
+        </Text>
+        <Text className="text-center" variant="muted">
+          {messageDescription}
+        </Text>
       </View>
     )
   }, [message, messageDescription, messageTitle])

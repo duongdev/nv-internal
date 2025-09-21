@@ -25,6 +25,7 @@ export const BottomSheet = forwardRef<
         appearsOnIndex={0}
         disappearsOnIndex={-1}
         enableTouchThrough
+        opacity={0.8}
       />
     ),
     [],

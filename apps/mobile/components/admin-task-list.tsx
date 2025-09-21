@@ -1,6 +1,8 @@
+import { Link } from 'expo-router'
 import type { FC } from 'react'
-import { FlatList, RefreshControl } from 'react-native'
+import { ActivityIndicator, FlatList, RefreshControl } from 'react-native'
 import { useTaskInfiniteList } from '@/api/task/use-task-infinite-list'
+import { formatTaskId } from '@/utils/task-id-helper'
 import { EmptyState } from './ui/empty-state'
 import { Text } from './ui/text'
 
@@ -11,8 +13,15 @@ export type AdminTaskListProps = {
 export const AdminTaskList: FC<AdminTaskListProps> = ({
   contentContainerClassName,
 }) => {
-  const { data, hasNextPage, isFetching, fetchNextPage, refetch } =
-    useTaskInfiniteList()
+  const {
+    data,
+    hasNextPage,
+    isFetching,
+    isRefetching,
+    isLoading,
+    fetchNextPage,
+    refetch,
+  } = useTaskInfiniteList()
 
   const tasks = data?.pages.flatMap((page) => page.tasks) ?? []
 
@@ -26,12 +35,16 @@ export const AdminTaskList: FC<AdminTaskListProps> = ({
     refetch()
   }
 
+  if (isLoading) {
+    return <ActivityIndicator className="my-2" />
+  }
+
   return (
     <FlatList
       contentContainerClassName={contentContainerClassName}
       data={tasks}
       ListEmptyComponent={
-        (!isFetching && (
+        (!isLoading && (
           <EmptyState
             className="flex-1"
             image="laziness"
@@ -44,9 +57,20 @@ export const AdminTaskList: FC<AdminTaskListProps> = ({
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.5}
       refreshControl={
-        <RefreshControl onRefresh={handleRefetch} refreshing={isFetching} />
+        <RefreshControl onRefresh={handleRefetch} refreshing={isRefetching} />
       }
-      renderItem={({ item }) => <Text>{item.title}</Text>}
+      renderItem={({ item }) => (
+        <Link
+          href={{
+            pathname: '/admin/tasks/[taskId]/view',
+            params: { taskId: item.id },
+          }}
+        >
+          <Text>
+            {formatTaskId(item.id)} {item.title}
+          </Text>
+        </Link>
+      )}
     />
   )
 }

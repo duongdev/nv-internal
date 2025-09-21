@@ -41,7 +41,7 @@ function AlertDialogOverlay({
           entering={FadeIn.duration(200).delay(50)}
           exiting={FadeOut.duration(150)}
         >
-          <>{children}</>
+          {children}
         </NativeOnlyAnimatedView>
       </AlertDialogPrimitive.Overlay>
     </FullWindowOverlay>
@@ -102,7 +102,7 @@ function AlertDialogTitle({
   return (
     <AlertDialogPrimitive.Title
       className={cn(
-        'font-gilroy font-semibold text-foreground text-lg',
+        'font-sans font-semibold text-foreground text-lg',
         className,
       )}
       {...props}
@@ -117,7 +117,7 @@ function AlertDialogDescription({
   React.RefAttributes<AlertDialogPrimitive.DescriptionRef>) {
   return (
     <AlertDialogPrimitive.Description
-      className={cn('font-gilroy text-muted-foreground text-sm', className)}
+      className={cn('font-sans text-muted-foreground text-sm', className)}
       {...props}
     />
   )

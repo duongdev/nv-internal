@@ -1,3 +1,5 @@
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import type { BottomSheetTextInputProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetTextInput'
 import { SearchIcon, XIcon } from 'lucide-react-native'
 import { type FC, useRef, useState } from 'react'
 import { Pressable, TextInput, type TextInputProps } from 'react-native'
@@ -8,6 +10,7 @@ import { Icon } from './icon'
 
 export type SearchBoxProps = TextInputProps & {
   onChangeTextDebounced?: (text: string) => void
+  isInBottomSheet?: boolean
   className?: string
 }
 
@@ -16,8 +19,11 @@ export const SearchBox: FC<SearchBoxProps> = ({
   onChangeText,
   onChangeTextDebounced,
   className,
+  isInBottomSheet = false,
+  ...props
 }) => {
   const inputRef = useRef<TextInput>(null)
+  const bottomSheetInputRef = useRef<BottomSheetTextInputProps>(null)
   const [val, setVal] = useState(value ?? '')
 
   const handleTextChange = (text: string) => {
@@ -29,6 +35,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
     onChangeTextDebounced?.('')
     inputRef.current?.focus()
   }
+  const Comp = isInBottomSheet ? BottomSheetTextInput : TextInput
 
   useDebounce(
     () => {
@@ -47,12 +54,13 @@ export const SearchBox: FC<SearchBoxProps> = ({
       onPress={() => inputRef.current?.focus()}
     >
       <Icon as={SearchIcon} className="size-5 shrink-0 text-muted-foreground" />
-      <TextInput
+      <Comp
         className="flex-1"
         onChangeText={handleTextChange}
         placeholder="Tìm kiếm..."
-        ref={inputRef}
+        ref={isInBottomSheet ? bottomSheetInputRef : (inputRef as any)}
         value={val}
+        {...(props as TextInputProps)}
       />
       {val && (
         <Button onPress={handleClear} size={null} variant={null}>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native'
 import { type FC, type RefObject, useMemo, useRef } from 'react'
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Keyboard,
@@ -62,7 +63,7 @@ export const AdminUserList: FC<AdminUserListProps> = ({
   contentContainerClassName,
   searchText,
 }) => {
-  const { data, isFetching: isLoading, refetch } = useUserList()
+  const { data, isLoading, refetch, isRefetching } = useUserList()
 
   const onRefresh = async () => {
     await refetch()
@@ -91,6 +92,10 @@ export const AdminUserList: FC<AdminUserListProps> = ({
     return fuse.search(searchText).map((result) => result.item)
   }, [data, searchText])
 
+  if (isLoading) {
+    return <ActivityIndicator className="my-2" />
+  }
+
   return (
     <FlatList
       contentContainerClassName={cn(contentContainerClassName)}
@@ -110,7 +115,7 @@ export const AdminUserList: FC<AdminUserListProps> = ({
         null
       }
       refreshControl={
-        <RefreshControl onRefresh={onRefresh} refreshing={isLoading} />
+        <RefreshControl onRefresh={onRefresh} refreshing={isRefetching} />
       }
       renderItem={({ item }) => <UserListItem user={item} />}
     />

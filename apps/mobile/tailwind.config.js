@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/style/useNamingConvention: <DEFAULT is defined by tailwind> */
-const { hairlineWidth } = require('nativewind/theme')
+const { hairlineWidth } = require('nativewind/theme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -72,12 +72,17 @@ module.exports = {
         // 'airbnb-extrabold': ['AirbnbCereal-ExtraBold', 'ui-sans-serif'],
         // 'airbnb-light': ['AirbnbCereal-Light', 'ui-sans-serif'],
         // 'airbnb-medium': ['AirbnbCereal-Medium', 'ui-sans-serif'],
-        system: ['Gilroy-Regular', 'ui-sans-serif'],
+        system: ['PublicSans_400Regular', 'Gilroy-Regular', 'ui-sans-serif'],
         gilroy: ['Gilroy-Regular', 'ui-sans-serif'],
         'gilroy-bold': ['Gilroy-Bold', 'ui-sans-serif'],
         'gilroy-medium': ['Gilroy-Medium', 'ui-sans-serif'],
         'gilroy-semibold': ['Gilroy-SemiBold', 'ui-sans-serif'],
         'gilroy-extrabold': ['Gilroy-Black', 'ui-sans-serif'],
+        sans: ['PublicSans_400Regular', 'ui-sans-serif'],
+        'sans-bold': ['PublicSans_700Bold', 'ui-sans-serif'],
+        'sans-medium': ['PublicSans_500Medium', 'ui-sans-serif'],
+        'sans-semibold': ['PublicSans_600SemiBold', 'ui-sans-serif'],
+        'sans-extrabold': ['PublicSans_900Black', 'ui-sans-serif'],
       },
     },
   },
@@ -85,4 +90,4 @@ module.exports = {
     hoverOnlyWhenSupported: true,
   },
   plugins: [require('tailwindcss-animate')],
-}
+};

@@ -39,22 +39,22 @@ export default function AdminTaskCreateScreen() {
           options={{
             title: 'Thêm công việc mới',
 
-            headerLeft: () => (
-              <Button
-                disabled={form.formState.isSubmitting}
-                onPress={() => router.dismiss()}
-                size="sm"
-                variant="outline"
-              >
-                <Text className="">Huỷ</Text>
-              </Button>
-            ),
+            // headerLeft: () => (
+            //   <Button
+            //     disabled={form.formState.isSubmitting}
+            //     onPress={() => router.dismiss()}
+            //     size="sm"
+            //     variant="outline"
+            //   >
+            //     <Text className="">Huỷ</Text>
+            //   </Button>
+            // ),
             headerRight: () => (
               <Button
                 disabled={form.formState.isSubmitting}
                 onPress={form.handleSubmit(onSubmit)}
                 size="sm"
-                variant="default"
+                variant={null}
               >
                 <Text className="">Tiếp tục</Text>
               </Button>

@@ -83,8 +83,8 @@ export const NAV_THEME: Record<'light' | 'dark', Theme> = {
 }
 
 export const FONT_FAMILY = {
-  regular: 'Gilroy-Regular',
-  medium: 'Gilroy-Medium',
-  semi: 'Gilroy-SemiBold',
-  bold: 'Gilroy-Bold',
+  regular: 'PublicSans_400Regular',
+  medium: 'PublicSans_500Medium',
+  semi: 'PublicSans_600SemiBold',
+  bold: 'PublicSans_700Bold',
 }

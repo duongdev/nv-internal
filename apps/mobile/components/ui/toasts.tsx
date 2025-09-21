@@ -7,6 +7,7 @@ import {
   type ValueOrFunction,
 } from '@backpackapp-io/react-native-toast'
 import type { FC } from 'react'
+import { FONT_FAMILY } from '@/lib/theme'
 
 export { ToastPosition }
 
@@ -59,7 +60,7 @@ export const Toasts: FC<ToastsProps> = ({ isInModal, ...props }) => {
     <RNToasts
       defaultStyle={{
         text: {
-          fontFamily: 'Gilroy-Medium',
+          fontFamily: FONT_FAMILY.regular,
         },
       }}
       extraInsets={{ top: isInModal ? -60 : 0, bottom: isInModal ? 64 : 0 }}

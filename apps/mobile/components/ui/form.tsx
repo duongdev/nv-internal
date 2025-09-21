@@ -129,10 +129,7 @@ function FormDescription({
 
   return (
     <Text
-      className={cn(
-        'pt-1 font-gilroy text-muted-foreground text-sm',
-        className,
-      )}
+      className={cn('pt-1 font-sans text-muted-foreground text-sm', className)}
       nativeID={formDescriptionNativeID}
       ref={ref}
       {...props}
@@ -157,7 +154,7 @@ function FormMessage({
   return (
     <Animated.Text
       className={cn(
-        'mt-0.5 font-gilroy font-medium text-destructive text-sm',
+        'mt-0.5 font-medium font-sans text-destructive text-sm',
         className,
       )}
       entering={FadeInDown}
