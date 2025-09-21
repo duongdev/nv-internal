@@ -29,8 +29,8 @@ export default function AdminTasksScreen() {
           ),
         }}
       />
-      <View className="flex-1 py-4">
-        <AdminTaskList contentContainerClassName="flex-1 px-4" />
+      <View className="flex-1 bg-muted">
+        <AdminTaskList contentContainerClassName="flex-1 gap-2 p-4" />
       </View>
     </>
   )

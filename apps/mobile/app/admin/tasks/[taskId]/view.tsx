@@ -23,7 +23,17 @@ export default function TaskViewScreen() {
   const isTaskNotFound = !taskId || (isFetched && !task)
 
   if (isLoading) {
-    return <ActivityIndicator className="my-4" />
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            headerBackButtonDisplayMode: 'generic',
+            title: '',
+          }}
+        />
+        <ActivityIndicator className="my-4" />
+      </>
+    )
   }
 
   return (

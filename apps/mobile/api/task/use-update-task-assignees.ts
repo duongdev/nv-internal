@@ -45,6 +45,7 @@ export function useUpdateTaskAssignees(
       queryClient.invalidateQueries({
         queryKey: taskQueryOptions({ id: args[2].taskId }).queryKey,
       })
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 

@@ -1,19 +1,23 @@
-import type { FC } from 'react'
-import { useUserPublicInfo } from '@/api/user/use-user-public-info'
+import type { FC, ReactNode } from 'react'
+import {
+  type FetchUserPublicInfoResponse,
+  useUserPublicInfo,
+} from '@/api/user/use-user-public-info'
 import { cn } from '@/lib/utils'
 import { getUserFullName } from '@/utils/user-helper'
 import { Skeleton } from './ui/skeleton'
 import { Text } from './ui/text'
 
-export type UserPublicInfoProps = {
+export type UserPublicInfoBaseProps = {
   userId: string
   className?: string
 }
 
-export const UserFullName: FC<UserPublicInfoProps> = ({
-  userId,
-  className,
-}) => {
+export const UserPublicInfo: FC<
+  UserPublicInfoBaseProps & {
+    children: (user: FetchUserPublicInfoResponse) => ReactNode
+  }
+> = ({ userId, className, children }) => {
   const { data, isLoading } = useUserPublicInfo(userId)
 
   if (isLoading) {
@@ -24,13 +28,24 @@ export const UserFullName: FC<UserPublicInfoProps> = ({
     return '[deleted]'
   }
 
+  return <>{children(data)}</>
+}
+
+export const UserFullName: FC<UserPublicInfoBaseProps> = ({
+  userId,
+  className,
+}) => {
   return (
-    <Text
-      className={cn(className, {
-        'line-through': data.banned,
-      })}
-    >
-      {getUserFullName(data)}
-    </Text>
+    <UserPublicInfo userId={userId}>
+      {(user) => (
+        <Text
+          className={cn(className, {
+            'line-through': user.banned,
+          })}
+        >
+          {getUserFullName(user)}
+        </Text>
+      )}
+    </UserPublicInfo>
   )
 }

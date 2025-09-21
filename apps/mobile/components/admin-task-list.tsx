@@ -1,10 +1,15 @@
 import { Link } from 'expo-router'
-import type { FC } from 'react'
-import { ActivityIndicator, FlatList, RefreshControl } from 'react-native'
-import { useTaskInfiniteList } from '@/api/task/use-task-infinite-list'
+import { type FC, Fragment } from 'react'
+import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native'
+import {
+  type FetchTaskListResponse,
+  useTaskInfiniteList,
+} from '@/api/task/use-task-infinite-list'
 import { formatTaskId } from '@/utils/task-id-helper'
+import { ContentSection } from './ui/content-section'
 import { EmptyState } from './ui/empty-state'
 import { Text } from './ui/text'
+import { UserFullName } from './user-public-info'
 
 export type AdminTaskListProps = {
   contentContainerClassName?: string
@@ -61,16 +66,47 @@ export const AdminTaskList: FC<AdminTaskListProps> = ({
       }
       renderItem={({ item }) => (
         <Link
+          className="active:opacity-70"
           href={{
             pathname: '/admin/tasks/[taskId]/view',
             params: { taskId: item.id },
           }}
         >
-          <Text>
-            {formatTaskId(item.id)} {item.title}
-          </Text>
+          <View className="w-full rounded-lg border border-border bg-card p-3">
+            <TaskListItem task={item} />
+          </View>
         </Link>
       )}
     />
+  )
+}
+
+export type TaskListItemProps = {
+  task: NonNullable<FetchTaskListResponse>['tasks'][number]
+}
+
+export const TaskListItem: FC<TaskListItemProps> = ({ task }) => {
+  return (
+    <View className="relative">
+      <Text className="absolute top-0 right-0 font-gilroy-medium font-medium text-muted-foreground text-sm">
+        {task.status}
+      </Text>
+      <Text className="font-sans-bold text-muted-foreground text-xs">
+        {formatTaskId(task.id)}
+      </Text>
+      <Text className="text-lg">{task.title}</Text>
+      {task.assigneeIds.length > 0 && (
+        <View className="flex-row flex-wrap">
+          {task.assigneeIds.map((userId, index) => (
+            <Fragment key={userId}>
+              <UserFullName userId={userId} />
+              {index < task.assigneeIds.length - 1 && (
+                <Text className="text-muted-foreground">, </Text>
+              )}
+            </Fragment>
+          ))}
+        </View>
+      )}
+    </View>
   )
 }
