@@ -17,6 +17,10 @@ export async function canUserViewTask({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
+export async function canUserUpdateTaskAssignees({ user }: { user: User }) {
+  return isUserAdmin({ user })
+}
+
 export async function createTask({
   data,
   user,
@@ -120,4 +124,34 @@ export async function getTaskById({ id }: { id: number }) {
   })
 
   return task
+}
+
+export async function updateTaskAssignees({
+  taskId,
+  assigneeIds,
+}: {
+  taskId: number
+  assigneeIds: string[]
+}) {
+  const prisma = getPrisma()
+  const logger = getLogger('task.service:updateTaskAssignees')
+
+  logger.trace({ taskId, assigneeIds }, 'Updating task assignees')
+
+  try {
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        assigneeIds,
+      },
+      include: { customer: true },
+    })
+
+    logger.info({ updatedTask }, 'Task assignees updated successfully')
+
+    return updatedTask
+  } catch (error) {
+    logger.error({ error }, 'Error updating task assignees')
+    throw error
+  }
 }

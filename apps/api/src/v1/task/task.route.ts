@@ -7,10 +7,12 @@ import { getAuthUserStrict } from '../middlewares/auth'
 import {
   canUserCreateTask,
   canUserListTasks,
+  canUserUpdateTaskAssignees,
   canUserViewTask,
   createTask,
   getTaskById,
   getTaskList,
+  updateTaskAssignees,
 } from './task.service'
 
 const router = new Hono()
@@ -91,6 +93,44 @@ const router = new Hono()
       }
 
       return c.json(task)
+    },
+  )
+  // Update task assignees
+  .put(
+    '/:id/assignees',
+    zValidator('param', z.object({ id: z.string() })),
+    zValidator(
+      'json',
+      z.object({
+        assigneeIds: z.array(z.string()),
+      }),
+    ),
+    async (c) => {
+      const taskId = parseInt(c.req.valid('param').id, 10)
+      const { assigneeIds } = c.req.valid('json')
+      const user = getAuthUserStrict(c)
+      const logger = getLogger('task.route:updateAssignees')
+
+      // Check permission
+      if (!(await canUserUpdateTaskAssignees({ user }))) {
+        logger.warn({ user }, 'User is not allowed to update task assignees')
+        throw new HTTPException(403, {
+          message: 'Bạn không có quyền cập nhật người được giao công việc.',
+          cause: 'Permission denied',
+        })
+      }
+
+      // Update the task assignees
+      try {
+        const updatedTask = await updateTaskAssignees({ taskId, assigneeIds })
+        return c.json(updatedTask)
+      } catch (error) {
+        logger.error({ error }, 'Failed to update task assignees')
+        throw new HTTPException(500, {
+          message: 'Không thể cập nhật người được giao công việc.',
+          cause: error,
+        })
+      }
     },
   )
 

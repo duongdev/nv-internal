@@ -113,5 +113,34 @@ const router = new Hono()
       return c.json(updatedUser)
     },
   )
+  // Get a user by id (public info)
+  .get(
+    '/:id/public-info',
+    zValidator('param', z.object({ id: z.string() })),
+    async (c) => {
+      getAuthUserStrict(c)
+      const clerkClient = c.get('clerk')
+      const { id: userId } = c.req.valid('param')
+
+      const user = await clerkClient.users.getUser(userId)
+      if (!user) {
+        throw new HTTPException(404, {
+          message: 'Người dùng không tồn tại.',
+          cause: 'Not found',
+        })
+      }
+
+      return c.json({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        banned: user.banned,
+        publicMetadata: user.publicMetadata,
+        imageUrl: user.imageUrl,
+        hasImage: user.hasImage,
+      })
+    },
+  )
 
 export default router

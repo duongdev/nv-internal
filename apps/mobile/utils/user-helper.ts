@@ -33,7 +33,9 @@ export function formatPhoneNumber(
     .replace(/(\d{3})(\d{4})(\d{3})/, '$1 $2 $3')
 }
 
-export function getUserFullName(user: User): string {
+export function getUserFullName(
+  user: Pick<User, 'firstName' | 'lastName'>,
+): string {
   return [user.lastName, user.firstName].filter(Boolean).join(' ') || 'Unknown'
 }
 

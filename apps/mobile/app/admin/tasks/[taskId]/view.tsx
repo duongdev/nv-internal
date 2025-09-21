@@ -15,7 +15,7 @@ export default function TaskViewScreen() {
   const {
     data: task,
     isLoading,
-    isFetching,
+    isRefetching,
     isFetched,
     refetch: handleRefetch,
   } = useTask({ id: taskId ?? 0 }, { enabled: !!taskId })
@@ -30,7 +30,7 @@ export default function TaskViewScreen() {
     <ScrollView
       contentContainerClassName="flex-1 p-4"
       refreshControl={
-        <RefreshControl onRefresh={handleRefetch} refreshing={isFetching} />
+        <RefreshControl onRefresh={handleRefetch} refreshing={isRefetching} />
       }
     >
       {isTaskNotFound ? (
