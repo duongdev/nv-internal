@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { type z, zCreateUser } from '@nv-internal/validation'
 import { Stack, useRouter } from 'expo-router'
+import { XIcon } from 'lucide-react-native'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Keyboard, ScrollView } from 'react-native'
 import { useCreateUser } from '@/api/user/use-create-user'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormInput } from '@/components/ui/form'
+import { Icon } from '@/components/ui/icon'
 import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 import { Toasts, toast } from '@/components/ui/toasts'
@@ -66,12 +68,13 @@ export default function CreateUserScreen() {
 
           headerLeft: () => (
             <Button
+              className="text-center"
               disabled={formState.isSubmitting}
               onPress={() => router.dismiss()}
-              size="sm"
-              variant="outline"
+              size="icon"
+              variant={null}
             >
-              <Text className="">Huỷ</Text>
+              <Icon as={XIcon} className="size-7" />
             </Button>
           ),
           headerRight: () => (
@@ -79,15 +82,18 @@ export default function CreateUserScreen() {
               disabled={formState.isSubmitting}
               onPress={handleSubmit(onSubmit)}
               size="sm"
-              variant="default"
+              variant={null}
             >
-              <Text className="">Xong</Text>
+              <Text className="font-sans-bold">Lưu</Text>
             </Button>
           ),
         }}
       />
       <Form {...form}>
-        <ScrollView contentContainerClassName="gap-2 p-4">
+        <ScrollView
+          automaticallyAdjustKeyboardInsets
+          contentContainerClassName="gap-2 p-4"
+        >
           <Text variant="h4">Thông tin cá nhân</Text>
           <Separator />
           <FormField

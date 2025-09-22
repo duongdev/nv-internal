@@ -127,6 +127,8 @@ function Routes() {
             presentation: 'modal',
           }}
         />
+
+        <Stack.Screen name="worker/(tabs)" options={ADMIN_SCREEN_OPTIONS} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}

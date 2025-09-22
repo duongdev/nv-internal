@@ -21,7 +21,7 @@ export default function ThemeSwitcherScreen() {
       <Stack.Screen
         options={{
           headerRight: () => (
-            <Button onPress={() => router.dismiss()} size="sm">
+            <Button onPress={() => router.dismiss()} size="sm" variant={null}>
               <Text>Xong</Text>
             </Button>
           ),

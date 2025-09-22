@@ -63,7 +63,7 @@ export default function AdminTaskCreateScreen() {
                 size="sm"
                 variant={null}
               >
-                <Text className="">Tiếp tục</Text>
+                <Text className="font-sans-bold">Tiếp tục</Text>
               </Button>
             ),
           }}

@@ -3,13 +3,16 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'expo-router'
 import {
   ChevronRightIcon,
+  CrownIcon,
+  HardHatIcon,
   LogOutIcon,
+  Repeat2Icon,
   ShieldUserIcon,
   SquareAsteriskIcon,
   SunMoonIcon,
 } from 'lucide-react-native'
 import type { FC } from 'react'
-import { Alert, ScrollView, View } from 'react-native'
+import { Alert, View } from 'react-native'
 import type { User } from '@/api/user/use-user-list'
 import { MenuGroup, MenuItem } from '@/components/ui/menu'
 import { Separator } from '@/components/ui/separator'
@@ -24,9 +27,11 @@ import {
   getUserRoles,
 } from '@/utils/user-helper'
 
-export type UserSettingsProps = {}
+export type UserSettingsProps = {
+  isAdminView?: boolean
+}
 
-export const UserSettingsScreen: FC<UserSettingsProps> = () => {
+export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
   const { user } = useUser()
   const { signOut } = useAuth()
   const queryClient = useQueryClient()
@@ -41,7 +46,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = () => {
   }
 
   return (
-    <ScrollView contentContainerClassName="flex-1 gap-4 p-4">
+    <View className="flex-1 gap-4 px-4">
       <UserHeader
         user={
           {
@@ -63,6 +68,26 @@ export const UserSettingsScreen: FC<UserSettingsProps> = () => {
             rightIcon={ChevronRightIcon}
           />
         </Link>
+      </MenuGroup>
+      <MenuGroup>
+        {isAdminView ? (
+          <Link asChild href="/worker" replace>
+            <MenuItem
+              label="Chuyển sang tài khoản thợ"
+              leftIcon={HardHatIcon}
+              rightIcon={Repeat2Icon}
+            />
+          </Link>
+        ) : (
+          <Link asChild href="/admin" replace>
+            <MenuItem
+              contentClassName="text-yellow-600 dark:text-yellow-700"
+              label="Chuyển sang tài Admin"
+              leftIcon={CrownIcon}
+              rightIcon={Repeat2Icon}
+            />
+          </Link>
+        )}
       </MenuGroup>
       <MenuGroup>
         <MenuItem
@@ -95,7 +120,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = () => {
           }
         />
       </MenuGroup>
-    </ScrollView>
+    </View>
   )
 }
 
