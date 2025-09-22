@@ -1,0 +1,55 @@
+import { Link, Stack } from 'expo-router'
+import { MapIcon } from 'lucide-react-native'
+import { useState } from 'react'
+import { KeyboardAvoidingView, Pressable, View } from 'react-native'
+import MapView from 'react-native-maps'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Icon } from '@/components/ui/icon'
+import { SearchBox } from '@/components/ui/search-box'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Text } from '@/components/ui/text'
+
+export default function LocationPicker() {
+  const [tabValue, setTabValue] = useState('suggestions')
+  const { bottom } = useSafeAreaInsets()
+
+  return (
+    <>
+      <Stack.Screen options={{ title: 'Chọn địa chỉ' }} />
+      <View className="flex-1 px-4 pt-4 pb-safe">
+        <View className="flex-1">
+          <SearchBox placeholder="Tìm địa chỉ..." />
+          <Tabs className="mt-4" onValueChange={setTabValue} value={tabValue}>
+            <TabsList className="h-10">
+              <TabsTrigger value="suggestions">
+                <Text>Gợi ý</Text>
+              </TabsTrigger>
+              <TabsTrigger value="saved">
+                <Text>Đã lưu</Text>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="suggestions">
+              <Text>Chưa có gợi ý nào.</Text>
+            </TabsContent>
+            <TabsContent value="saved">
+              <Text>Chưa có địa chỉ nào được lưu.</Text>
+            </TabsContent>
+          </Tabs>
+        </View>
+        <KeyboardAvoidingView
+          behavior="position"
+          keyboardVerticalOffset={bottom + 100}
+        >
+          <Link asChild href="/(inputs)/location-picker/map-picker">
+            <Pressable className="-mx-4 mt-4 flex-row items-center justify-center gap-1 border-border border-t pt-3 pb-4 active:bg-muted">
+              <Icon as={MapIcon} className="size-5 text-muted-foreground" />
+              <Text className="text-muted-foreground text-sm">
+                Chọn từ bản đồ
+              </Text>
+            </Pressable>
+          </Link>
+        </KeyboardAvoidingView>
+      </View>
+    </>
+  )
+}

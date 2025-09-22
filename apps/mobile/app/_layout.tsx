@@ -134,6 +134,11 @@ function Routes() {
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
+      {/* Inputs */}
+      <Stack.Screen
+        name="(inputs)/location-picker"
+        options={{ headerShown: false, presentation: 'modal' }}
+      />
     </Stack>
   )
 }

@@ -3,10 +3,11 @@ import { type CreateTaskValues, zCreateTask } from '@nv-internal/validation'
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { Stack, useRouter } from 'expo-router'
 import { useForm } from 'react-hook-form'
-import { Keyboard, ScrollView } from 'react-native'
+import { Keyboard, Pressable, ScrollView } from 'react-native'
 import { useCreateTask } from '@/api/task/use-create-task'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormInput, FormTextarea } from '@/components/ui/form'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 import { Toasts } from '@/components/ui/toasts'
@@ -100,7 +101,26 @@ export default function AdminTaskCreateScreen() {
               />
             )}
           />
-          <FormField
+
+          <Pressable
+            className="-mx-1 rounded px-1 active:bg-muted"
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light)
+              router.push('/(inputs)/location-picker')
+            }}
+          >
+            <Label className="mb-1">Địa chỉ làm việc</Label>
+            <Text
+              className="min-h-[44px] w-full rounded-lg border border-border bg-background px-3 py-2 text-base text-foreground leading-5"
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{ lineHeight: 20 }}
+            >
+              {form.getValues('address') ||
+                'Chọn địa chỉ làm việc (bấm để chọn)'}
+            </Text>
+          </Pressable>
+
+          {/* <FormField
             control={form.control}
             name="address"
             render={({ field }) => (
@@ -111,9 +131,12 @@ export default function AdminTaskCreateScreen() {
                 placeholder="Nhập địa chỉ làm việc"
                 returnKeyType="next"
                 {...field}
+                onFocus={() => {
+                  router.push('/(inputs)/location-picker')
+                }}
               />
             )}
-          />
+          /> */}
 
           <Separator className="mt-4 mb-2" />
 
