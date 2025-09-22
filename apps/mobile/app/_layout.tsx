@@ -1,15 +1,16 @@
-/** biome-ignore-all lint/style/useNamingConvention: <explanation> */
+/** biome-ignore-all lint/style/useNamingConvention: <Font names are different> */
 import '@/global.css'
 
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
 import { tokenCache } from '@clerk/clerk-expo/token-cache'
 import {
-  PublicSans_200ExtraLight,
-  PublicSans_400Regular,
-  PublicSans_600SemiBold,
-  PublicSans_700Bold,
-  PublicSans_800ExtraBold,
-} from '@expo-google-fonts/public-sans'
+  BeVietnamPro_200ExtraLight as Sans_200ExtraLight,
+  BeVietnamPro_400Regular as Sans_400Regular,
+  BeVietnamPro_500Medium as Sans_500Medium,
+  BeVietnamPro_600SemiBold as Sans_600SemiBold,
+  BeVietnamPro_700Bold as Sans_700Bold,
+  BeVietnamPro_800ExtraBold as Sans_800ExtraBold,
+} from '@expo-google-fonts/be-vietnam-pro'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { ThemeProvider } from '@react-navigation/native'
 import { PortalHost } from '@rn-primitives/portal'
@@ -61,11 +62,12 @@ function Routes() {
     'Gilroy-Medium': require('@/assets/fonts/SVN-Gilroy Medium.otf'),
     'Gilroy-SemiBold': require('@/assets/fonts/SVN-Gilroy SemiBold.otf'),
     'Gilroy-Black': require('@/assets/fonts/SVN-Gilroy Black.otf'),
-    PublicSans_200ExtraLight,
-    PublicSans_400Regular,
-    PublicSans_600SemiBold,
-    PublicSans_700Bold,
-    PublicSans_800ExtraBold,
+    Sans_200ExtraLight,
+    Sans_400Regular,
+    Sans_500Medium,
+    Sans_600SemiBold,
+    Sans_700Bold,
+    Sans_800ExtraBold,
   })
 
   React.useEffect(() => {

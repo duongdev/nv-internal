@@ -145,7 +145,7 @@ export const UserListItem: FC<UserListItemProps> = ({ user }) => {
         <View>
           <View className="flex-row items-center gap-2">
             <Text
-              className={cn('font-semibold text-lg text-muted-foreground', {
+              className={cn('font-semibold text-muted-foreground', {
                 'line-through': isUserBanned(user),
               })}
             >

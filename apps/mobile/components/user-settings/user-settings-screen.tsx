@@ -82,7 +82,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
           <Link asChild href="/admin" replace>
             <MenuItem
               contentClassName="text-yellow-600 dark:text-yellow-700"
-              label="Chuyển sang tài Admin"
+              label="Chuyển sang tài khoản Admin"
               leftIcon={CrownIcon}
               rightIcon={Repeat2Icon}
             />

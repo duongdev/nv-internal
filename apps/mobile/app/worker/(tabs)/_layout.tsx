@@ -11,7 +11,7 @@ export default function WorkerTabLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: THEME[colorScheme ?? 'light'].primary,
-          tabBarLabelStyle: { fontFamily: FONT_FAMILY.bold },
+          tabBarLabelStyle: { fontFamily: FONT_FAMILY.medium },
         }}
       >
         <Tabs.Screen
