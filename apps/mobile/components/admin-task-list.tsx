@@ -1,4 +1,5 @@
 import { Link } from 'expo-router'
+import { MapPinIcon, TextIcon, User2Icon } from 'lucide-react-native'
 import { type FC, Fragment } from 'react'
 import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native'
 import {
@@ -8,6 +9,7 @@ import {
 import { formatTaskId } from '@/utils/task-id-helper'
 import { ContentSection } from './ui/content-section'
 import { EmptyState } from './ui/empty-state'
+import { Icon } from './ui/icon'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
 
@@ -95,16 +97,31 @@ export const TaskListItem: FC<TaskListItemProps> = ({ task }) => {
         {formatTaskId(task.id)}
       </Text>
       <Text className="text-lg">{task.title}</Text>
+      {task.description && (
+        <View className="flex-row flex-wrap items-center gap-1">
+          <Icon as={TextIcon} />
+          <Text className="line-clamp-2 text-muted-foreground">
+            {task.description}
+          </Text>
+        </View>
+      )}
       {task.assigneeIds.length > 0 && (
-        <View className="flex-row flex-wrap">
+        <View className="flex-row flex-wrap items-center gap-1">
+          <Icon as={User2Icon} />
           {task.assigneeIds.map((userId, index) => (
             <Fragment key={userId}>
-              <UserFullName userId={userId} />
+              <UserFullName className="text-muted-foreground" userId={userId} />
               {index < task.assigneeIds.length - 1 && (
-                <Text className="text-muted-foreground">, </Text>
+                <Text className="text-muted-foreground">/</Text>
               )}
             </Fragment>
           ))}
+        </View>
+      )}
+      {task.address && (
+        <View className="flex-row flex-wrap items-center gap-1">
+          <Icon as={MapPinIcon} />
+          <Text className="text-muted-foreground">{task.address}</Text>
         </View>
       )}
     </View>

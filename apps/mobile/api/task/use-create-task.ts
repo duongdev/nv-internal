@@ -1,5 +1,9 @@
 import type { CreateTaskValues } from '@nv-internal/validation'
-import { type UseMutationOptions, useMutation } from '@tanstack/react-query'
+import {
+  type UseMutationOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { callHonoApi } from '@/lib/api-client'
 
 export async function createTask(data: CreateTaskValues) {
@@ -23,14 +27,14 @@ export function useCreateTask(
     CreateTaskValues
   >,
 ) {
-  // const queryClient = useQueryClient()
+  const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: createTask,
     ...mutationOptions,
     onSettled: (...args) => {
       mutationOptions?.onSettled?.(...args)
       // Invalidate task list query
-      // queryClient.invalidateQueries(['tasks'])
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 

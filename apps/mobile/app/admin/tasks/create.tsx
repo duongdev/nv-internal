@@ -29,7 +29,14 @@ export default function AdminTaskCreateScreen() {
     Keyboard.dismiss()
     impactAsync(ImpactFeedbackStyle.Light)
 
-    await createTask(values)
+    const task = await createTask(values)
+    if (!task) {
+      return
+    }
+    router.replace({
+      pathname: '/admin/tasks/[taskId]/view',
+      params: { taskId: task.id },
+    })
   }
 
   return (
@@ -116,7 +123,7 @@ export default function AdminTaskCreateScreen() {
             name="customerName"
             render={({ field }) => (
               <FormInput
-                autoCapitalize="sentences"
+                autoCapitalize="words"
                 label="Tên khách hàng"
                 onSubmitEditing={() => form.setFocus('customerPhone')}
                 placeholder="Nhập tên khách hàng"
