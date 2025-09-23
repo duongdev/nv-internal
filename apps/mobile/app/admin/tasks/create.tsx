@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { type CreateTaskValues, zCreateTask } from '@nv-internal/validation'
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Keyboard, Pressable, ScrollView } from 'react-native'
 import { useCreateTask } from '@/api/task/use-create-task'
@@ -11,22 +12,24 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 import { Toasts } from '@/components/ui/toasts'
+import { cn } from '@/lib/utils'
 
 export default function AdminTaskCreateScreen() {
   const params = useLocalSearchParams()
-  console.log('🚀 ~ AdminTaskCreateScreen ~ params:', params)
   const router = useRouter()
   const form = useForm<CreateTaskValues>({
     resolver: zodResolver(zCreateTask),
     defaultValues: {
       title: '',
       description: '',
-      address: '',
       customerName: '',
       customerPhone: '',
+      geoLocation: undefined,
     },
   })
   const { mutateAsync: createTask } = useCreateTask()
+
+  const geoLocation = form.watch('geoLocation')
 
   const onSubmit = async (values: CreateTaskValues) => {
     Keyboard.dismiss()
@@ -41,6 +44,18 @@ export default function AdminTaskCreateScreen() {
       params: { taskId: task.id },
     })
   }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need form.setValue>
+  useEffect(() => {
+    if (params.address && params.latitude && params.longitude) {
+      form.setValue('geoLocation', {
+        address: params.address as string,
+        lat: parseFloat(params.latitude as string),
+        lng: parseFloat(params.longitude as string),
+        name: params.name as string,
+      })
+    }
+  }, [params.address, params.latitude, params.longitude, params.name])
 
   return (
     <>
@@ -114,18 +129,25 @@ export default function AdminTaskCreateScreen() {
                   // Return to this screen after selecting a location
                   redirectTo: '/admin/tasks/create',
                   // Pass current address to location picker
-                  address: form.getValues('address'),
+                  address: geoLocation?.name || geoLocation?.address,
                 },
               })
             }}
           >
             <Label className="mb-1">Địa chỉ làm việc</Label>
             <Text
-              className="min-h-[44px] w-full rounded-md border border-border bg-background px-3 py-2 text-base text-muted-foreground/50 dark:bg-input/30"
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={{ lineHeight: 20 }}
+              className={cn(
+                'min-h-[44px] w-full rounded-md border border-border bg-background px-3 py-2 text-base text-muted-foreground/50 dark:bg-input/30',
+                {
+                  'text-foreground': geoLocation,
+                },
+              )}
             >
-              {form.getValues('address') || 'Chọn địa chỉ làm việc'}
+              {(geoLocation &&
+                [geoLocation.name, geoLocation.address]
+                  .filter(Boolean)
+                  .join(', ')) ||
+                'Chọn địa chỉ làm việc'}
             </Text>
           </Pressable>
 

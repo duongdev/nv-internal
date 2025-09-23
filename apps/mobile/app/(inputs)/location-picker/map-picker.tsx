@@ -81,16 +81,12 @@ export default function App() {
         latitude: camera?.center.latitude,
         longitude: camera?.center.longitude,
         address: addressText,
-        name: (params.name as string) || addressText || 'Vị trí đã chọn',
+        name: params.name as string,
       },
     })
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <run once>
-  useEffect(() => {
-    getCurrentLocation()
-  }, [])
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <No need to check getCurrentLocation>
   useEffect(() => {
     if (params.latitude && params.longitude) {
       const lat = parseFloat(params.latitude as string)
@@ -104,6 +100,8 @@ export default function App() {
         })
         getAddressFromCoordinates(lat, lon)
       }
+    } else {
+      getCurrentLocation()
     }
   }, [params.latitude, params.longitude, getAddressFromCoordinates])
 

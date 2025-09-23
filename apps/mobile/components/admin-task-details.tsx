@@ -5,6 +5,7 @@ import { useUpdateTaskAssignees } from '@/api/task/use-update-task-assignees'
 import { ContentSection } from './ui/content-section'
 import { InlineEditableBottomSheet } from './ui/inline-editable'
 import { Separator } from './ui/separator'
+import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
 import { UserSelectBottomSheetModal } from './user-select-bottom-sheet-modal'
@@ -23,7 +24,16 @@ export const AdminTaskDetails: FC<AdminTaskDetailsProps> = ({ task }) => {
         <Text>{task.description || 'Chưa có mô tả'}</Text>
       </ContentSection>
       <ContentSection label="Địa chỉ làm việc">
-        <Text>{task.address || 'Chưa có địa chỉ'}</Text>
+        {task.geoLocation ? (
+          <>
+            {task.geoLocation.name && <Text>{task.geoLocation.name}</Text>}
+            {task.geoLocation.address && (
+              <Text className="text-sm">{task.geoLocation.address}</Text>
+            )}
+          </>
+        ) : (
+          <Text>Chưa có địa chỉ</Text>
+        )}
       </ContentSection>
       <ContentSection label="Thông tin khách hàng">
         <Text>{task.customer?.name || 'Không có tên'}</Text>
@@ -31,7 +41,7 @@ export const AdminTaskDetails: FC<AdminTaskDetailsProps> = ({ task }) => {
       </ContentSection>
       <Separator className="my-2" />
       <ContentSection label="Trạng thái công việc">
-        <Text className="capitalize">{task.status}</Text>
+        <TaskStatusBadge className="mt-1" status={task.status} />
       </ContentSection>
       <TaskAssignees assigneeIds={task.assigneeIds} taskId={task.id} />
     </View>

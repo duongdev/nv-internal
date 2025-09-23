@@ -1,6 +1,6 @@
 import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { MapIcon } from 'lucide-react-native'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LocationSearchList } from '@/components/location-search-list'
@@ -13,8 +13,14 @@ export default function LocationPicker() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const [tabValue, setTabValue] = useState('suggestions')
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState((params.address as string) || '')
   const { bottom } = useSafeAreaInsets()
+
+  useEffect(() => {
+    if (params.address) {
+      setSearchText(params.address as string)
+    }
+  }, [params.address])
 
   return (
     <>
@@ -24,6 +30,7 @@ export default function LocationPicker() {
           <SearchBox
             onChangeTextDebounced={setSearchText}
             placeholder="Tìm địa chỉ..."
+            value={searchText}
           />
           <Tabs
             className="mt-4 hidden"
@@ -70,7 +77,13 @@ export default function LocationPicker() {
           behavior="position"
           keyboardVerticalOffset={bottom + 100}
         >
-          <Link asChild href="/(inputs)/location-picker/map-picker">
+          <Link
+            asChild
+            href={{
+              pathname: '/(inputs)/location-picker/map-picker',
+              params: { redirectTo: params.redirectTo as string },
+            }}
+          >
             <Pressable className="-mx-4 mt-4 flex-row items-center justify-center gap-1 border-border border-t pt-3 pb-4 active:bg-muted">
               <Icon as={MapIcon} className="size-5 text-muted-foreground" />
               <Text className="text-muted-foreground text-sm">

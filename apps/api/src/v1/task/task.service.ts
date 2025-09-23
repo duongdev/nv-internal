@@ -5,6 +5,11 @@ import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
 import { isUserAdmin } from '../user/user.service'
 
+const DEFAULT_TASK_INCLUDE: Prisma.TaskInclude = {
+  customer: true,
+  geoLocation: true,
+}
+
 export async function canUserCreateTask({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
@@ -58,16 +63,30 @@ export async function createTask({
 
       logger.trace({ customer }, 'Using existing customer')
 
+      let geoLocationId: string | undefined = undefined
+      if (
+        data.geoLocation?.lat !== undefined &&
+        data.geoLocation?.lng !== undefined
+      ) {
+        const geoLocation = await tx.geoLocation.create({
+          data: {
+            address: data.geoLocation.address,
+            name: data.geoLocation.name,
+            lat: data.geoLocation.lat,
+            lng: data.geoLocation.lng,
+          },
+        })
+        geoLocationId = geoLocation.id
+      }
+
       const createdTask = await tx.task.create({
         data: {
           title: data.title,
           description: data.description,
-          address: data.address,
           customerId: customer.id,
+          geoLocationId,
         },
-        include: {
-          customer: true,
-        },
+        include: DEFAULT_TASK_INCLUDE,
       })
 
       return createdTask
@@ -99,7 +118,7 @@ export async function getTaskList({
     where,
     orderBy: { createdAt: 'desc' },
     take,
-    include: { customer: true },
+    include: DEFAULT_TASK_INCLUDE,
     ...(cursor ? { cursor: { id: parseInt(cursor, 10) }, skip: 1 } : {}),
   })
 
@@ -120,7 +139,7 @@ export async function getTaskById({ id }: { id: number }) {
 
   const task = await prisma.task.findUnique({
     where: { id },
-    include: { customer: true },
+    include: DEFAULT_TASK_INCLUDE,
   })
 
   return task
@@ -144,7 +163,7 @@ export async function updateTaskAssignees({
       data: {
         assigneeIds,
       },
-      include: { customer: true },
+      include: DEFAULT_TASK_INCLUDE,
     })
 
     logger.info({ updatedTask }, 'Task assignees updated successfully')

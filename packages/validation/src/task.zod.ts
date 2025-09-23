@@ -7,7 +7,6 @@ export const zCreateTask = z.object({
     .min(2, 'Tiêu đề quá ngắn')
     .max(100, 'Tiêu đề quá dài'),
   description: z.string().trim(),
-  address: z.string().trim().optional(),
   customerPhone: z.union([
     z.literal(''),
     z
@@ -18,6 +17,14 @@ export const zCreateTask = z.object({
       .optional(),
   ]),
   customerName: z.string().trim().optional(),
+  geoLocation: z
+    .object({
+      address: z.string().trim().optional(),
+      name: z.string().trim().optional(),
+      lat: z.number(),
+      lng: z.number(),
+    })
+    .optional(),
 })
 
 export type CreateTaskValues = z.infer<typeof zCreateTask>
