@@ -1,8 +1,9 @@
-import { useRouter } from 'expo-router'
-import { LocateFixedIcon, XIcon } from 'lucide-react-native'
-import React, { useState } from 'react'
-import { StyleSheet, View } from 'react-native'
-import MapView, { Marker } from 'react-native-maps'
+import * as Location from 'expo-location'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { MapPinCheckIcon, XIcon } from 'lucide-react-native'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Image, StyleSheet, View } from 'react-native'
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
@@ -10,37 +11,101 @@ import { Text } from '@/components/ui/text'
 export default function App() {
   const router = useRouter()
   const mapRef = React.useRef<MapView>(null)
-  const [markerCoordinate, setMarkerCoordinate] = useState({
-    latitude: 10.7398321,
-    longitude: 106.6256546,
-  })
   const [addressText, setAddressText] = useState('')
+  const params = useLocalSearchParams()
+
+  const latitude = parseFloat(params.latitude as string) || 10.7398321
+  const longitude = parseFloat(params.longitude as string) || 106.6256546
 
   const initialRegion = {
-    latitude: markerCoordinate.latitude,
-    longitude: markerCoordinate.longitude,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    latitude,
+    longitude,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
   }
 
-  const getAddressFromCoordinates = async (
-    latitude: number,
-    longitude: number,
-  ) => {
-    try {
-      const address = await mapRef.current?.addressForCoordinate({
-        latitude,
-        longitude,
-      })
-      setAddressText(
-        `${address?.name}, ${address?.subLocality}, ${address?.subAdministrativeArea}, ${address?.administrativeArea}`,
-      )
-      return address
-    } catch (error) {
-      console.error('Error getting address:', error)
-      return null
+  const getAddressFromCoordinates = useCallback(
+    async (latitude: number, longitude: number) => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+        )
+        const address = await response.json()
+
+        if (!address) {
+          setAddressText('Không thể lấy địa chỉ')
+          return null
+        }
+
+        setAddressText(
+          ((address.display_name as string) || '')
+            .split(',')
+            .slice(0, -2)
+            .join(', '),
+        )
+        return address
+      } catch (error) {
+        console.error('Error getting address:', error)
+        setAddressText('Không thể lấy địa chỉ')
+        return null
+      }
+    },
+    [],
+  )
+
+  async function getCurrentLocation() {
+    const { status } = await Location.requestForegroundPermissionsAsync()
+    if (status !== 'granted') {
+      // biome-ignore lint/suspicious/noConsole: <ignore location permission>
+      console.log('Permission to access location was denied')
+      return
     }
+
+    const location = await Location.getCurrentPositionAsync({})
+    const { latitude, longitude } = location.coords
+    mapRef.current?.animateToRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    })
+    await getAddressFromCoordinates(latitude, longitude)
   }
+
+  const handleSelectLocation = async () => {
+    const camera = await mapRef.current?.getCamera()
+    router.dismissTo({
+      // biome-ignore lint/suspicious/noExplicitAny: <ignore>
+      pathname: (params.redirectTo as string as any) || '/',
+      params: {
+        latitude: camera?.center.latitude,
+        longitude: camera?.center.longitude,
+        address: addressText,
+        name: (params.name as string) || addressText || 'Vị trí đã chọn',
+      },
+    })
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <run once>
+  useEffect(() => {
+    getCurrentLocation()
+  }, [])
+
+  useEffect(() => {
+    if (params.latitude && params.longitude) {
+      const lat = parseFloat(params.latitude as string)
+      const lon = parseFloat(params.longitude as string)
+      if (lat && lon) {
+        mapRef.current?.animateToRegion({
+          latitude: lat,
+          longitude: lon,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        })
+        getAddressFromCoordinates(lat, lon)
+      }
+    }
+  }, [params.latitude, params.longitude, getAddressFromCoordinates])
 
   return (
     <View className="relative flex-1">
@@ -55,32 +120,30 @@ export default function App() {
 
       <MapView
         initialRegion={initialRegion}
-        onRegionChange={setMarkerCoordinate}
-        onRegionChangeComplete={async (region) => {
-          setMarkerCoordinate({
-            latitude: region.latitude,
-            longitude: region.longitude,
-          })
-          await getAddressFromCoordinates(region.latitude, region.longitude)
+        onRegionChangeComplete={(region) => {
+          getAddressFromCoordinates(region.latitude, region.longitude)
         }}
+        provider={PROVIDER_GOOGLE}
         ref={mapRef}
         style={styles.map}
-      >
-        <Marker coordinate={markerCoordinate} title="Marker" />
-      </MapView>
+      />
+      <Image
+        className="-translate-x-1/2 -translate-y-full absolute top-1/2 left-1/2 size-14"
+        source={require('@/assets/images/map-marker-128px.png')}
+      />
       {addressText && (
         <View className="absolute right-0 bottom-10 left-0 mx-4 items-center gap-2">
           <Button
             className="rounded-full shadow-lg"
-            onPress={() => router.dismiss()}
+            onPress={handleSelectLocation}
           >
             <Icon
-              as={LocateFixedIcon}
+              as={MapPinCheckIcon}
               className="size-5 text-primary-foreground"
             />
             <Text>Chọn địa điểm</Text>
           </Button>
-          <View className="rounded-full bg-white/80 p-4 shadow-lg">
+          <View className="rounded-full bg-white/80 p-4 shadow-lg dark:bg-black/80">
             <Text className="text-center text-sm">
               {addressText || 'Đang tải địa chỉ...'}
             </Text>

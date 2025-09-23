@@ -1,16 +1,19 @@
-import { Link, Stack } from 'expo-router'
+import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { MapIcon } from 'lucide-react-native'
 import { useState } from 'react'
-import { KeyboardAvoidingView, Pressable, View } from 'react-native'
-import MapView from 'react-native-maps'
+import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { LocationSearchList } from '@/components/location-search-list'
 import { Icon } from '@/components/ui/icon'
 import { SearchBox } from '@/components/ui/search-box'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Text } from '@/components/ui/text'
 
 export default function LocationPicker() {
+  const router = useRouter()
+  const params = useLocalSearchParams()
   const [tabValue, setTabValue] = useState('suggestions')
+  const [searchText, setSearchText] = useState('')
   const { bottom } = useSafeAreaInsets()
 
   return (
@@ -18,8 +21,15 @@ export default function LocationPicker() {
       <Stack.Screen options={{ title: 'Chọn địa chỉ' }} />
       <View className="flex-1 px-4 pt-4 pb-safe">
         <View className="flex-1">
-          <SearchBox placeholder="Tìm địa chỉ..." />
-          <Tabs className="mt-4" onValueChange={setTabValue} value={tabValue}>
+          <SearchBox
+            onChangeTextDebounced={setSearchText}
+            placeholder="Tìm địa chỉ..."
+          />
+          <Tabs
+            className="mt-4 hidden"
+            onValueChange={setTabValue}
+            value={tabValue}
+          >
             <TabsList className="h-10">
               <TabsTrigger value="suggestions">
                 <Text>Gợi ý</Text>
@@ -35,6 +45,26 @@ export default function LocationPicker() {
               <Text>Chưa có địa chỉ nào được lưu.</Text>
             </TabsContent>
           </Tabs>
+          <ScrollView
+            className="mt-4 flex-1"
+            keyboardShouldPersistTaps="handled"
+          >
+            <LocationSearchList
+              onSelect={(location) =>
+                router.push({
+                  pathname: '/(inputs)/location-picker/map-picker',
+                  params: {
+                    redirectTo: params.redirectTo as string,
+                    latitude: location.location.latitude,
+                    longitude: location.location.longitude,
+                    address: location.formattedAddress,
+                    name: location.displayName.text,
+                  },
+                })
+              }
+              searchText={searchText}
+            />
+          </ScrollView>
         </View>
         <KeyboardAvoidingView
           behavior="position"

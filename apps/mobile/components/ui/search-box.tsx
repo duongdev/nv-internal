@@ -55,7 +55,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
     >
       <Icon as={SearchIcon} className="size-5 shrink-0 text-muted-foreground" />
       <Comp
-        className="flex-1"
+        className="flex-1 text-primary"
         onChangeText={handleTextChange}
         placeholder="Tìm kiếm..."
         ref={isInBottomSheet ? bottomSheetInputRef : (inputRef as any)}

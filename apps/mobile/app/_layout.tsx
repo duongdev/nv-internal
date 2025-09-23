@@ -5,7 +5,7 @@ import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
 import { tokenCache } from '@clerk/clerk-expo/token-cache'
 import {
   BeVietnamPro_200ExtraLight as Sans_200ExtraLight,
-  BeVietnamPro_400Regular as Sans_400Regular,
+  BeVietnamPro_300Light as Sans_400Regular,
   BeVietnamPro_500Medium as Sans_500Medium,
   BeVietnamPro_600SemiBold as Sans_600SemiBold,
   BeVietnamPro_700Bold as Sans_700Bold,

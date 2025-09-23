@@ -22,6 +22,8 @@ model Task {
   title       String
   description String?
   address     String?
+  lat         Float?
+  lng         Float?
   customer    Customer?  @relation(fields: [customerId], references: [id])
   customerId  String?
   status      TaskStatus @default(READY)

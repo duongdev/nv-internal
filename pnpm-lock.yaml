@@ -159,6 +159,9 @@ importers:
       expo-linking:
         specifier: ~8.0.8
         version: 8.0.8(expo@54.0.7)(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0)
+      expo-location:
+        specifier: ~19.0.7
+        version: 19.0.7(expo@54.0.7)
       expo-router:
         specifier: ~6.0.7
         version: 6.0.7(@expo/metro-runtime@6.1.1)(@types/react@19.1.12)(expo-constants@18.0.9)(expo-linking@8.0.8)(expo@54.0.7)(react-dom@19.1.0(react@19.1.0))(react-native-gesture-handler@2.28.0(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0))(react-native-reanimated@4.1.0(@babel/core@7.28.3)(react-native-worklets@0.5.1(@babel/core@7.28.3)(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0))(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0))(react-native-safe-area-context@5.6.1(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0))(react-native-screens@4.16.0(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0))(react-native-web@0.21.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0)
@@ -3358,6 +3361,11 @@ packages:
     peerDependencies:
       react: 19.1.0
       react-native: '*'
+
+  expo-location@19.0.7:
+    resolution: {integrity: sha512-YNkh4r9E6ECbPkBCAMG5A5yHDgS0pw+Rzyd0l2ZQlCtjkhlODB55nMCKr5CZnUI0mXTkaSm8CwfoCO8n2MpYfg==}
+    peerDependencies:
+      expo: '*'
 
   expo-modules-autolinking@3.0.10:
     resolution: {integrity: sha512-6pwaz9H7aK/iYraHbX7zjg8QFTUuMfGEs8Vyc6bAoBd8Rovtb91WX955Kq5sazwNrQjs3WePwQ23LEAmls3u5g==}
@@ -9254,6 +9262,10 @@ snapshots:
     transitivePeerDependencies:
       - expo
       - supports-color
+
+  expo-location@19.0.7(expo@54.0.7):
+    dependencies:
+      expo: 54.0.7(@babel/core@7.28.3)(@expo/metro-runtime@6.1.1)(expo-router@6.0.7)(react-native@0.81.4(@babel/core@7.28.3)(@types/react@19.1.12)(react@19.1.0))(react@19.1.0)
 
   expo-modules-autolinking@3.0.10:
     dependencies:
