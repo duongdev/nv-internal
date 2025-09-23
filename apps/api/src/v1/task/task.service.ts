@@ -1,6 +1,6 @@
 import type { User } from '@clerk/backend'
 import type { CreateTaskValues } from '@nv-internal/validation'
-import type { Prisma } from '../../../generated/prisma'
+import type { Prisma, TaskStatus } from '../../../generated/prisma'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
 import { isUserAdmin } from '../user/user.service'
@@ -23,6 +23,10 @@ export async function canUserViewTask({ user }: { user: User }) {
 }
 
 export async function canUserUpdateTaskAssignees({ user }: { user: User }) {
+  return isUserAdmin({ user })
+}
+
+export async function canUserUpdateTaskStatus({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
@@ -171,6 +175,36 @@ export async function updateTaskAssignees({
     return updatedTask
   } catch (error) {
     logger.error({ error }, 'Error updating task assignees')
+    throw error
+  }
+}
+
+export async function updateTaskStatus({
+  taskId,
+  status,
+}: {
+  taskId: number
+  status: TaskStatus
+}) {
+  const prisma = getPrisma()
+  const logger = getLogger('task.service:updateTaskStatus')
+
+  logger.trace({ taskId, status }, 'Updating task status')
+
+  try {
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status,
+      },
+      include: DEFAULT_TASK_INCLUDE,
+    })
+
+    logger.info({ updatedTask }, 'Task status updated successfully')
+
+    return updatedTask
+  } catch (error) {
+    logger.error({ error }, 'Error updating task status')
     throw error
   }
 }

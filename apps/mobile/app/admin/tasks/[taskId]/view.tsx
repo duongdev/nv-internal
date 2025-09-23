@@ -1,7 +1,13 @@
 import { Stack } from 'expo-router'
 import { useLocalSearchParams } from 'expo-router/build/hooks'
-import { ActivityIndicator, RefreshControl, ScrollView } from 'react-native'
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native'
 import { useTask } from '@/api/task/use-task'
+import { AdminTaskAction } from '@/components/admin-task-action'
 import { AdminTaskDetails } from '@/components/admin-task-details'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatTaskId } from '@/utils/task-id-helper'
@@ -37,12 +43,7 @@ export default function TaskViewScreen() {
   }
 
   return (
-    <ScrollView
-      contentContainerClassName="flex-1 p-4"
-      refreshControl={
-        <RefreshControl onRefresh={handleRefetch} refreshing={isRefetching} />
-      }
-    >
+    <View className="flex-1 p-4">
       {isTaskNotFound ? (
         emptyState
       ) : (
@@ -54,10 +55,26 @@ export default function TaskViewScreen() {
             }}
           />
 
-          {task && <AdminTaskDetails task={task} />}
+          <View className="flex-1 justify-between">
+            <ScrollView
+              className="flex-1"
+              refreshControl={
+                <RefreshControl
+                  onRefresh={handleRefetch}
+                  refreshing={isRefetching}
+                />
+              }
+            >
+              {task && <AdminTaskDetails task={task} />}
+            </ScrollView>
+
+            <View className="p-4">
+              <AdminTaskAction task={task!} />
+            </View>
+          </View>
         </>
       )}
-    </ScrollView>
+    </View>
   )
 }
 

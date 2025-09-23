@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { callHonoApi } from '@/lib/api-client'
+import { TASK_LIST_QUERY_KEY } from './use-task-infinite-list'
 
 export async function createTask(data: CreateTaskValues) {
   const { data: task } = await callHonoApi(
@@ -34,7 +35,7 @@ export function useCreateTask(
     onSettled: (...args) => {
       mutationOptions?.onSettled?.(...args)
       // Invalidate task list query
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: TASK_LIST_QUERY_KEY })
     },
   })
 

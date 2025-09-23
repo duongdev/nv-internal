@@ -3,42 +3,43 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
+import type { TaskStatus } from '@/components/ui/task-status-badge'
 import { callHonoApi } from '@/lib/api-client'
 import { taskQueryOptions } from './use-task'
 import { TASK_LIST_QUERY_KEY } from './use-task-infinite-list'
 
-export async function updateTaskAssignees({
+export async function updateTaskStatus({
   taskId,
-  assigneeIds,
+  status,
 }: {
   taskId: number
-  assigneeIds: string[]
+  status: TaskStatus
 }) {
   const { data: task } = await callHonoApi(
     (c) =>
-      c.v1.task[':id'].assignees.$put({
+      c.v1.task[':id'].status.$put({
         param: { id: taskId.toString() },
-        json: { assigneeIds },
+        json: { status },
       }),
     { toastOnError: true },
   )
   return task
 }
 
-export type UpdateTaskAssigneesResponse = Awaited<
-  ReturnType<typeof updateTaskAssignees>
+export type UpdateTaskStatusResponse = Awaited<
+  ReturnType<typeof updateTaskStatus>
 >
 
-export function useUpdateTaskAssignees(
+export function useUpdateTaskStatus(
   mutationOptions?: UseMutationOptions<
-    UpdateTaskAssigneesResponse,
+    UpdateTaskStatusResponse,
     Error,
-    { taskId: number; assigneeIds: string[] }
+    { taskId: number; status: TaskStatus }
   >,
 ) {
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: updateTaskAssignees,
+    mutationFn: updateTaskStatus,
     ...mutationOptions,
     onSettled: (...args) => {
       mutationOptions?.onSettled?.(...args)

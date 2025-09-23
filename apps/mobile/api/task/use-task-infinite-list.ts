@@ -16,9 +16,11 @@ export async function fetchTaskList({ cursor, take }: TaskListQuery) {
 
 export type FetchTaskListResponse = Awaited<ReturnType<typeof fetchTaskList>>
 
+export const TASK_LIST_QUERY_KEY = ['tasks']
+
 export function useTaskInfiniteList() {
   const infiniteQuery = useInfiniteQuery({
-    queryKey: ['tasks'],
+    queryKey: TASK_LIST_QUERY_KEY,
     queryFn: async ({ pageParam = '' }) => {
       return fetchTaskList({ cursor: pageParam })
     },

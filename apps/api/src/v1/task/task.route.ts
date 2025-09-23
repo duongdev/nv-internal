@@ -2,17 +2,20 @@ import { zValidator } from '@hono/zod-validator'
 import { z, zCreateTask, zTaskListQuery } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
+import { TaskStatus } from '../../../generated/prisma'
 import { getLogger } from '../../lib/log'
 import { getAuthUserStrict } from '../middlewares/auth'
 import {
   canUserCreateTask,
   canUserListTasks,
   canUserUpdateTaskAssignees,
+  canUserUpdateTaskStatus,
   canUserViewTask,
   createTask,
   getTaskById,
   getTaskList,
   updateTaskAssignees,
+  updateTaskStatus,
 } from './task.service'
 
 const router = new Hono()
@@ -128,6 +131,44 @@ const router = new Hono()
         logger.error({ error }, 'Failed to update task assignees')
         throw new HTTPException(500, {
           message: 'Không thể cập nhật người được giao công việc.',
+          cause: error,
+        })
+      }
+    },
+  )
+  // Update task status
+  .put(
+    '/:id/status',
+    zValidator('param', z.object({ id: z.string() })),
+    zValidator(
+      'json',
+      z.object({
+        status: z.enum(TaskStatus),
+      }),
+    ),
+    async (c) => {
+      const taskId = parseInt(c.req.valid('param').id, 10)
+      const { status } = c.req.valid('json') as { status: TaskStatus }
+      const user = getAuthUserStrict(c)
+      const logger = getLogger('task.route:updateStatus')
+
+      // Check permission
+      if (!(await canUserUpdateTaskStatus({ user }))) {
+        logger.warn({ user }, 'User is not allowed to update task status')
+        throw new HTTPException(403, {
+          message: 'Bạn không có quyền cập nhật trạng thái công việc.',
+          cause: 'Permission denied',
+        })
+      }
+
+      // Update the task status
+      try {
+        const updatedTask = await updateTaskStatus({ taskId, status })
+        return c.json(updatedTask)
+      } catch (error) {
+        logger.error({ error }, 'Failed to update task status')
+        throw new HTTPException(500, {
+          message: 'Không thể cập nhật trạng thái công việc.',
           cause: error,
         })
       }
