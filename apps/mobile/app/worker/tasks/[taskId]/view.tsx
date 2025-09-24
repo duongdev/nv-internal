@@ -1,5 +1,4 @@
-import { Stack } from 'expo-router'
-import { useLocalSearchParams } from 'expo-router/build/hooks'
+import { Stack, useLocalSearchParams } from 'expo-router'
 import {
   ActivityIndicator,
   RefreshControl,
@@ -7,12 +6,15 @@ import {
   View,
 } from 'react-native'
 import { useTask } from '@/api/task/use-task'
+import { ActivityFeed } from '@/components/activity-feed'
 import { AdminTaskAction } from '@/components/admin-task-action'
-import { TaskAssignees, TaskDetails } from '@/components/task-details'
+import { TaskDetails } from '@/components/task-details'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Separator } from '@/components/ui/separator'
+import { Text } from '@/components/ui/text'
 import { formatTaskId } from '@/utils/task-id-helper'
 
-export default function TaskViewScreen() {
+export default function WorkerTaskView() {
   const searchParams = useLocalSearchParams()
   const taskId =
     typeof searchParams.taskId === 'string'
@@ -55,30 +57,29 @@ export default function TaskViewScreen() {
             }}
           />
 
-          {task && (
-            <View className="flex-1 justify-between">
-              <ScrollView
-                className="flex-1"
-                contentContainerClassName="flex-1 gap-2 p-4"
-                refreshControl={
-                  <RefreshControl
-                    onRefresh={handleRefetch}
-                    refreshing={isRefetching}
-                  />
-                }
-              >
-                <TaskDetails task={task} />
-                <TaskAssignees
-                  assigneeIds={task.assigneeIds}
-                  taskId={task.id}
+          <View className="flex-1 justify-between">
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="flex-1 gap-2 p-4"
+              refreshControl={
+                <RefreshControl
+                  onRefresh={handleRefetch}
+                  refreshing={isRefetching}
                 />
-              </ScrollView>
+              }
+            >
+              {task && <TaskDetails task={task} />}
+              <Separator className="my-2" />
+              <Text className="font-sans-medium" variant="h4">
+                Hoạt động
+              </Text>
+              <ActivityFeed targetId={task?.id ?? 0} />
+            </ScrollView>
 
-              <View className="px-6 pb-safe shadow-lg">
-                <AdminTaskAction task={task!} />
-              </View>
+            <View className="p-4">
+              <AdminTaskAction task={task!} />
             </View>
-          )}
+          </View>
         </>
       )}
     </View>

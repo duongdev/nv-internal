@@ -20,7 +20,7 @@ export const AdminTaskAction: FC<AdminTaskActionProps> = ({ task }) => {
   if (task.status === 'PREPARING') {
     return (
       <Button
-        className="w-full"
+        className="h-14 w-full"
         onPress={() => {
           Alert.alert(
             'Cho phép bắt đầu?',

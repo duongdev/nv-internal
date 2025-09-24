@@ -1,3 +1,4 @@
+import { TaskStatus } from './prisma'
 import { z } from './zod'
 
 export const zCreateTask = z.object({
@@ -31,6 +32,8 @@ export type CreateTaskValues = z.infer<typeof zCreateTask>
 
 export const zTaskListQuery = z.object({
   cursor: z.string().optional(),
-  take: z.number().min(1).max(100).default(10).optional(),
+  take: z.string().optional(),
+  status: z.union([z.enum(TaskStatus), z.array(z.enum(TaskStatus))]).optional(),
+  assignedOnly: z.string().optional(),
 })
 export type TaskListQuery = z.infer<typeof zTaskListQuery>

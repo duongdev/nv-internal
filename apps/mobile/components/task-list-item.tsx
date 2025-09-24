@@ -10,11 +10,12 @@ import { UserFullName } from './user-public-info'
 
 export type TaskListItemProps = {
   task: NonNullable<FetchTaskListResponse>['tasks'][number]
+  className?: string
 }
 
-export const TaskListItem: FC<TaskListItemProps> = ({ task }) => {
+export const TaskListItem: FC<TaskListItemProps> = ({ task, className }) => {
   return (
-    <View className="relative">
+    <View className={`relative ${className}`}>
       <TaskStatusBadge
         className="absolute top-0 right-0 font-gilroy-medium font-medium text-muted-foreground text-sm"
         status={task.status}

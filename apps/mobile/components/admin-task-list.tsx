@@ -60,7 +60,7 @@ export function AdminTaskList({
       }
       renderItem={({ item }) => (
         <Link
-          className="active:opacity-70"
+          className="active:bg-muted"
           href={{
             pathname: '/admin/tasks/[taskId]/view',
             params: { taskId: item.id },

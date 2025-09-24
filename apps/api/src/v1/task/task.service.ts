@@ -93,6 +93,15 @@ export async function createTask({
         include: DEFAULT_TASK_INCLUDE,
       })
 
+      // Create activity log
+      await tx.activity.create({
+        data: {
+          action: 'TASK_CREATED',
+          userId: user.id,
+          topic: `TASK_${createdTask.id}`,
+        },
+      })
+
       return createdTask
     })
 
@@ -108,14 +117,19 @@ export async function createTask({
 export async function getTaskList({
   cursor,
   take = 10,
+  assignedUserIds,
+  status,
 }: {
   cursor?: string
   take?: number
+  assignedUserIds?: string[]
+  status?: TaskStatus[]
 }) {
   const prisma = getPrisma()
 
   const where: Prisma.TaskWhereInput = {
-    // Add any necessary filters here
+    ...(assignedUserIds ? { assigneeIds: { hasSome: assignedUserIds } } : {}),
+    ...(status ? { status: { in: status } } : {}),
   }
 
   const tasks = await prisma.task.findMany({
@@ -152,26 +166,41 @@ export async function getTaskById({ id }: { id: number }) {
 export async function updateTaskAssignees({
   taskId,
   assigneeIds,
+  user,
 }: {
   taskId: number
   assigneeIds: string[]
+  user: User | null
 }) {
   const prisma = getPrisma()
   const logger = getLogger('task.service:updateTaskAssignees')
 
-  logger.trace({ taskId, assigneeIds }, 'Updating task assignees')
+  logger.trace({ taskId, assigneeIds, user }, 'Updating task assignees')
 
   try {
-    const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        assigneeIds,
-      },
-      include: DEFAULT_TASK_INCLUDE,
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const task = await tx.task.update({
+        where: { id: taskId },
+        data: {
+          assigneeIds,
+        },
+        include: DEFAULT_TASK_INCLUDE,
+      })
+
+      // Create activity log
+      await tx.activity.create({
+        data: {
+          action: 'TASK_ASSIGNEES_UPDATED',
+          userId: user?.id || null,
+          topic: `TASK_${task.id}`,
+          payload: { newAssigneeIds: assigneeIds },
+        },
+      })
+
+      return task
     })
 
     logger.info({ updatedTask }, 'Task assignees updated successfully')
-
     return updatedTask
   } catch (error) {
     logger.error({ error }, 'Error updating task assignees')
@@ -182,26 +211,41 @@ export async function updateTaskAssignees({
 export async function updateTaskStatus({
   taskId,
   status,
+  user,
 }: {
   taskId: number
   status: TaskStatus
+  user: User | null
 }) {
   const prisma = getPrisma()
   const logger = getLogger('task.service:updateTaskStatus')
 
-  logger.trace({ taskId, status }, 'Updating task status')
+  logger.trace({ taskId, status, user }, 'Updating task status')
 
   try {
-    const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        status,
-      },
-      include: DEFAULT_TASK_INCLUDE,
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const task = await tx.task.update({
+        where: { id: taskId },
+        data: {
+          status,
+        },
+        include: DEFAULT_TASK_INCLUDE,
+      })
+
+      // Create activity log
+      await tx.activity.create({
+        data: {
+          action: 'TASK_STATUS_UPDATED',
+          userId: user?.id || null,
+          topic: `TASK_${task.id}`,
+          payload: { newStatus: status },
+        },
+      })
+
+      return task
     })
 
     logger.info({ updatedTask }, 'Task status updated successfully')
-
     return updatedTask
   } catch (error) {
     logger.error({ error }, 'Error updating task status')

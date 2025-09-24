@@ -1,2 +1,3 @@
 node_modules
 .vercel
+packages/validation/src/generated/prisma

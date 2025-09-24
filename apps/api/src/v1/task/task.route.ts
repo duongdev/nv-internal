@@ -21,10 +21,19 @@ import {
 const router = new Hono()
   // Get infinite task list
   .get('/', zValidator('query', zTaskListQuery), async (c) => {
-    const { cursor, take } = c.req.valid('query')
+    const {
+      cursor,
+      take = '10',
+      status,
+      assignedOnly = 'false',
+    } = c.req.valid('query')
     const user = getAuthUserStrict(c)
 
-    if (!(await canUserListTasks({ user }))) {
+    let assignedUserIds: string[] | undefined = undefined
+
+    if (assignedOnly === 'true') {
+      assignedUserIds = [user.id]
+    } else if (!(await canUserListTasks({ user }))) {
       throw new HTTPException(403, {
         message: 'Bạn không có quyền xem danh sách công việc.',
         cause: 'Permission denied',
@@ -33,7 +42,9 @@ const router = new Hono()
 
     const { tasks, nextCursor, hasNextPage } = await getTaskList({
       cursor,
-      take,
+      take: Number(take),
+      assignedUserIds,
+      status: status ? (Array.isArray(status) ? status : [status]) : undefined,
     })
 
     return c.json({

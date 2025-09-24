@@ -3,6 +3,11 @@ generator client {
   output   = "../generated/prisma"
 }
 
+generator validator {
+  provider = "prisma-client-js"
+  output   = "../../../packages/validation/src/generated/prisma"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -41,6 +46,8 @@ model GeoLocation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tasks     Task[]
+
+  @@index([lat, lng])
 }
 
 model Customer {
@@ -50,4 +57,20 @@ model Customer {
   tasks     Task[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?
+  topic     String
+  action    String
+  payload   Json?
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([topic])
 }
