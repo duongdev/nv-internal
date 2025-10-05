@@ -3,11 +3,11 @@ import { type FC, useEffect, useState } from 'react'
 import { Linking, View } from 'react-native'
 import type { Task } from '@/api/task/use-task'
 import { useUpdateTaskAssignees } from '@/api/task/use-update-task-assignees'
+import { TaskAction } from './task-action'
 import { Button } from './ui/button'
 import { ContentSection } from './ui/content-section'
 import { Icon } from './ui/icon'
 import { InlineEditableBottomSheet } from './ui/inline-editable'
-import { Separator } from './ui/separator'
 import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
@@ -20,14 +20,19 @@ export type TaskDetailsProps = {
 export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
   return (
     <>
-      {/* <ContentSection label="Tiêu đề công việc">
-        <Text className="font-sans-medium" variant="h4">
-          {task.title || 'Chưa có tiêu đề'}
-        </Text>
-      </ContentSection> */}
-      <Text className="font-sans-medium" variant="h4">
-        {task.title || 'Chưa có tiêu đề'}
-      </Text>
+      <View className="flex-row items-start justify-between gap-2">
+        <View className="flex-1">
+          <TaskStatusBadge status={task.status} />
+          <Text className="font-sans-medium" variant="h4">
+            {task.title || 'Chưa có tiêu đề'} {task.title || 'Chưa có tiêu đề'}
+          </Text>
+        </View>
+
+        {/* <Button size="sm" variant="default">
+          <Text>Bắt đầu</Text>
+        </Button> */}
+        <TaskAction task={task} />
+      </View>
       <ContentSection label="Mô tả công việc">
         <Text>{task.description || 'Chưa có mô tả'}</Text>
       </ContentSection>
@@ -76,10 +81,6 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             </Button>
           )}
         </View>
-      </ContentSection>
-      <Separator className="my-2" />
-      <ContentSection label="Trạng thái công việc">
-        <TaskStatusBadge className="mt-1" status={task.status} />
       </ContentSection>
     </>
   )

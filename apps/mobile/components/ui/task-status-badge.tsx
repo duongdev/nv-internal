@@ -48,7 +48,7 @@ export const TaskStatusBadge: FC<TaskStatusBadgeProps> = ({
   return (
     <View
       className={cn(
-        'flex flex-row items-center gap-1 self-start rounded-full border border-border px-2 py-1',
+        'flex flex-row items-center gap-1 self-start rounded-full border border-primary px-2 py-1',
         // statusConfig.borderColor,
         className,
       )}

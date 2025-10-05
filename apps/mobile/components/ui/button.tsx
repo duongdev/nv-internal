@@ -54,7 +54,7 @@ const buttonVariants = cva(
         ),
         icon: 'h-10 w-10 sm:h-9 sm:w-9',
         'icon-sm': cn(
-          'h-8 w-8 sm:h-7 sm:w-7',
+          'h-9 w-9 sm:h-7 sm:w-7',
           Platform.select({ web: 'has-[>svg]:px-2' }),
         ),
       },

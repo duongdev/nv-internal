@@ -4,6 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { callHonoApi } from '@/lib/api-client'
+import { activitiesQueryOptions } from '../activity/use-activities'
 import { taskQueryOptions } from './use-task'
 import { TASK_LIST_QUERY_KEY } from './use-task-infinite-list'
 
@@ -47,6 +48,10 @@ export function useUpdateTaskAssignees(
         queryKey: taskQueryOptions({ id: args[2].taskId }).queryKey,
       })
       queryClient.invalidateQueries({ queryKey: TASK_LIST_QUERY_KEY })
+      queryClient.invalidateQueries({
+        queryKey: activitiesQueryOptions({ topic: `TASK_${args[2].taskId}` })
+          .queryKey,
+      })
     },
   })
 

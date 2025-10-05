@@ -87,7 +87,7 @@ export default function WorkerIndex() {
             }}
             key={task.id}
           >
-            <View className="rounded-lg border border-border p-3 active:bg-muted">
+            <View className="rounded-lg border border-border bg-secondary p-3 active:bg-card">
               <TaskListItem task={task} />
             </View>
           </Link>

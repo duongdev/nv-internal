@@ -136,7 +136,11 @@ const router = new Hono()
 
       // Update the task assignees
       try {
-        const updatedTask = await updateTaskAssignees({ taskId, assigneeIds })
+        const updatedTask = await updateTaskAssignees({
+          taskId,
+          assigneeIds,
+          user,
+        })
         return c.json(updatedTask)
       } catch (error) {
         logger.error({ error }, 'Failed to update task assignees')
@@ -174,7 +178,7 @@ const router = new Hono()
 
       // Update the task status
       try {
-        const updatedTask = await updateTaskStatus({ taskId, status })
+        const updatedTask = await updateTaskStatus({ taskId, status, user })
         return c.json(updatedTask)
       } catch (error) {
         logger.error({ error }, 'Failed to update task status')

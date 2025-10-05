@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Stack } from 'expo-router'
 import { useLocalSearchParams } from 'expo-router/build/hooks'
 import {
@@ -6,10 +7,14 @@ import {
   ScrollView,
   View,
 } from 'react-native'
+import { activitiesQueryOptions } from '@/api/activity/use-activities'
 import { useTask } from '@/api/task/use-task'
-import { AdminTaskAction } from '@/components/admin-task-action'
+import { ActivityFeed } from '@/components/activity-feed'
+import { TaskAction } from '@/components/task-action'
 import { TaskAssignees, TaskDetails } from '@/components/task-details'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Separator } from '@/components/ui/separator'
+import { Text } from '@/components/ui/text'
 import { formatTaskId } from '@/utils/task-id-helper'
 
 export default function TaskViewScreen() {
@@ -23,10 +28,18 @@ export default function TaskViewScreen() {
     isLoading,
     isRefetching,
     isFetched,
-    refetch: handleRefetch,
+    refetch,
   } = useTask({ id: taskId ?? 0 }, { enabled: !!taskId })
+  const queryClient = useQueryClient()
 
   const isTaskNotFound = !taskId || (isFetched && !task)
+
+  const handleRefetch = () => {
+    refetch()
+    queryClient.invalidateQueries({
+      queryKey: activitiesQueryOptions({ topic: `TASK_${taskId}` }).queryKey,
+    })
+  }
 
   if (isLoading) {
     return (
@@ -58,8 +71,7 @@ export default function TaskViewScreen() {
           {task && (
             <View className="flex-1 justify-between">
               <ScrollView
-                className="flex-1"
-                contentContainerClassName="flex-1 gap-2 p-4"
+                contentContainerClassName="gap-2 p-4 pb-safe"
                 refreshControl={
                   <RefreshControl
                     onRefresh={handleRefetch}
@@ -72,10 +84,15 @@ export default function TaskViewScreen() {
                   assigneeIds={task.assigneeIds}
                   taskId={task.id}
                 />
+                <Separator className="my-2" />
+                <Text className="font-sans-medium" variant="h4">
+                  Hoạt động
+                </Text>
+                <ActivityFeed topic={`TASK_${taskId}`} />
               </ScrollView>
 
               <View className="px-6 pb-safe shadow-lg">
-                <AdminTaskAction task={task!} />
+                <TaskAction task={task!} />
               </View>
             </View>
           )}

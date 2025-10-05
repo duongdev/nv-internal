@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Stack, useLocalSearchParams } from 'expo-router'
 import {
   ActivityIndicator,
@@ -5,9 +6,10 @@ import {
   ScrollView,
   View,
 } from 'react-native'
+import { activitiesQueryOptions } from '@/api/activity/use-activities'
 import { useTask } from '@/api/task/use-task'
 import { ActivityFeed } from '@/components/activity-feed'
-import { AdminTaskAction } from '@/components/admin-task-action'
+import { TaskBottomActions } from '@/components/task-bottom-actions'
 import { TaskDetails } from '@/components/task-details'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Separator } from '@/components/ui/separator'
@@ -25,10 +27,18 @@ export default function WorkerTaskView() {
     isLoading,
     isRefetching,
     isFetched,
-    refetch: handleRefetch,
+    refetch,
   } = useTask({ id: taskId ?? 0 }, { enabled: !!taskId })
+  const queryClient = useQueryClient()
 
   const isTaskNotFound = !taskId || (isFetched && !task)
+
+  const handleRefetch = () => {
+    refetch()
+    queryClient.invalidateQueries({
+      queryKey: activitiesQueryOptions({ topic: `TASK_${taskId}` }).queryKey,
+    })
+  }
 
   if (isLoading) {
     return (
@@ -59,8 +69,7 @@ export default function WorkerTaskView() {
 
           <View className="flex-1 justify-between">
             <ScrollView
-              className="flex-1"
-              contentContainerClassName="flex-1 gap-2 p-4"
+              contentContainerClassName="mb-safe gap-2 p-4 pb-safe-offset-4"
               refreshControl={
                 <RefreshControl
                   onRefresh={handleRefetch}
@@ -73,12 +82,10 @@ export default function WorkerTaskView() {
               <Text className="font-sans-medium" variant="h4">
                 Hoạt động
               </Text>
-              <ActivityFeed targetId={task?.id ?? 0} />
+              <ActivityFeed topic={`TASK_${taskId}`} />
+              <View className="pb-safe" />
             </ScrollView>
-
-            <View className="p-4">
-              <AdminTaskAction task={task!} />
-            </View>
+            <TaskBottomActions />
           </View>
         </>
       )}
