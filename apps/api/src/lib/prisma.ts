@@ -1,8 +1,8 @@
 import { neonConfig } from '@neondatabase/serverless'
 import { PrismaNeon } from '@prisma/adapter-neon'
-import { extendPrismaClient } from 'prisma-prefixed-ids'
 import ws from 'ws'
 import { type Prisma, PrismaClient } from '../../generated/prisma'
+import { extendPrismaClient } from './prisma-prefixed-ids.js'
 
 neonConfig.webSocketConstructor = ws
 neonConfig.poolQueryViaFetch = true

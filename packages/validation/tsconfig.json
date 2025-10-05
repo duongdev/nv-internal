@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "outDir": "./dist",
+    "module": "CommonJS",
+    "target": "ES2020",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
