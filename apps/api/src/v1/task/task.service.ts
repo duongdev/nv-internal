@@ -3,6 +3,7 @@ import type { CreateTaskValues } from '@nv-internal/validation'
 import type { Prisma, TaskStatus } from '../../../generated/prisma'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
+import { createActivity } from '../activity/activity.service'
 import { isUserAdmin } from '../user/user.service'
 
 const DEFAULT_TASK_INCLUDE: Prisma.TaskInclude = {
@@ -94,13 +95,15 @@ export async function createTask({
       })
 
       // Create activity log
-      await tx.activity.create({
-        data: {
+      await createActivity(
+        {
           action: 'TASK_CREATED',
           userId: user.id,
-          topic: `TASK_${createdTask.id}`,
+          topic: { entityType: 'TASK', entityId: createdTask.id },
+          payload: {},
         },
-      })
+        tx,
+      )
 
       return createdTask
     })
@@ -188,14 +191,15 @@ export async function updateTaskAssignees({
       })
 
       // Create activity log
-      await tx.activity.create({
-        data: {
+      await createActivity(
+        {
           action: 'TASK_ASSIGNEES_UPDATED',
           userId: user?.id || null,
-          topic: `TASK_${task.id}`,
+          topic: { entityType: 'TASK', entityId: task.id },
           payload: { newAssigneeIds: assigneeIds },
         },
-      })
+        tx,
+      )
 
       return task
     })
@@ -233,14 +237,15 @@ export async function updateTaskStatus({
       })
 
       // Create activity log
-      await tx.activity.create({
-        data: {
+      await createActivity(
+        {
           action: 'TASK_STATUS_UPDATED',
           userId: user?.id || null,
-          topic: `TASK_${task.id}`,
+          topic: { entityType: 'TASK', entityId: task.id },
           payload: { newStatus: status },
         },
-      })
+        tx,
+      )
 
       return task
     })
