@@ -1,1 +1,1 @@
-export * from './generated/prisma/client';
+export * from '@nv-internal/prisma-client';

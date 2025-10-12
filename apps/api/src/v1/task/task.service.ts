@@ -1,6 +1,6 @@
 import type { User } from '@clerk/backend'
+import type { Prisma, TaskStatus } from '@nv-internal/prisma-client'
 import type { CreateTaskValues } from '@nv-internal/validation'
-import type { Prisma, TaskStatus } from '../../../generated/prisma'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
 import { createActivity } from '../activity/activity.service'

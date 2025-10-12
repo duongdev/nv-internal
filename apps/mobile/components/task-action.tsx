@@ -1,4 +1,4 @@
-import { TaskStatus } from '@nv-internal/api/generated/prisma/client'
+import { TaskStatus } from '@nv-internal/prisma-client'
 import type { FC } from 'react'
 import { Alert } from 'react-native'
 import type { Task } from '@/api/task/use-task'

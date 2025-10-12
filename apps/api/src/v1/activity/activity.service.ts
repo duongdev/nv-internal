@@ -1,4 +1,4 @@
-import type { Prisma } from '../../../generated/prisma'
+import type { Prisma } from '@nv-internal/prisma-client'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
 

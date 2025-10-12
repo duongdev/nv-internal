@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/prisma-client"
+    },
+    {
+      "path": "./packages/validation"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/mobile"
+    }
+  ]
+}

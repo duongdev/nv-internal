@@ -12,6 +12,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "@nv-internal/prisma-client": "workspace:*"
+  },
   "peerDependencies": {
     "zod": "4.1.5"
   }

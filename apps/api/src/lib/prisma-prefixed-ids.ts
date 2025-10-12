@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <Copied from original> */
+
+import type { PrismaClient } from '@nv-internal/prisma-client'
 import { randomBytes } from 'crypto'
-import type { PrismaClient } from '../../generated/prisma'
 
 // Define ModelName type based on Prisma's model names
 export type ModelName = string

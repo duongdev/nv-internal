@@ -1,4 +1,4 @@
-import { TaskStatus as Status } from '@nv-internal/api/generated/prisma/client'
+import { TaskStatus as Status } from '@nv-internal/prisma-client'
 import { type FC, useMemo } from 'react'
 import { View } from 'react-native'
 import { cn } from '@/lib/utils'

@@ -5,6 +5,13 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nv-internal/prisma-client": [
+        "packages/prisma-client/dist/index.d.ts",
+        "packages/prisma-client/dist"
+      ]
+    }
   }
 }

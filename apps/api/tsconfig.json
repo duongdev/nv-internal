@@ -9,7 +9,14 @@
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@nv-internal/prisma-client": [
+        "../../packages/prisma-client/dist/index.d.ts",
+        "../../packages/prisma-client/dist"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",
