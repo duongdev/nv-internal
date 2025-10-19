@@ -1,0 +1,49 @@
+---
+description: API development guidelines and patterns
+globs: ["apps/api/**/*"]
+alwaysApply: false
+---
+
+# API Development Guidelines
+
+- All routes must use authentication middleware from `@hono/clerk-auth`
+- Use transactions for multi-model operations
+- Log all state changes to the Activity table
+- Use cursor-based pagination for lists
+- Follow the versioned API structure in `src/v1/`
+- Use Zod schemas from `@nv-internal/validation` for request/response validation
+- Database operations should use the Prisma client from `@nv-internal/prisma-client`
+
+## API Patterns
+
+- All routes require authentication middleware
+- Transactions used for multi-model operations
+- Activity logging for all state changes
+- Cursor-based pagination for lists
+
+## Development Commands
+
+### API (apps/api/)
+
+```bash
+# Start local development environment
+docker compose -f docker-compose.dev.yml up    # Start local database first
+npx vc dev                                     # Start API server with Vercel dev
+
+# Build and deployment
+pnpm vercel-build     # Build for Vercel deployment (generates Prisma client)
+```
+
+## Security
+
+### Server-Side Authority
+
+Keep sensitive logic, validation, and data manipulation strictly on the server-side. Use secure API endpoints.
+
+### Input Sanitization/Validation
+
+Always sanitize and validate user input on the server-side.
+
+### Credentials
+
+Never hardcode secrets or credentials in the codebase. Use environment variables or a secure secrets management solution.

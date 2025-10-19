@@ -1,0 +1,21 @@
+---
+description: Protocol for installing new libraries in the project
+globs: ["package.json", "pnpm-lock.yaml", "yarn.lock", "npm-shrinkwrap.json"]
+alwaysApply: false
+---
+
+# Library Installation Protocol
+
+- Always get explicit confirmation before installing new libraries
+- Evaluate alternatives and discuss implications before adding dependencies
+- Consider security implications, maintenance burden, and bundle size impact
+- Check for existing solutions in the codebase before proposing new libraries
+- Document the reason for adding each new dependency
+
+## Dependency Awareness
+
+Be mindful of the security implications of adding or updating dependencies.
+
+## Package Manager
+
+This project uses pnpm with workspaces, not npm or yarn. Always use pnpm commands for package management.

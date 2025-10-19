@@ -1,0 +1,61 @@
+---
+description: Code style, quality, and refactoring guidelines
+globs: ["**/*.{ts,tsx,js,jsx}"]
+alwaysApply: false
+---
+
+# Code Style Guidelines
+
+- Use Biome for formatting and linting (not ESLint/Prettier)
+- 2-space indentation
+- 80-character line width
+- Single quotes for JavaScript, double quotes for JSX
+- Use sorted Tailwind classes with clsx
+- Follow the naming conventions defined in biome.json
+
+## TypeScript Guidelines
+
+Use strict typing (avoid `any`). Document complex logic or public APIs with JSDoc.
+
+## Readability & Maintainability
+
+Write clean, well-organized code.
+
+## Small Files & Components
+
+- Keep files under **300 lines**. Refactor proactively.
+- Break down large React components into smaller, single-responsibility components.
+
+## Avoid Duplication (DRY)
+
+Actively look for and reuse existing functionality. Refactor to eliminate duplication.
+
+## Pattern Consistency
+
+Adhere to established project patterns. Don't introduce new ones without discussion/explicit instruction. If replacing an old pattern, ensure the old implementation is fully removed.
+
+## File Naming
+
+Use clear, descriptive names. Avoid "temp", "refactored", "improved", etc., in permanent file names.
+
+## No One-Time Scripts
+
+Do not commit one-time utility scripts into the main codebase.
+
+## Refactoring
+
+### Purposeful Refactoring
+
+Refactor to improve clarity, reduce duplication, simplify complexity, or adhere to architectural goals.
+
+### Holistic Check
+
+When refactoring, look for duplicate code, similar components/files, and opportunities for consolidation across the affected area.
+
+### Edit, Don't Copy
+
+Modify existing files directly. Do not duplicate files and rename them (e.g., `component-v2.tsx`).
+
+### Verify Integrations
+
+After refactoring, ensure all callers, dependencies, and integration points function correctly. Run relevant tests.

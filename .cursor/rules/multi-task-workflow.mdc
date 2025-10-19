@@ -1,0 +1,27 @@
+---
+description: Guidelines for managing multiple tasks in a single session
+globs: ["**/*"]
+alwaysApply: false
+---
+
+# Multi-Task Workflow
+
+When working with multiple todos:
+
+- Complete one task at a time
+- Verify each task works as expected before marking it as completed
+- Run relevant tests for each task individually
+- Only move to the next task after confirming the current task is fully functional
+- Document any assumptions or dependencies between tasks
+
+## Task Definition
+
+- Clearly understand the task requirements, acceptance criteria, and any dependencies.
+
+## Systematic Change Protocol
+
+Before making significant changes:
+
+- **Identify Impact:** Determine affected components, dependencies, and potential side effects.
+- **Plan:** Outline the steps. Tackle one logical change or file at a time.
+- **Verify Testing:** Confirm how the change will be tested. Add tests if necessary _before_ implementing.

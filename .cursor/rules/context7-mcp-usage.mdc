@@ -1,0 +1,17 @@
+---
+description: Guidelines for using Context7 MCP to research documentation and best practices
+globs: ["**/*"]
+alwaysApply: false
+---
+
+# Using Context7 MCP for Documentation Research
+
+- Use Context7 MCP to research best practices before implementing new features
+- Leverage Context7 to understand documentation correctly and avoid misinterpretation
+- When working with unfamiliar technologies, first use Context7 to get up-to-date information
+- Context7 helps ensure that implementation follows current best practices
+- Always verify Context7 information against official documentation when possible
+
+## Research
+
+Use available tools to research solutions or best practices when stuck or unsure.

@@ -1,0 +1,22 @@
+---
+description: Database development guidelines and patterns
+globs: ["**/prisma/**/*", "**/migrations/**/*", "**/*.{prisma,sql}"]
+alwaysApply: false
+---
+
+# Database Guidelines
+
+- Use prefixed IDs (cust*, geo*, act\_) for readability
+- All database operations should go through the Prisma client
+- For local development, use Docker Compose with local PostgreSQL
+- For production, Neon database with Prisma adapter is automatically used
+- Prisma client is generated to `packages/prisma-client/generated/`
+
+## Development Commands
+
+### Root Level
+
+```bash
+pnpm install          # Install dependencies for all packages
+pnpm build            # Build all packages
+```

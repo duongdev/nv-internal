@@ -1,0 +1,34 @@
+---
+description: Mobile app development guidelines and patterns
+globs: ["apps/mobile/**/*"]
+alwaysApply: false
+---
+
+# Mobile App Development Guidelines
+
+- Use Expo Router for file-based routing
+- Implement protected routes using Clerk auth state
+- Use TanStack Query with aggressive caching (1 week gcTime)
+- Make type-safe API calls via the `callHonoApi` utility
+- Use NativeWind for styling with Tailwind classes
+- Present forms and inputs as modals
+- Follow the existing component structure in the components/ directory
+
+## Mobile Patterns
+
+- Type-safe API calls via `callHonoApi` utility
+- React Query with aggressive caching (1 week gcTime)
+- Protected routes using Clerk auth state
+- Modal presentations for forms and inputs
+
+## Development Commands
+
+### Mobile (apps/mobile/)
+
+```bash
+pnpm dev              # Start Expo development server
+pnpm android          # Run on Android
+pnpm ios              # Run on iOS
+pnpm web              # Run on web
+pnpm clean            # Clean .expo and node_modules
+```
