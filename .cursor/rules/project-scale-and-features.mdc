@@ -1,0 +1,107 @@
+---
+description: Project scale, features, and roadmap information for NV Internal task management app
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# NV Internal - Project Scale & Features
+
+## Project Scale
+
+NV Internal is a task management application designed for an air conditioning service company in Vietnam. It targets small businesses with less than 50 users who need to manage installation, repair, and maintenance tasks performed by technicians at customer locations.
+
+## Core Features
+
+### Task Management
+
+- Tasks with title, description, customer info, and location
+- Work type classification: installation, repair, or maintenance
+- Assignment to multiple workers
+- Status tracking: PREPARING → READY → IN_PROGRESS → ON_HOLD → COMPLETED
+- Geographic location support with lat/lng coordinates
+- Customer management with contact information
+
+### Check-in/Check-out System
+
+- Location-based check-in at task sites
+- Photo verification during check-in/check-out
+- Time tracking for each task
+- GPS location validation
+
+### User Management
+
+- Role-based access control (Admin/Worker)
+- Authentication via Clerk (email/password + OAuth)
+- User administration capabilities
+
+### Mobile App
+
+- Admin interface for task and user management
+- Worker interface for viewing assigned tasks and check-in/out
+- Vietnamese language support
+- Touch-optimized mobile experience
+- Android and iOS platform support
+
+## Technical Architecture
+
+- **Monorepo** with pnpm workspaces
+- **Backend**: Hono API with PostgreSQL/Neon database
+- **Mobile**: Expo React Native with TypeScript
+- **Authentication**: Clerk integration
+- **State Management**: TanStack Query
+- **Database**: Prisma ORM with prefixed IDs
+- **Platforms**: Android and iOS
+
+## Current Status
+
+### Completed
+
+- Basic task CRUD operations
+- User authentication and roles
+- Task assignment and status updates
+- Location support
+- Mobile app with admin/worker interfaces
+- Activity logging
+
+### In Progress
+
+- Photo attachment functionality for check-in/check-out
+- Location-based check-in/check-out system
+- Work type classification (install/repair/maintain)
+- Push notifications for task updates
+
+## Future Roadmap
+
+### Short Term (3 months)
+
+- Enhanced check-in/check-out with photo and location
+- Work type specialization with custom forms
+- Time tracking and reporting
+- Task completion verification
+
+### Medium Term (3-6 months)
+
+- Calendar integration for scheduling
+- SMS notifications for customers
+- Inventory management for parts
+- Route optimization for workers
+- Customer history and equipment tracking
+
+### Long Term (6+ months)
+
+- Multiple service branches support
+- Advanced permissions system
+- Predictive maintenance scheduling
+- Performance monitoring and analytics
+
+## Development Guidelines
+
+- Follow existing patterns in the codebase
+- Use TypeScript strictly
+- Maintain Vietnamese language support where applicable
+- Prioritize mobile-first design
+- Implement proper error handling and loading states
+- Log all significant actions to Activity table
+- Use role-based permissions for all operations
+- Focus on air conditioning service workflows
+- Ensure check-in/check-out functionality is robust and reliable
