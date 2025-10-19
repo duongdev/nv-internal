@@ -198,6 +198,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
                 ))}
             </View>
             <Text>
+              {user.username} •{' '}
               {getUserPrimaryEmail(user) ||
                 formatPhoneNumber(getUserPhoneNumber(user))}
             </Text>

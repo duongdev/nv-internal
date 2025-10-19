@@ -1,5 +1,5 @@
 import type { User } from '@clerk/backend'
-import type { Prisma, TaskStatus } from '@nv-internal/prisma-client'
+import type { Prisma, Task, TaskStatus } from '@nv-internal/prisma-client'
 import type { CreateTaskValues } from '@nv-internal/validation'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
@@ -19,8 +19,24 @@ export async function canUserListTasks({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
-export async function canUserViewTask({ user }: { user: User }) {
-  return isUserAdmin({ user })
+export async function isUserAssignedToTask({
+  user,
+  task,
+}: {
+  user: User
+  task: { id: number; assigneeIds: string[] }
+}) {
+  return task.assigneeIds.includes(user.id)
+}
+
+export async function canUserViewTask({
+  user,
+  task,
+}: {
+  user: User
+  task: { id: number; assigneeIds: string[] }
+}) {
+  return isUserAdmin({ user }) || isUserAssignedToTask({ user, task })
 }
 
 export async function canUserUpdateTaskAssignees({ user }: { user: User }) {

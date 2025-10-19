@@ -89,20 +89,19 @@ const router = new Hono()
     async (c) => {
       const taskId = parseInt(c.req.valid('param').id, 10)
       const user = getAuthUserStrict(c)
-
-      if (!(await canUserViewTask({ user }))) {
-        throw new HTTPException(403, {
-          message: 'Bạn không có quyền xem công việc.',
-          cause: 'Permission denied',
-        })
-      }
-
       const task = await getTaskById({ id: taskId })
 
       if (!task) {
         throw new HTTPException(404, {
           message: 'Không tìm thấy công việc.',
           cause: 'Task not found',
+        })
+      }
+
+      if (!(await canUserViewTask({ user, task }))) {
+        throw new HTTPException(403, {
+          message: 'Bạn không có quyền xem công việc.',
+          cause: 'Permission denied',
         })
       }
 

@@ -1,7 +1,8 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   // Output the generated Prisma client into the prisma-client workspace package
-  output   = "../../../packages/prisma-client/generated"
+  output          = "../../../packages/prisma-client/generated"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {

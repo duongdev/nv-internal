@@ -198,7 +198,9 @@ const config = {
         "native": true
       }
     ],
-    "previewFeatures": [],
+    "previewFeatures": [
+      "driverAdapters"
+    ],
     "sourceFilePath": "/Users/duongdev/personal/nv-internal/apps/api/prisma/schema.prisma",
     "isCustomOutput": true
   },
@@ -213,7 +215,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -222,8 +223,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  // Output the generated Prisma client into the prisma-client workspace package\n  output   = \"../../../packages/prisma-client/generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum TaskStatus {\n  PREPARING\n  READY\n  IN_PROGRESS\n  ON_HOLD\n  COMPLETED\n}\n\nmodel Task {\n  id            Int          @id @default(autoincrement())\n  createdAt     DateTime     @default(now())\n  updatedAt     DateTime     @updatedAt\n  title         String\n  description   String?\n  customer      Customer?    @relation(fields: [customerId], references: [id])\n  customerId    String?\n  status        TaskStatus   @default(PREPARING)\n  assigneeIds   String[]\n  startedAt     DateTime?\n  completedAt   DateTime?\n  geoLocation   GeoLocation? @relation(fields: [geoLocationId], references: [id])\n  geoLocationId String?\n}\n\nmodel GeoLocation {\n  id        String   @id @default(cuid())\n  address   String?\n  name      String?\n  lat       Float\n  lng       Float\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  tasks     Task[]\n\n  @@index([lat, lng])\n}\n\nmodel Customer {\n  id        String   @id @default(cuid())\n  name      String?\n  phone     String?\n  tasks     Task[]\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([phone])\n}\n\nmodel Activity {\n  id        String   @id @default(cuid())\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  userId    String?\n  topic     String\n  action    String\n  payload   Json?\n\n  @@index([userId])\n  @@index([createdAt])\n  @@index([topic])\n}\n",
-  "inlineSchemaHash": "5a1545f3933d3d021fbbda936d7ed978e427a70208b5f7a2b4dbca143fa9870f",
+  "inlineSchema": "generator client {\n  provider        = \"prisma-client-js\"\n  // Output the generated Prisma client into the prisma-client workspace package\n  output          = \"../../../packages/prisma-client/generated\"\n  previewFeatures = [\"driverAdapters\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum TaskStatus {\n  PREPARING\n  READY\n  IN_PROGRESS\n  ON_HOLD\n  COMPLETED\n}\n\nmodel Task {\n  id            Int          @id @default(autoincrement())\n  createdAt     DateTime     @default(now())\n  updatedAt     DateTime     @updatedAt\n  title         String\n  description   String?\n  customer      Customer?    @relation(fields: [customerId], references: [id])\n  customerId    String?\n  status        TaskStatus   @default(PREPARING)\n  assigneeIds   String[]\n  startedAt     DateTime?\n  completedAt   DateTime?\n  geoLocation   GeoLocation? @relation(fields: [geoLocationId], references: [id])\n  geoLocationId String?\n}\n\nmodel GeoLocation {\n  id        String   @id @default(cuid())\n  address   String?\n  name      String?\n  lat       Float\n  lng       Float\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  tasks     Task[]\n\n  @@index([lat, lng])\n}\n\nmodel Customer {\n  id        String   @id @default(cuid())\n  name      String?\n  phone     String?\n  tasks     Task[]\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([phone])\n}\n\nmodel Activity {\n  id        String   @id @default(cuid())\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  userId    String?\n  topic     String\n  action    String\n  payload   Json?\n\n  @@index([userId])\n  @@index([createdAt])\n  @@index([topic])\n}\n",
+  "inlineSchemaHash": "09c14195076496fae26f87ef8c7e313e5d8797065616791bda0d191c16caafb6",
   "copyEngine": true
 }
 
