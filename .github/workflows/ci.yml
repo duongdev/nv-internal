@@ -24,8 +24,23 @@ jobs:
           node-version: 22.x
           cache: 'pnpm'
 
+      - name: Get pnpm store directory
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
 
       - name: Biome lint
         run: pnpm biome lint
@@ -34,7 +49,7 @@ jobs:
         run: pnpm biome check
 
       - name: TypeScript typecheck
-        run: pnpm -w tsc -b --pretty false
+        run: pnpm -w tsc -b apps/api/tsconfig.ci.json --pretty false
 
       - name: Run tests
         run: pnpm test

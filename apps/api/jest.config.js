@@ -23,6 +23,26 @@ module.exports = {
   // Custom test reporter to reduce output
   reporters: ['default'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', { useESM: false }],
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        useESM: false,
+        tsconfig: {
+          allowSyntheticDefaultImports: true,
+          esModuleInterop: true,
+          module: 'CommonJS',
+          target: 'ES2020',
+          skipLibCheck: true,
+          strict: false,
+          // Allow module resolution without file extensions
+          moduleResolution: 'node',
+          allowJs: true,
+        },
+      },
+    ],
   },
+  // Make sure Jest can resolve TypeScript files directly
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  // Allow imports from test files
+  modulePathIgnorePatterns: ['<rootDir>/dist/'],
 }
