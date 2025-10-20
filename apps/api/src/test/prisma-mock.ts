@@ -2,53 +2,49 @@
 // biome-ignore-all lint/style/useNamingConvention: Mock functions need any for flexibility
 import { jest } from '@jest/globals'
 
+export type MockedModel = {
+  create: jest.MockedFunction<any>
+  createMany: jest.MockedFunction<any>
+  findFirst: jest.MockedFunction<any>
+  findMany: jest.MockedFunction<any>
+  findUnique?: jest.MockedFunction<any>
+  update: jest.MockedFunction<any>
+  updateMany?: jest.MockedFunction<any>
+  delete: jest.MockedFunction<any>
+  deleteMany: jest.MockedFunction<any>
+  count: jest.MockedFunction<any>
+}
+
 export interface MockPrismaClient {
   $transaction: jest.MockedFunction<any>
   $connect: jest.MockedFunction<any>
   $disconnect: jest.MockedFunction<any>
   $executeRaw: jest.MockedFunction<any>
-  customer: {
-    create: jest.MockedFunction<any>
-    createMany: jest.MockedFunction<any>
-    findFirst: jest.MockedFunction<any>
-    findMany: jest.MockedFunction<any>
-    update: jest.MockedFunction<any>
-    delete: jest.MockedFunction<any>
-    deleteMany: jest.MockedFunction<any>
-    count: jest.MockedFunction<any>
+  customer: MockedModel
+  geoLocation: MockedModel
+  task: MockedModel & { findUnique: jest.MockedFunction<any> }
+  activity: MockedModel
+  attachment: MockedModel
+}
+
+function createModelMock(withFindUnique = false, withUpdateMany = false): MockedModel {
+  const base: any = {
+    create: jest.fn(),
+    createMany: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteMany: jest.fn(),
+    count: jest.fn(),
   }
-  geoLocation: {
-    create: jest.MockedFunction<any>
-    createMany: jest.MockedFunction<any>
-    findFirst: jest.MockedFunction<any>
-    findMany: jest.MockedFunction<any>
-    update: jest.MockedFunction<any>
-    delete: jest.MockedFunction<any>
-    deleteMany: jest.MockedFunction<any>
-    count: jest.MockedFunction<any>
+  if (withFindUnique) {
+    base.findUnique = jest.fn()
   }
-  task: {
-    create: jest.MockedFunction<any>
-    createMany: jest.MockedFunction<any>
-    findFirst: jest.MockedFunction<any>
-    findMany: jest.MockedFunction<any>
-    findUnique: jest.MockedFunction<any>
-    update: jest.MockedFunction<any>
-    updateMany: jest.MockedFunction<any>
-    delete: jest.MockedFunction<any>
-    deleteMany: jest.MockedFunction<any>
-    count: jest.MockedFunction<any>
+  if (withUpdateMany) {
+    base.updateMany = jest.fn()
   }
-  activity: {
-    create: jest.MockedFunction<any>
-    createMany: jest.MockedFunction<any>
-    findFirst: jest.MockedFunction<any>
-    findMany: jest.MockedFunction<any>
-    update: jest.MockedFunction<any>
-    delete: jest.MockedFunction<any>
-    deleteMany: jest.MockedFunction<any>
-    count: jest.MockedFunction<any>
-  }
+  return base as MockedModel
 }
 
 export function createMockPrismaClient(): MockPrismaClient {
@@ -57,48 +53,11 @@ export function createMockPrismaClient(): MockPrismaClient {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
     $executeRaw: jest.fn(),
-    customer: {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
-      count: jest.fn(),
-    },
-    geoLocation: {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
-      count: jest.fn(),
-    },
-    task: {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
-      count: jest.fn(),
-    },
-    activity: {
-      create: jest.fn(),
-      createMany: jest.fn(),
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      deleteMany: jest.fn(),
-      count: jest.fn(),
-    },
+    customer: createModelMock(),
+    geoLocation: createModelMock(),
+    task: { ...createModelMock(true, true), findUnique: jest.fn() },
+    activity: createModelMock(),
+    attachment: createModelMock(),
   } as MockPrismaClient
 
   // Setup default transaction behavior

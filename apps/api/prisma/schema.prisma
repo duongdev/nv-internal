@@ -36,6 +36,9 @@ model Task {
   completedAt   DateTime?
   geoLocation   GeoLocation? @relation(fields: [geoLocationId], references: [id])
   geoLocationId String?
+
+  // Attachments linked to this task
+  attachments   Attachment[]
 }
 
 model GeoLocation {
@@ -74,4 +77,26 @@ model Activity {
   @@index([userId])
   @@index([createdAt])
   @@index([topic])
+}
+
+model Attachment {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Nullable to allow attachments for other entities in future
+  task             Task?    @relation(fields: [taskId], references: [id])
+  taskId           Int?
+
+  provider         String   // e.g., 'vercel-blob' | 'local-disk'
+  url              String?  // optional, private by default
+  pathname         String   // storage key/path
+  size             Int
+  mimeType         String
+  originalFilename String
+  fileHash         String?
+  uploadedBy       String   // Clerk userId
+
+  @@index([taskId])
+  @@index([uploadedBy])
 }

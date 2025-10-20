@@ -5,6 +5,9 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 import { getAuthUserStrict } from '../middlewares/auth'
+import { VercelBlobProvider } from '../../lib/storage/vercel-blob.provider'
+import { LocalDiskProvider } from '../../lib/storage/local-disk.provider'
+import { uploadTaskAttachments } from '../attachment/attachment.service'
 import {
   canUserCreateTask,
   canUserListTasks,
@@ -147,6 +150,50 @@ const router = new Hono()
           message: 'Không thể cập nhật người được giao công việc.',
           cause: error,
         })
+      }
+    },
+  )
+  // Upload attachments
+  .post(
+    '/:id/attachments',
+    zValidator('param', z.object({ id: z.string().regex(/^\d+$/) })),
+    async (c) => {
+      const taskId = parseInt(c.req.valid('param').id, 10)
+      const user = getAuthUserStrict(c)
+      const logger = getLogger('task.route:uploadAttachments')
+
+      const form = await c.req.formData()
+      const files = form.getAll('files').filter((f): f is File => f instanceof File)
+
+      try {
+        const storage = process.env.NODE_ENV === 'development'
+          ? new LocalDiskProvider()
+          : new VercelBlobProvider()
+
+        const attachments = await uploadTaskAttachments({
+          taskId,
+          files,
+          user,
+          storage,
+        })
+
+        c.status(201)
+        return c.json({ attachments })
+      } catch (error: unknown) {
+        logger.error({ error }, 'Failed to upload attachments')
+        const errMsg = (error as { message?: string } | null | undefined)?.message
+        const rawStatus = (error as { status?: number } | null | undefined)?.status
+        const derivedStatus = errMsg === 'TASK_NOT_FOUND' ? 404 : rawStatus
+        const status = (derivedStatus === 400 || derivedStatus === 403 || derivedStatus === 404
+          ? derivedStatus
+          : 500) as 400 | 403 | 404 | 500
+        const message =
+          status === 403
+            ? 'Bạn không có quyền tải tệp lên công việc này.'
+            : status === 404
+              ? 'Không tìm thấy công việc.'
+              : 'Không thể tải tệp lên.'
+        throw new HTTPException(status, { message, cause: error })
       }
     },
   )

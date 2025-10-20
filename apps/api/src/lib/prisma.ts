@@ -24,6 +24,7 @@ const prefixes: Partial<Record<ModelName, string>> = {
   Customer: 'cust',
   GeoLocation: 'geo',
   Activity: 'act',
+  Attachment: 'att',
   /** biome-ignore-end lint/style/useNamingConvention: <extend model name> */
 }
 
