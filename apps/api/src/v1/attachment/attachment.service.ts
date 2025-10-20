@@ -1,12 +1,12 @@
 import type { User } from '@clerk/backend'
 import type { Prisma } from '@nv-internal/prisma-client'
-import { getPrisma } from '../../lib/prisma'
-import { createActivity } from '../activity/activity.service'
-import { getLogger } from '../../lib/log'
 import { defaultUploadConfig } from '../../lib/config/upload-config'
+import { getLogger } from '../../lib/log'
+import { getPrisma } from '../../lib/prisma'
 import type { StorageProvider } from '../../lib/storage/storage.types'
-import { isUserAdmin } from '../user/user.service'
+import { createActivity } from '../activity/activity.service'
 import { isUserAssignedToTask } from '../task/task.service'
+import { isUserAdmin } from '../user/user.service'
 
 export interface UploadAttachmentInput {
   taskId: number
@@ -135,5 +135,3 @@ export async function uploadTaskAttachments({
   )
   return result
 }
-
-

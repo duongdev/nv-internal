@@ -19,5 +19,3 @@ export interface StorageProvider {
   getSignedUrl(key: string, opts?: GetSignedUrlOptions): Promise<string>
   readonly name: string
 }
-
-

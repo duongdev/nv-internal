@@ -4,10 +4,10 @@ import { z, zCreateTask, zTaskListQuery } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
-import { getAuthUserStrict } from '../middlewares/auth'
-import { VercelBlobProvider } from '../../lib/storage/vercel-blob.provider'
 import { LocalDiskProvider } from '../../lib/storage/local-disk.provider'
+import { VercelBlobProvider } from '../../lib/storage/vercel-blob.provider'
 import { uploadTaskAttachments } from '../attachment/attachment.service'
+import { getAuthUserStrict } from '../middlewares/auth'
 import {
   canUserCreateTask,
   canUserListTasks,
@@ -163,12 +163,15 @@ const router = new Hono()
       const logger = getLogger('task.route:uploadAttachments')
 
       const form = await c.req.formData()
-      const files = form.getAll('files').filter((f): f is File => f instanceof File)
+      const files = form
+        .getAll('files')
+        .filter((f): f is File => f instanceof File)
 
       try {
-        const storage = process.env.NODE_ENV === 'development'
-          ? new LocalDiskProvider()
-          : new VercelBlobProvider()
+        const storage =
+          process.env.NODE_ENV === 'development'
+            ? new LocalDiskProvider()
+            : new VercelBlobProvider()
 
         const attachments = await uploadTaskAttachments({
           taskId,
@@ -181,12 +184,18 @@ const router = new Hono()
         return c.json({ attachments })
       } catch (error: unknown) {
         logger.error({ error }, 'Failed to upload attachments')
-        const errMsg = (error as { message?: string } | null | undefined)?.message
-        const rawStatus = (error as { status?: number } | null | undefined)?.status
+        const errMsg = (error as { message?: string } | null | undefined)
+          ?.message
+        const rawStatus = (error as { status?: number } | null | undefined)
+          ?.status
         const derivedStatus = errMsg === 'TASK_NOT_FOUND' ? 404 : rawStatus
-        const status = (derivedStatus === 400 || derivedStatus === 403 || derivedStatus === 404
-          ? derivedStatus
-          : 500) as 400 | 403 | 404 | 500
+        const status = (
+          derivedStatus === 400 ||
+          derivedStatus === 403 ||
+          derivedStatus === 404
+            ? derivedStatus
+            : 500
+        ) as 400 | 403 | 404 | 500
         const message =
           status === 403
             ? 'Bạn không có quyền tải tệp lên công việc này.'

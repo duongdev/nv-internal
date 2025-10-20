@@ -27,7 +27,10 @@ export interface MockPrismaClient {
   attachment: MockedModel
 }
 
-function createModelMock(withFindUnique = false, withUpdateMany = false): MockedModel {
+function createModelMock(
+  withFindUnique = false,
+  withUpdateMany = false,
+): MockedModel {
   const base: any = {
     create: jest.fn(),
     createMany: jest.fn(),

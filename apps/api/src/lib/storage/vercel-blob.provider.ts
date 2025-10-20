@@ -1,4 +1,8 @@
-import type { PutObjectInput, PutObjectResult, StorageProvider } from './storage.types'
+import type {
+  PutObjectInput,
+  PutObjectResult,
+  StorageProvider,
+} from './storage.types'
 
 // Lazy import to avoid bundling in environments without provider
 type VercelBlobModule = typeof import('@vercel/blob')
@@ -21,13 +25,15 @@ export class VercelBlobProvider implements StorageProvider {
       addRandomSuffix?: boolean
       contentType?: string
     }
-    const putFn = (vercelModule as unknown as {
-      put: (
-        key: string,
-        body: Blob | ArrayBuffer | ReadableStream,
-        options?: PutOptions,
-      ) => Promise<unknown>
-    }).put
+    const putFn = (
+      vercelModule as unknown as {
+        put: (
+          key: string,
+          body: Blob | ArrayBuffer | ReadableStream,
+          options?: PutOptions,
+        ) => Promise<unknown>
+      }
+    ).put
     await putFn(input.key, input.body as Blob | ArrayBuffer | ReadableStream, {
       access: 'private',
       addRandomSuffix: false,
@@ -47,5 +53,3 @@ export class VercelBlobProvider implements StorageProvider {
     return key
   }
 }
-
-

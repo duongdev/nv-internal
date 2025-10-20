@@ -1,6 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { PutObjectInput, PutObjectResult, StorageProvider } from './storage.types'
+import type {
+  PutObjectInput,
+  PutObjectResult,
+  StorageProvider,
+} from './storage.types'
 
 const UPLOAD_ROOT = join(process.cwd(), 'apps', 'api', '.uploads')
 
@@ -32,5 +36,3 @@ export class LocalDiskProvider implements StorageProvider {
     return `/dev-uploads/${key}`
   }
 }
-
-

@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import type { Task } from '@nv-internal/prisma-client'
 import { TaskStatus } from '@nv-internal/prisma-client'
 import {
   createMockAdminUser,
   createMockWorkerUser,
+  type MockUser,
 } from '../../../test/mock-auth'
 import {
   createMockPrismaClient,
@@ -27,6 +29,8 @@ jest.mock('../../../lib/prisma', () => ({
 }))
 
 describe('Task Service Unit Tests', () => {
+  const toUser = (u: MockUser) => u as unknown as import('@clerk/backend').User
+  const asTask = (t: Partial<Task>) => t as Task
   beforeEach(() => {
     resetPrismaMock(mockPrisma)
   })
@@ -34,25 +38,25 @@ describe('Task Service Unit Tests', () => {
   describe('Permission Functions', () => {
     it('should allow admin to create tasks', async () => {
       const adminUser = createMockAdminUser()
-      const canCreate = await canUserCreateTask({ user: adminUser })
+      const canCreate = await canUserCreateTask({ user: toUser(adminUser) })
       expect(canCreate).toBe(true)
     })
 
     it('should not allow worker to create tasks', async () => {
       const workerUser = createMockWorkerUser()
-      const canCreate = await canUserCreateTask({ user: workerUser })
+      const canCreate = await canUserCreateTask({ user: toUser(workerUser) })
       expect(canCreate).toBe(false)
     })
 
     it('should allow admin to list tasks', async () => {
       const adminUser = createMockAdminUser()
-      const canList = await canUserListTasks({ user: adminUser })
+      const canList = await canUserListTasks({ user: toUser(adminUser) })
       expect(canList).toBe(true)
     })
 
     it('should not allow worker to list all tasks', async () => {
       const workerUser = createMockWorkerUser()
-      const canList = await canUserListTasks({ user: workerUser })
+      const canList = await canUserListTasks({ user: toUser(workerUser) })
       expect(canList).toBe(false)
     })
 
@@ -63,7 +67,10 @@ describe('Task Service Unit Tests', () => {
         title: 'Test Task',
         assigneeIds: ['worker_123'],
       }
-      const canView = await canUserViewTask({ user: adminUser, task: mockTask })
+      const canView = await canUserViewTask({
+        user: toUser(adminUser),
+        task: mockTask,
+      })
       expect(canView).toBe(true)
     })
 
@@ -75,7 +82,7 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canView = await canUserViewTask({
-        user: workerUser,
+        user: toUser(workerUser),
         task: mockTask,
       })
       expect(canView).toBe(true)
@@ -89,7 +96,7 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canView = await canUserViewTask({
-        user: workerUser,
+        user: toUser(workerUser),
         task: mockTask,
       })
       expect(canView).toBe(false)
@@ -97,13 +104,17 @@ describe('Task Service Unit Tests', () => {
 
     it('should allow admin to update task assignees', async () => {
       const adminUser = createMockAdminUser()
-      const canUpdate = await canUserUpdateTaskAssignees({ user: adminUser })
+      const canUpdate = await canUserUpdateTaskAssignees({
+        user: toUser(adminUser),
+      })
       expect(canUpdate).toBe(true)
     })
 
     it('should not allow worker to update task assignees', async () => {
       const workerUser = createMockWorkerUser()
-      const canUpdate = await canUserUpdateTaskAssignees({ user: workerUser })
+      const canUpdate = await canUserUpdateTaskAssignees({
+        user: toUser(workerUser),
+      })
       expect(canUpdate).toBe(false)
     })
   })
@@ -117,8 +128,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: adminUser,
-        task: mockTask,
+        user: toUser(adminUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.READY,
       })
       expect(canUpdate).toBe(true)
@@ -132,8 +143,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: adminUser,
-        task: mockTask,
+        user: toUser(adminUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.ON_HOLD,
       })
       expect(canUpdate).toBe(true)
@@ -147,8 +158,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: adminUser,
-        task: mockTask,
+        user: toUser(adminUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.READY,
       })
       expect(canUpdate).toBe(true)
@@ -162,8 +173,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: workerUser,
-        task: mockTask,
+        user: toUser(workerUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.IN_PROGRESS,
       })
       expect(canUpdate).toBe(true)
@@ -177,8 +188,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: workerUser,
-        task: mockTask,
+        user: toUser(workerUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.COMPLETED,
       })
       expect(canUpdate).toBe(true)
@@ -192,8 +203,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: workerUser,
-        task: mockTask,
+        user: toUser(workerUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.READY,
       })
       expect(canUpdate).toBe(false)
@@ -207,8 +218,8 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: ['worker_123'],
       }
       const canUpdate = await canUserUpdateTaskStatus({
-        user: workerUser,
-        task: mockTask,
+        user: toUser(workerUser),
+        task: asTask(mockTask),
         targetStatus: TaskStatus.IN_PROGRESS,
       })
       expect(canUpdate).toBe(false)
@@ -274,7 +285,10 @@ describe('Task Service Unit Tests', () => {
         },
       }
 
-      const result = await createTask({ data: taskData, user: adminUser })
+      const result = await createTask({
+        data: taskData,
+        user: toUser(adminUser),
+      })
 
       expect(result).toEqual(mockTask)
       expect(mockPrisma.customer.create).toHaveBeenCalledWith({
@@ -326,7 +340,7 @@ describe('Task Service Unit Tests', () => {
       const result = await updateTaskAssignees({
         taskId: 1,
         assigneeIds: ['worker_456', 'worker_789'],
-        user: adminUser,
+        user: toUser(adminUser),
       })
 
       expect(result).toEqual(mockUpdatedTask)
@@ -368,7 +382,7 @@ describe('Task Service Unit Tests', () => {
       const result = await updateTaskStatus({
         taskId: 1,
         status: TaskStatus.READY,
-        user: adminUser,
+        user: toUser(adminUser),
       })
 
       expect(result).toEqual(mockUpdatedTask)

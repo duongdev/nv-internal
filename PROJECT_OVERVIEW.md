@@ -193,6 +193,18 @@ NV Internal is a task management application designed for an air conditioning se
 - **CI/CD**: Automated testing and deployment
 - **Environment Management**: Separate environments for dev, staging, and production
 
+### Commit Guidelines
+
+- **Conventional Commits**: Use `<type>(<scope>): <description>`
+  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+  - Common scopes: `api`, `mobile`, `prisma`, `validation`, `ci`, `docs`
+- **Split commits by concern**: If changes span different areas, create multiple focused commits to ease review, cherry-picking, and reverts. Use `git add -p` to stage by hunk.
+- **Pre-commit checks**:
+  - Format/lint: `pnpm exec biome check --write .`
+  - API tests: `pnpm --filter @nv-internal/api test`
+  - Optional (when changing shared packages): `pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/validation build`
+- See the detailed command flow in `.cursor/commands/commit-changes.md`.
+
 ### Security Considerations
 
 - **Authentication**: Secure token-based authentication

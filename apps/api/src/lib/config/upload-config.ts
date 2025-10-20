@@ -41,5 +41,3 @@ export const defaultUploadConfig: UploadConfig = {
     'video/webm',
   ]),
 }
-
-

@@ -1,6 +1,9 @@
-import { describe, it, expect } from '@jest/globals'
+import { describe, expect, it } from '@jest/globals'
+import {
+  createMockAdminUser,
+  createMockWorkerUser,
+} from '../../../test/mock-auth'
 import { createTestAppWithAuth } from '../../../test/test-app'
-import { createMockAdminUser, createMockWorkerUser } from '../../../test/mock-auth'
 
 function makeFile(name: string, type: string, size: number) {
   const blob = new Blob([new Uint8Array(size)], { type })
@@ -45,7 +48,10 @@ describe('POST /v1/task/:id/attachments', () => {
     const app = createTestAppWithAuth(createMockAdminUser())
     const formData = new FormData()
     formData.append('files', makeFile('bad.txt', 'text/plain', 10))
-    const res = await app.request('/v1/task/1/attachments', { method: 'POST', body: formData })
+    const res = await app.request('/v1/task/1/attachments', {
+      method: 'POST',
+      body: formData,
+    })
     expect([400, 201, 404]).toContain(res.status)
   })
 
@@ -53,9 +59,10 @@ describe('POST /v1/task/:id/attachments', () => {
     const app = createTestAppWithAuth(createMockWorkerUser())
     const formData = new FormData()
     formData.append('files', makeFile('a.jpg', 'image/jpeg', 1024))
-    const res = await app.request('/v1/task/1/attachments', { method: 'POST', body: formData })
+    const res = await app.request('/v1/task/1/attachments', {
+      method: 'POST',
+      body: formData,
+    })
     expect([201, 403, 404, 400]).toContain(res.status)
   })
 })
-
-

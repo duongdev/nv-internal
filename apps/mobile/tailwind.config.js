@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/style/useNamingConvention: <DEFAULT is defined by tailwind> */
-const { hairlineWidth } = require('nativewind/theme');
+const { hairlineWidth } = require('nativewind/theme')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -90,4 +90,4 @@ module.exports = {
     hoverOnlyWhenSupported: true,
   },
   plugins: [require('tailwindcss-animate')],
-};
+}
