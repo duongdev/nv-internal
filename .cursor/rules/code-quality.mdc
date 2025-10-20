@@ -1,7 +1,7 @@
 ---
 description: Code style, quality, and refactoring guidelines
-globs: ["**/*.{ts,tsx,js,jsx}"]
-alwaysApply: false
+globs: ["**/*"]
+alwaysApply: true
 ---
 
 # Code Style Guidelines

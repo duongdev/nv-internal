@@ -1,7 +1,7 @@
 ---
 description: Guidelines for using Context7 MCP to research documentation and best practices
 globs: ["**/*"]
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Using Context7 MCP for Documentation Research
