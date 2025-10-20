@@ -58,7 +58,11 @@ export const SearchBox: FC<SearchBoxProps> = ({
         className="flex-1 text-primary"
         onChangeText={handleTextChange}
         placeholder="Tìm kiếm..."
-        ref={isInBottomSheet ? bottomSheetInputRef : (inputRef as unknown as React.Ref<TextInput>)}
+        ref={
+          isInBottomSheet
+            ? bottomSheetInputRef
+            : (inputRef as unknown as React.Ref<TextInput>)
+        }
         value={val}
         {...(props as TextInputProps)}
       />

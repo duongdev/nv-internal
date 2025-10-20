@@ -18,6 +18,7 @@
       "!**/.turbo/**",
       "!**/.next/**",
       "!**/.cache/**",
+      "!**/.pnpm-store/**",
       "!**/generated/**",
       "!**/generated/**",
       "!**/generated/prisma/**",
