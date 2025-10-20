@@ -25,8 +25,8 @@ jest.mock('../../attachment/attachment.service', () => ({
   uploadTaskAttachments: jest.fn(),
 }))
 
-import * as taskService from '../task.service'
 import * as attachmentService from '../../attachment/attachment.service'
+import * as taskService from '../task.service'
 
 function asMock<T extends (...args: unknown[]) => unknown>(fn: T) {
   return fn as unknown as jest.Mock<ReturnType<T>, Parameters<T>>
