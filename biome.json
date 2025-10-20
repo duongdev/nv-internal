@@ -7,7 +7,26 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/.vercel/**", "!**/.expo/**"]
+    "includes": [
+      "**",
+      "!**/.vercel/**",
+      "!**/.expo/**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/build/**",
+      "!**/coverage/**",
+      "!**/.turbo/**",
+      "!**/.next/**",
+      "!**/.cache/**",
+      "!**/generated/**",
+      "!**/generated/**",
+      "!**/generated/prisma/**",
+      "!**/generated/prisma-client/**",
+      "!**/apps/**/dist/**",
+      "!**/packages/**/dist/**",
+      "!**/apps/**/generated/**",
+      "!**/packages/**/generated/**"
+    ]
   },
   "formatter": {
     "enabled": true,

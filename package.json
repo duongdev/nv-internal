@@ -4,7 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "pnpm -w -r --workspace-concurrency=1 test",
+    "test:api": "pnpm -w --filter @nv-internal/api test",
+    "test:api:verbose": "pnpm -w --filter @nv-internal/api run test:verbose",
+    "test:coverage": "pnpm -w -r test -- --coverage",
+    
+    "biome:lint": "biome lint",
+    "biome:check": "biome check --write",
+    "biome:format": "biome format --write"
   },
   "workspaces": [
     "apps/*",

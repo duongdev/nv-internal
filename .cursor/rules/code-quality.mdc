@@ -46,7 +46,7 @@ Do not commit one-time utility scripts into the main codebase.
 
 Follow the conventional commit format for all commit messages:
 
-```
+```text
 <type>[optional scope]: <description>
 
 [optional body]
@@ -92,3 +92,28 @@ Modify existing files directly. Do not duplicate files and rename them (e.g., `c
 ### Verify Integrations
 
 After refactoring, ensure all callers, dependencies, and integration points function correctly. Run relevant tests.
+
+## Biome Enforcement
+
+- All files must pass Biome formatting and linting before commit.
+- Do not use ESLint or Prettier. Biome is the single source of truth.
+- Respect project-wide Biome config in `biome.json` without overrides.
+- Tailwind class order must be sorted consistently (use clsx when composing).
+
+## Post-Edit Checks (Required)
+
+After any edit that changes source code or documentation:
+
+- Run Biome format and lint at the repo root and affected workspaces.
+- Fix all reported issues before opening or updating a PR.
+- Run TypeScript type checks and resolve all errors.
+
+Suggested commands:
+
+```bash
+pnpm biome check --write
+pnpm biome lint
+pnpm -w run -r typecheck || pnpm -w tsc -b --pretty false
+```
+
+CI will fail on Biome or TypeScript errors. Changes must be corrected before merge.
