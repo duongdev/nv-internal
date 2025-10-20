@@ -6,7 +6,7 @@
     "postinstall": "prisma generate",
     "vercel-build": "pnpm run build:packages && prisma generate && prisma migrate deploy && pnpm run build",
     "build:packages": "pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/validation build",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "test": "jest",
     "test:verbose": "jest --verbose",
     "test:watch": "jest --watch",
