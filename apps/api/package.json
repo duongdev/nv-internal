@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy"
+    "vercel-build": "pnpm run build:packages && prisma generate && prisma migrate deploy && pnpm run build",
+    "build:packages": "pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/validation build",
+    "build": "tsc"
   },
   "dependencies": {
     "@clerk/types": "^4.91.0",

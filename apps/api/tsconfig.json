@@ -15,6 +15,10 @@
       "@nv-internal/prisma-client": [
         "../../packages/prisma-client/dist/index.d.ts",
         "../../packages/prisma-client/dist"
+      ],
+      "@nv-internal/validation": [
+        "../../packages/validation/dist/index.d.ts",
+        "../../packages/validation/dist"
       ]
     }
   },
