@@ -1,4 +1,4 @@
-import type { TaskListQuery, TaskStatus } from '@nv-internal/validation'
+import type { TaskStatus } from '@nv-internal/validation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { callHonoApi } from '@/lib/api-client'
 

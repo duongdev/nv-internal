@@ -2,19 +2,23 @@
 try {
   // Require the built CommonJS bundle
   const pkg = require('../packages/prisma-client/dist')
-  console.log(
+  process.stdout.write(
     'Loaded @nv-internal/prisma-client keys:',
     Object.keys(pkg).slice(0, 20),
   )
-  console.log('Has PrismaClient:', typeof pkg.PrismaClient !== 'undefined')
+  process.stdout.write(
+    `Has PrismaClient: ${typeof pkg.PrismaClient !== 'undefined'}\n`,
+  )
   if (pkg.TaskStatus) {
-    console.log('TaskStatus keys:', Object.keys(pkg.TaskStatus))
+    process.stdout.write(
+      `TaskStatus keys: ${Object.keys(pkg.TaskStatus).join(', ')}\n`,
+    )
   }
   process.exit(0)
 } catch (err) {
-  console.error('Require failed:', err && err.message)
+  process.stderr.write(`Require failed: ${err && err.message}\n`)
   if (err && err.stack) {
-    console.error(err.stack)
+    process.stderr.write(`${err.stack}\n`)
   }
   process.exit(2)
 }
