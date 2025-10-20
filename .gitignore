@@ -1,3 +1,17 @@
 node_modules
 .vercel
 packages/validation/src/generated/prisma
+
+# Build artifacts
+dist/
+**/dist/
+*.tsbuildinfo
+
+# Generated files
+generated/
+**/generated/
+
+# Test files
+test-*.ts
+test-*.js
+server.ts
