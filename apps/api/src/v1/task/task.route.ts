@@ -166,12 +166,40 @@ const router = new Hono()
       const user = getAuthUserStrict(c)
       const logger = getLogger('task.route:updateStatus')
 
-      // Check permission
-      if (!(await canUserUpdateTaskStatus({ user }))) {
-        logger.warn({ user }, 'User is not allowed to update task status')
+      // Fetch the task first
+      const task = await getTaskById({ id: taskId })
+      if (!task) {
+        throw new HTTPException(404, {
+          message: 'Không tìm thấy công việc.',
+          cause: 'Task not found',
+        })
+      }
+
+      // Check permission with task and target status
+      const canUpdate = await canUserUpdateTaskStatus({
+        user,
+        task,
+        targetStatus: status,
+      })
+      if (!canUpdate) {
+        logger.warn(
+          { user, taskId, currentStatus: task.status, targetStatus: status },
+          'User is not allowed to update task status',
+        )
+
+        // Check if user is assigned to provide more specific error message
+        const isAssigned = task.assigneeIds.includes(user.id)
+        if (!isAssigned) {
+          throw new HTTPException(403, {
+            message: 'Bạn không được phân công vào công việc này.',
+            cause: 'Not assigned to task',
+          })
+        }
+
+        // Invalid transition
         throw new HTTPException(403, {
-          message: 'Bạn không có quyền cập nhật trạng thái công việc.',
-          cause: 'Permission denied',
+          message: `Không thể chuyển trạng thái từ ${task.status} sang ${status}.`,
+          cause: 'Invalid status transition',
         })
       }
 

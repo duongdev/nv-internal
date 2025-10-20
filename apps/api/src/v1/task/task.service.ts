@@ -43,8 +43,53 @@ export async function canUserUpdateTaskAssignees({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
-export async function canUserUpdateTaskStatus({ user }: { user: User }) {
-  return isUserAdmin({ user })
+export async function canUserUpdateTaskStatus({
+  user,
+  task,
+  targetStatus,
+}: {
+  user: User
+  task: Task
+  targetStatus: TaskStatus
+}): Promise<boolean> {
+  const isAdmin = await isUserAdmin({ user })
+  const isAssigned = await isUserAssignedToTask({ user, task })
+
+  // Admin permissions
+  if (isAdmin) {
+    // Admin can: PREPARING → READY, any status → ON_HOLD, ON_HOLD → any status
+    if (task.status === 'PREPARING' && targetStatus === 'READY') {
+      return true
+    }
+    if (targetStatus === 'ON_HOLD') {
+      return true
+    }
+    if (task.status === 'ON_HOLD') {
+      return true
+    }
+    // Admin can also do worker transitions if they're assigned
+    if (isAssigned) {
+      if (task.status === 'READY' && targetStatus === 'IN_PROGRESS') {
+        return true
+      }
+      if (task.status === 'IN_PROGRESS' && targetStatus === 'COMPLETED') {
+        return true
+      }
+    }
+  }
+
+  // Worker permissions (only if assigned)
+  if (isAssigned && !isAdmin) {
+    // Worker can: READY → IN_PROGRESS, IN_PROGRESS → COMPLETED
+    if (task.status === 'READY' && targetStatus === 'IN_PROGRESS') {
+      return true
+    }
+    if (task.status === 'IN_PROGRESS' && targetStatus === 'COMPLETED') {
+      return true
+    }
+  }
+
+  return false
 }
 
 export async function createTask({
