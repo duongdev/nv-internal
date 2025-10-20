@@ -6,7 +6,11 @@ export async function fetchAssignedTaskList({
   cursor,
   take,
   status,
-}: TaskListQuery) {
+}: {
+  cursor?: string
+  take?: string
+  status?: TaskStatus[]
+}) {
   const { data } = await callHonoApi(
     (c) =>
       c.v1.task.$get({
@@ -42,7 +46,7 @@ export function useAssignedTaskInfiniteList({
       return fetchAssignedTaskList({
         cursor: pageParam,
         status,
-        take: limit?.toString(),
+        take: limit ? limit.toString() : undefined,
       })
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,

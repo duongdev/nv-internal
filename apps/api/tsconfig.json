@@ -4,9 +4,13 @@
     "module": "NodeNext",
     "strict": true,
     "skipLibCheck": true,
+    "isolatedModules": true,
     "types": [
-      "node"
+      "node",
+      "jest"
     ],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "outDir": "./dist",

@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Jest Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/node_modules/.bin/jest",
+      "args": ["--runInBand", "--no-cache"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "windows": {
+        "program": "${workspaceFolder}/apps/api/node_modules/jest/bin/jest.js"
+      }
+    },
+    {
+      "name": "Debug Current Jest Test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/node_modules/.bin/jest",
+      "args": ["--runInBand", "--no-cache", "${relativeFile}"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "windows": {
+        "program": "${workspaceFolder}/apps/api/node_modules/jest/bin/jest.js"
+      }
+    }
+  ]
+}

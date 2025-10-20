@@ -1,37 +1,14 @@
 {
-  "editor.defaultFormatter": "biomejs.biome",
-  "editor.codeActionsOnSave": {
-    "source.organizeImports.biome": "explicit",
-    "source.fixAll.biome": "explicit"
+  "jest.jestCommandLine": "pnpm test",
+  "jest.rootPath": "apps/api",
+  "jest.autoRun": {
+    "watch": false,
+    "onSave": "test-file"
   },
-  "[json]": {
-    "editor.defaultFormatter": "biomejs.biome"
+  "jest.testExplorer": {
+    "enabled": true
   },
-  "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "editor.formatOnSave": true,
-  "cSpell.words": [
-    "autoincrement",
-    "cuid",
-    "hono",
-    "openai",
-    "posthog",
-    "Pressable",
-    "revenuecat",
-    "svix",
-    "tanstack",
-    "unban"
-  ],
-  "emeraldwalk.runonsave": {
-    "commands": [
-      {
-        "match": "\\.(ts|tsx|js|jsx|html)$",
-        "cmd": "pnpm biome lint ${file} --unsafe"
-      }
-    ]
-  }
+  "jest.showCoverageOnLoad": false,
+  "jest.coverageFormatter": "DefaultFormatter",
+  "typescript.preferences.includePackageJsonAutoImports": "auto"
 }
