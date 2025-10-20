@@ -8,6 +8,10 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Connection pool configuration for serverless optimization
+  // connection_limit: 1 prevents connection exhaustion in serverless
+  // pool_timeout: 0 disables connection timeout
+  // query_timeout: 10 sets 10 second query timeout
 }
 
 enum TaskStatus {

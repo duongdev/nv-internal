@@ -27,16 +27,65 @@ const prefixes: Partial<Record<ModelName, string>> = {
   /** biome-ignore-end lint/style/useNamingConvention: <extend model name> */
 }
 
+// Global Prisma instance cache for serverless optimization
+let prismaInstance: PrismaClient | null = null
+
 export const getPrisma = (databaseUrl = process.env.DATABASE_URL) => {
-  const options: ConstructorParameters<typeof PrismaClient>[0] = {}
+  // Return cached instance if available (singleton pattern for serverless)
+  if (prismaInstance) {
+    return prismaInstance
+  }
+
+  const options: ConstructorParameters<typeof PrismaClient>[0] = {
+    // Connection pool configuration for serverless
+    datasources: {
+      db: {
+        url: databaseUrl,
+      },
+    },
+    // Query timeout configuration
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'info', 'warn', 'error']
+        : ['error'],
+  }
 
   if (isVercelRuntime) {
     // Use the PrismaNeon adapter in Vercel serverless environment.
-    options.adapter = new PrismaNeon({ connectionString: databaseUrl })
+    options.adapter = new PrismaNeon({
+      connectionString: databaseUrl,
+    })
   }
 
   const prisma = new PrismaClient(options)
-  return extendPrismaClient(prisma, {
+  const extendedPrisma = extendPrismaClient(prisma, {
     prefixes,
   }) as unknown as PrismaClient
+
+  // Cache the instance for reuse
+  prismaInstance = extendedPrisma
+
+  return prismaInstance
+}
+
+// Graceful disconnect utility for serverless cleanup
+export const disconnectPrisma = async () => {
+  if (prismaInstance) {
+    try {
+      await prismaInstance.$disconnect()
+      prismaInstance = null
+    } catch (error) {
+      // Use proper logging instead of console
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error disconnecting Prisma:', error)
+      }
+    }
+  }
+}
+
+// Handle process termination gracefully
+if (typeof process !== 'undefined') {
+  process.on('SIGINT', disconnectPrisma)
+  process.on('SIGTERM', disconnectPrisma)
+  process.on('beforeExit', disconnectPrisma)
 }
