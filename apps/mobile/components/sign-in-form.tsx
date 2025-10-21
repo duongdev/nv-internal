@@ -1,8 +1,6 @@
 import { useSignIn } from '@clerk/clerk-expo'
-import { Link } from 'expo-router'
 import * as React from 'react'
 import { type TextInput, View } from 'react-native'
-import { SocialConnections } from '@/components/social-connections'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,16 +11,15 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 
 export function SignInForm() {
   const { signIn, setActive, isLoaded } = useSignIn()
-  const [email, setEmail] = React.useState('')
+  const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
   const passwordInputRef = React.useRef<TextInput>(null)
   const [error, setError] = React.useState<{
-    email?: string
+    username?: string
     password?: string
   }>({})
 
@@ -31,17 +28,17 @@ export function SignInForm() {
       return
     }
 
-    // Start the sign-in process using the email and password provided
+    // Start the sign-in process using the username and password provided
     try {
       const signInAttempt = await signIn.create({
-        identifier: email,
+        identifier: username,
         password,
       })
 
       // If sign-in process is complete, set the created session as active
       // and redirect the user
       if (signInAttempt.status === 'complete') {
-        setError({ email: '', password: '' })
+        setError({ username: '', password: '' })
         await setActive({ session: signInAttempt.createdSessionId })
         return
       }
@@ -50,11 +47,45 @@ export function SignInForm() {
     } catch (err) {
       // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
-        const isEmailMessage =
-          err.message.toLowerCase().includes('identifier') ||
-          err.message.toLowerCase().includes('email')
+        const errorMessage = err.message.toLowerCase()
+        let vietnameseError: string
+
+        // Translate common Clerk error messages to Vietnamese
+        if (errorMessage.includes("couldn't find your account")) {
+          vietnameseError = 'Không tìm thấy tài khoản của bạn.'
+        } else if (
+          errorMessage.includes('identifier') ||
+          errorMessage.includes('username')
+        ) {
+          if (errorMessage.includes('is required')) {
+            vietnameseError = 'Vui lòng nhập tên đăng nhập.'
+          } else if (errorMessage.includes('invalid')) {
+            vietnameseError = 'Tên đăng nhập không hợp lệ.'
+          } else {
+            vietnameseError = 'Không tìm thấy tài khoản của bạn.'
+          }
+        } else if (errorMessage.includes('password')) {
+          if (errorMessage.includes('is required')) {
+            vietnameseError = 'Vui lòng nhập mật khẩu.'
+          } else if (errorMessage.includes('incorrect')) {
+            vietnameseError = 'Mật khẩu không chính xác.'
+          } else if (errorMessage.includes('invalid')) {
+            vietnameseError = 'Mật khẩu không hợp lệ.'
+          } else {
+            vietnameseError = 'Đăng nhập thất bại. Vui lòng thử lại.'
+          }
+        } else {
+          vietnameseError = 'Đăng nhập thất bại. Vui lòng thử lại.'
+        }
+
+        const isUsernameMessage =
+          errorMessage.includes('identifier') ||
+          errorMessage.includes('username')
+
         setError(
-          isEmailMessage ? { email: err.message } : { password: err.message },
+          isUsernameMessage
+            ? { username: vietnameseError }
+            : { password: vietnameseError },
         )
         return
       }
@@ -62,7 +93,7 @@ export function SignInForm() {
     }
   }
 
-  function onEmailSubmitEditing() {
+  function onUsernameSubmitEditing() {
     passwordInputRef.current?.focus()
   }
 
@@ -71,52 +102,38 @@ export function SignInForm() {
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-black/5 sm:shadow-sm">
         <CardHeader>
           <CardTitle className="text-center text-xl sm:text-left">
-            Sign in to mobile
+            Điện lạnh Nam Việt
           </CardTitle>
           <CardDescription className="text-center sm:text-left">
-            Welcome back! Please sign in to continue
+            Chào mừng! Vui lòng đăng nhập để tiếp tục
           </CardDescription>
         </CardHeader>
         <CardContent className="gap-6">
           <View className="gap-6">
             <View className="gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Tên đăng nhập</Label>
               <Input
                 autoCapitalize="none"
-                autoComplete="email"
-                id="email"
-                keyboardType="email-address"
-                onChangeText={setEmail}
-                onSubmitEditing={onEmailSubmitEditing}
-                placeholder="m@example.com"
+                id="username"
+                onChangeText={setUsername}
+                onSubmitEditing={onUsernameSubmitEditing}
+                placeholder="Nhập tên đăng nhập"
                 returnKeyType="next"
                 submitBehavior="submit"
               />
-              {error.email ? (
+              {error.username ? (
                 <Text className="font-medium text-destructive text-sm">
-                  {error.email}
+                  {error.username}
                 </Text>
               ) : null}
             </View>
             <View className="gap-1.5">
-              <View className="flex-row items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link asChild href={`/(auth)/forgot-password?email=${email}`}>
-                  <Button
-                    className="ml-auto h-4 web:h-fit px-1 py-0 sm:h-4"
-                    size="sm"
-                    variant="link"
-                  >
-                    <Text className="font-normal leading-4">
-                      Forgot your password?
-                    </Text>
-                  </Button>
-                </Link>
-              </View>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 onChangeText={setPassword}
                 onSubmitEditing={onSubmit}
+                placeholder="••••••••"
                 ref={passwordInputRef}
                 returnKeyType="send"
                 secureTextEntry
@@ -128,24 +145,9 @@ export function SignInForm() {
               ) : null}
             </View>
             <Button className="w-full" onPress={onSubmit}>
-              <Text>Continue</Text>
+              <Text>Đăng nhập</Text>
             </Button>
           </View>
-          <Text className="text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link
-              className="text-sm underline underline-offset-4"
-              href="/(auth)/sign-up"
-            >
-              Sign up
-            </Link>
-          </Text>
-          <View className="flex-row items-center">
-            <Separator className="flex-1" />
-            <Text className="px-4 text-muted-foreground text-sm">or</Text>
-            <Separator className="flex-1" />
-          </View>
-          <SocialConnections />
         </CardContent>
       </Card>
     </View>

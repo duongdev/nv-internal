@@ -14,4 +14,4 @@ generated/
 # Test files
 test-*.ts
 test-*.js
-server.ts
+server.tspackages/WebDriverAgent/

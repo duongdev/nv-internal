@@ -43,7 +43,7 @@ pnpm biome:format        # Format code
 ```bash
 # Start local development (requires database first)
 docker compose -f docker-compose.dev.yml up    # Start local PostgreSQL
-npx vc dev                                     # Start API server with Vercel dev
+npx vc dev                                     # Start API server with Vercel dev, run in the root of the monorepo
 
 # Build and deployment
 pnpm build             # Build API only

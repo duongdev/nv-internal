@@ -24,7 +24,7 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
         <View className="flex-1">
           <TaskStatusBadge status={task.status} />
           <Text className="font-sans-medium" variant="h4">
-            {task.title || 'Chưa có tiêu đề'} {task.title || 'Chưa có tiêu đề'}
+            {task.title || 'Chưa có tiêu đề'}
           </Text>
         </View>
 
