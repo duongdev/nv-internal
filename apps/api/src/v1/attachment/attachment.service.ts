@@ -299,12 +299,23 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
 /**
  * Stream file for attachment view endpoint
  * Validates JWT token and returns file stream (works for both local and Vercel Blob)
+ * Supports byte range requests for video streaming
  */
-export async function streamLocalFile({ token }: { token: string }): Promise<{
+export async function streamLocalFile({
+  token,
+  start,
+  end,
+}: {
+  token: string
+  start?: number
+  end?: number
+}): Promise<{
   stream: NodeJS.ReadableStream
   mimeType: string
   size: number
   filename: string
+  blobUrl?: string
+  provider?: string
 }> {
   const logger = getLogger('attachment.service:streamFile')
   const secret = process.env.ATTACHMENT_JWT_SECRET
@@ -369,9 +380,19 @@ export async function streamLocalFile({ token }: { token: string }): Promise<{
         'Found blob in Vercel Blob storage',
       )
 
+      // Prepare fetch options with range header if needed
+      const fetchOptions: RequestInit = {}
+      if (start !== undefined) {
+        const endPart = end !== undefined ? end.toString() : ''
+        fetchOptions.headers = {
+          // biome-ignore lint/style/useNamingConvention: Range is a standard HTTP header
+          Range: `bytes=${start}-${endPart}`,
+        }
+      }
+
       // Fetch the file from the blob URL
-      const response = await fetch(blobInfo.url)
-      if (!response.ok) {
+      const response = await fetch(blobInfo.url, fetchOptions)
+      if (!response.ok && response.status !== 206) {
         logger.error(
           { status: response.status, key, blobUrl: blobInfo.url },
           'Failed to fetch from Vercel Blob',
@@ -401,6 +422,8 @@ export async function streamLocalFile({ token }: { token: string }): Promise<{
         mimeType: attachment.mimeType,
         size: actualSize,
         filename: filename || attachment.originalFilename,
+        blobUrl: blobInfo.url, // Return blob URL for potential redirect
+        provider: 'vercel-blob',
       }
     } catch (error) {
       logger.error({ error, key }, 'Failed to fetch blob metadata')
@@ -427,11 +450,20 @@ export async function streamLocalFile({ token }: { token: string }): Promise<{
     throw err
   }
 
-  // Create read stream
-  const stream = createReadStream(filePath)
+  // Create read stream with range support
+  // Note: createReadStream's end is inclusive, and HTTP Range end is also inclusive
+  const streamOptions: { start?: number; end?: number } = {}
+  if (start !== undefined) {
+    streamOptions.start = start
+  }
+  if (end !== undefined) {
+    streamOptions.end = end // Both HTTP Range and createReadStream use inclusive end
+  }
+
+  const stream = createReadStream(filePath, streamOptions)
 
   logger.info(
-    { key, size: fileStats.size, provider: 'local-disk' },
+    { key, size: fileStats.size, provider: 'local-disk', range: streamOptions },
     'Streaming local file',
   )
 
@@ -440,5 +472,6 @@ export async function streamLocalFile({ token }: { token: string }): Promise<{
     mimeType: attachment.mimeType,
     size: fileStats.size,
     filename: filename || attachment.originalFilename,
+    provider: 'local-disk',
   }
 }

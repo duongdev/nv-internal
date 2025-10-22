@@ -13,6 +13,29 @@ type AssetType =
   | ImagePicker.ImagePickerAsset
   | DocumentPicker.DocumentPickerAsset
 
+/**
+ * Get MIME type from file extension as fallback
+ */
+function getMimeTypeFromExtension(filename: string): string | null {
+  const ext = filename.toLowerCase().split('.').pop()
+  const mimeMap: Record<string, string> = {
+    // Images
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    heic: 'image/heic',
+    heif: 'image/heif',
+    // Videos
+    mov: 'video/quicktime',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    // Documents
+    pdf: 'application/pdf',
+  }
+  return ext ? mimeMap[ext] || null : null
+}
+
 async function uploadAttachmentsReal({
   taskId,
   assets,
@@ -30,12 +53,18 @@ async function uploadAttachmentsReal({
         : 'fileName' in asset
           ? asset.fileName
           : 'file.jpg'
-    const mimeType =
-      'mimeType' in asset
-        ? asset.mimeType
-        : 'type' in asset
-          ? asset.type
-          : 'image/jpeg'
+
+    // Try to get MIME type from asset, then from file extension, finally use default
+    let mimeType =
+      'mimeType' in asset ? asset.mimeType : 'type' in asset ? asset.type : null
+
+    // If mimeType is not available or is the generic type, try to infer from filename
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      const inferredType = getMimeTypeFromExtension(fileName || '')
+      if (inferredType) {
+        mimeType = inferredType
+      }
+    }
 
     // React Native FormData format
     // @ts-ignore - React Native FormData types differ from web
