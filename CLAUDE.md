@@ -196,6 +196,57 @@ Examples:
 - **Test Environment**: Node environment with ts-jest preset
 - **Test Files**: Named `*.test.ts` alongside source files
 
+## Task Documentation
+
+**IMPORTANT**: When implementing features or fixes, always document your work in `.claude/tasks/`:
+
+1. **Create Task Files**: Use format `YYYYMMDD-HHMMSS-description.md` for descending sort by creation time
+   - Date and time in UTC
+   - Example: `20251022-224500-fix-attachment-counting-and-ui.md`
+
+2. **Keep Documentation Updated**: Update task files throughout the implementation process
+   - Document problem analysis
+   - Track implementation steps and progress
+   - Record testing results and decisions made
+   - Note any deviations from the original plan
+
+3. **Task File Structure**:
+
+   ```markdown
+   # Task Title
+
+   ## Overview
+
+   Brief description of the task
+
+   ## Implementation Status
+
+   ⏳ In Progress / ✅ Completed
+
+   ## Problem Analysis
+
+   Detailed analysis of the issue
+
+   ## Implementation Plan
+
+   - [ ] Step 1
+   - [ ] Step 2
+
+   ## Testing Scenarios
+
+   Test cases and results
+
+   ## Notes
+
+   Important decisions and context
+   ```
+
+4. **Benefits**:
+   - Provides audit trail of changes
+   - Helps onboard team members
+   - Documents architectural decisions
+   - Makes it easy to review past implementations
+
 ## Important File Locations
 
 - **API Routes**: `apps/api/src/v1/*/` (route.ts and service.ts files)
@@ -203,6 +254,7 @@ Examples:
 - **Database Schema**: `apps/api/prisma/schema.prisma`
 - **Shared Validation**: `packages/validation/`
 - **Shared Prisma Client**: `packages/prisma-client/`
+- **Task Documentation**: `.claude/tasks/` (implementation tracking)
 - **Cursor Rules**: `.cursor/rules/` (project-specific guidelines)
 - **Commit Commands**: `.cursor/commands/commit-changes.md`
 

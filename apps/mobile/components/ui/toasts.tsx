@@ -32,8 +32,11 @@ export const toast = {
   loading: (message: string, options?: ToastOptions) =>
     $toast.loading(message, {
       ...DEFAULT_TOAST_OPTIONS,
+      // Loading toasts should persist indefinitely until explicitly dismissed
+      duration: Number.POSITIVE_INFINITY,
       ...options,
     }),
+  dismiss: (id: string) => $toast.dismiss(id),
   promise<T>(
     promise: Promise<T>,
     msgs: {

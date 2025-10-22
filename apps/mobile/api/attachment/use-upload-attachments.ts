@@ -116,7 +116,12 @@ export function useUploadAttachments(
   mutationOptions?: UseMutationOptions<
     UploadAttachmentsResponse,
     Error,
-    { taskId: number; assets: AssetType[] }
+    {
+      taskId: number
+      assets: AssetType[]
+      loadingToastId?: string
+      toastStartTime?: number
+    }
   >,
 ) {
   const queryClient = useQueryClient()
@@ -124,18 +129,56 @@ export function useUploadAttachments(
   return useMutation({
     mutationFn: uploadAttachmentsReal,
     ...mutationOptions,
-    onSuccess: (...args) => {
-      mutationOptions?.onSuccess?.(...args)
+    onSuccess: async (data, variables, ...args) => {
+      const { toast } = require('@/components/ui/toasts')
+
+      // Dismiss loading toast if provided, but ensure minimum display time
+      const loadingToastId = variables.loadingToastId
+      const toastStartTime = variables.toastStartTime
+      if (loadingToastId && toastStartTime) {
+        const MIN_DISPLAY_TIME = 1000 // 1 second minimum to ensure user sees it
+        const elapsed = Date.now() - toastStartTime
+
+        // If less than minimum time has passed, wait
+        if (elapsed < MIN_DISPLAY_TIME) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, MIN_DISPLAY_TIME - elapsed),
+          )
+        }
+
+        // Dismiss the loading toast
+        toast.dismiss(loadingToastId)
+      }
+
+      mutationOptions?.onSuccess?.(data, variables, ...args)
 
       // Show success toast
-      const { toast } = require('@/components/ui/toasts')
       toast.success('Tải tệp lên thành công')
     },
-    onError: (error, ...args) => {
-      mutationOptions?.onError?.(error, ...args)
+    onError: async (error, variables, ...args) => {
+      const { toast } = require('@/components/ui/toasts')
+
+      // Dismiss loading toast if provided, but ensure minimum display time
+      const loadingToastId = variables.loadingToastId
+      const toastStartTime = variables.toastStartTime
+      if (loadingToastId && toastStartTime) {
+        const MIN_DISPLAY_TIME = 1000 // 1 second minimum to ensure user sees it
+        const elapsed = Date.now() - toastStartTime
+
+        // If less than minimum time has passed, wait
+        if (elapsed < MIN_DISPLAY_TIME) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, MIN_DISPLAY_TIME - elapsed),
+          )
+        }
+
+        // Dismiss the loading toast
+        toast.dismiss(loadingToastId)
+      }
+
+      mutationOptions?.onError?.(error, variables, ...args)
 
       // Show error toast
-      const { toast } = require('@/components/ui/toasts')
       const errorMessage =
         error.message || 'Không thể tải tệp lên. Vui lòng thử lại.'
       toast.error(errorMessage)

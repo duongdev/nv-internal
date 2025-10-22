@@ -13,7 +13,7 @@ import {
   ImageIcon,
   XIcon,
 } from 'lucide-react-native'
-import { forwardRef, useState } from 'react'
+import { forwardRef, useRef, useState } from 'react'
 import { Alert, Image, Linking, Pressable, View } from 'react-native'
 import { useUploadAttachments } from '@/api/attachment/use-upload-attachments'
 import { Badge } from './ui/badge'
@@ -21,6 +21,7 @@ import { BottomSheet } from './ui/bottom-sheet'
 import { Button } from './ui/button'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
+import { toast } from './ui/toasts'
 
 type CapturedPhoto = ImagePicker.ImagePickerAsset
 
@@ -32,6 +33,7 @@ export const AttachmentUploadSheet = forwardRef<
 >(({ taskId, ...props }, ref) => {
   const [mode, setMode] = useState<'choice' | 'camera-review'>('choice')
   const [capturedPhotos, setCapturedPhotos] = useState<CapturedPhoto[]>([])
+  const loadingToastIdRef = useRef<string | null>(null)
   const uploadMutation = useUploadAttachments()
 
   const handleCamera = async () => {
@@ -123,8 +125,27 @@ export const AttachmentUploadSheet = forwardRef<
       | DocumentPicker.DocumentPickerAsset
     )[],
   ) => {
-    // Upload assets directly without thumbnail generation
-    await uploadMutation.mutateAsync({ taskId, assets })
+    // Show loading toast with 30 second maximum duration
+    const fileCount = assets.length
+    const loadingMessage =
+      fileCount === 1
+        ? 'Đang tải lên 1 tệp...'
+        : `Đang tải lên ${fileCount} tệp...`
+    const toastId = toast.loading(loadingMessage, { duration: 30000 })
+    const toastStartTime = Date.now()
+    loadingToastIdRef.current = toastId
+
+    try {
+      // Upload assets directly without thumbnail generation
+      await uploadMutation.mutateAsync({
+        taskId,
+        assets,
+        loadingToastId: toastId,
+        toastStartTime,
+      })
+    } finally {
+      loadingToastIdRef.current = null
+    }
   }
 
   const handleCameraUpload = async () => {
