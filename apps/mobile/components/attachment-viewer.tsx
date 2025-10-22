@@ -206,6 +206,7 @@ export function AttachmentViewer({
           initialIndex={initialIndex}
           keyExtractor={(item) => item}
           onIndexChange={setCurrentIndex}
+          onSwipeToClose={onClose}
           renderItem={renderItem}
         />
       </View>
