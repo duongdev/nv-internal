@@ -97,6 +97,12 @@ model Attachment {
   fileHash         String?
   uploadedBy       String   // Clerk userId
 
+  // Thumbnail and preview support
+  thumbnailPathname String?  // Storage path for video thumbnail or resized image
+  blurhash          String?  // BlurHash placeholder for images and videos
+  width             Int?     // Original width in pixels
+  height            Int?     // Original height in pixels
+
   @@index([taskId])
   @@index([uploadedBy])
 }

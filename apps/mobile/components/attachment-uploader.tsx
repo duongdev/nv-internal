@@ -18,7 +18,8 @@ export function AttachmentUploader({
   const { user } = useUser()
 
   // Permission check
-  const isAdmin = user?.publicMetadata?.roles?.includes('nv_internal_admin')
+  const roles = user?.publicMetadata?.roles
+  const isAdmin = Array.isArray(roles) && roles.includes('nv_internal_admin')
   const isAssigned = assigneeIds.includes(user?.id || '')
   const canUpload = isAdmin || isAssigned
 
