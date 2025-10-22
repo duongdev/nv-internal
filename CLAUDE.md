@@ -107,6 +107,27 @@ Examples:
 - `fix(mobile): prevent crash on task details for missing location`
 - `refactor(prisma): extract prefixed id helper to shared client`
 
+### Pull Requests
+
+**Merge Strategy**: PRs will be **squashed and merged** into the main branch.
+
+**PR Title**: Use semantic commit format for PR titles since they become the final commit message after squashing.
+
+Format: `<type>(<scope>): <description>`
+
+Examples:
+
+- `feat(mobile): add compact attachment list to activity feed`
+- `fix(api): resolve database connection timeout issue`
+- `refactor(mobile): improve attachment viewer performance`
+
+**PR Description**: Include:
+
+- Summary of changes
+- Test plan
+- Breaking changes (if any)
+- Screenshots/demo (for UI changes)
+
 ## Key Architecture Patterns
 
 ### API Structure
