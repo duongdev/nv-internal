@@ -10,5 +10,27 @@
   },
   "jest.showCoverageOnLoad": false,
   "jest.coverageFormatter": "DefaultFormatter",
-  "typescript.preferences.includePackageJsonAutoImports": "auto"
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "editor.formatOnSave": true,
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.(ts|tsx|js|jsx|html)$",
+        "cmd": "pnpm biome lint ${file} --unsafe"
+      }
+    ]
+  }
 }
