@@ -26,7 +26,7 @@ type CapturedPhoto = ImagePicker.ImagePickerAsset
 
 export const AttachmentUploadSheet = forwardRef<
   BottomSheetModalMethods,
-  BottomSheetModalProps & {
+  Omit<BottomSheetModalProps, 'children'> & {
     taskId: number
   }
 >(({ taskId, ...props }, ref) => {
@@ -123,7 +123,7 @@ export const AttachmentUploadSheet = forwardRef<
       | DocumentPicker.DocumentPickerAsset
     )[],
   ) => {
-    // Pass assets directly - they will be converted to FormData in the mutation
+    // Upload assets directly without thumbnail generation
     await uploadMutation.mutateAsync({ taskId, assets })
   }
 

@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import type { User } from '@clerk/backend'
 import type { Prisma } from '@nv-internal/prisma-client'
 import jwt from 'jsonwebtoken'
+import { generateBlurhash } from '../../lib/blurhash'
 import { defaultUploadConfig } from '../../lib/config/upload-config'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
@@ -81,6 +82,50 @@ export async function uploadTaskAttachments({
   }
 
   // Upload & persist
+  interface FileInfo {
+    file: File
+    key: string
+    safeName: string
+  }
+
+  const fileInfos: FileInfo[] = []
+
+  for (const file of files) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const date = new Date()
+    const key = `tasks/${taskId}/${date.getUTCFullYear()}/${
+      date.getUTCMonth() + 1
+    }/${date.getUTCDate()}/${crypto.randomUUID()}-${safeName}`
+
+    fileInfos.push({
+      file,
+      key,
+      safeName,
+    })
+  }
+
+  // Upload all files to storage
+  for (const info of fileInfos) {
+    try {
+      await storage.put({
+        key: info.key,
+        body: info.file,
+        contentType: info.file.type,
+      })
+    } catch (storageError) {
+      logger.error(
+        {
+          error: String(storageError),
+          key: info.key,
+          fileName: info.file.name,
+        },
+        'Failed to upload file to storage',
+      )
+      throw storageError
+    }
+  }
+
+  // Create attachment records with blurhash for images only
   const toCreate: Array<Prisma.AttachmentCreateManyInput> = []
   const uploaded: Array<{
     provider: string
@@ -90,39 +135,51 @@ export async function uploadTaskAttachments({
     originalFilename: string
   }> = []
 
-  for (const file of files) {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const date = new Date()
-    const key = `tasks/${taskId}/${date.getUTCFullYear()}/${
-      date.getUTCMonth() + 1
-    }/${date.getUTCDate()}/${crypto.randomUUID()}-${safeName}`
+  for (const info of fileInfos) {
+    const baseData = {
+      taskId,
+      provider: storage.name,
+      pathname: info.key,
+      mimeType: info.file.type,
+      size: info.file.size,
+      originalFilename: info.file.name,
+      uploadedBy: user.id,
+    }
 
-    try {
-      await storage.put({ key, body: file, contentType: file.type })
-    } catch (storageError) {
-      logger.error(
-        { error: String(storageError), key, fileName: file.name },
-        'Failed to upload file to storage',
-      )
-      throw storageError
+    // Generate blurhash for images only
+    let blurhashData:
+      | { blurhash: string; width: number; height: number }
+      | undefined
+    if (info.file.type.startsWith('image/')) {
+      try {
+        // Get file buffer to generate blurhash
+        const buffer = Buffer.from(await info.file.arrayBuffer())
+        blurhashData = await generateBlurhash(buffer)
+        logger.info(
+          { filename: info.file.name, blurhash: blurhashData.blurhash },
+          'Generated blurhash for image',
+        )
+      } catch (error) {
+        logger.warn(
+          { error, filename: info.file.name },
+          'Failed to generate blurhash for image',
+        )
+      }
     }
 
     uploaded.push({
       provider: storage.name,
-      pathname: key,
-      mimeType: file.type,
-      size: file.size,
-      originalFilename: file.name,
+      pathname: info.key,
+      mimeType: info.file.type,
+      size: info.file.size,
+      originalFilename: info.file.name,
     })
 
     toCreate.push({
-      taskId,
-      provider: storage.name,
-      pathname: key,
-      mimeType: file.type,
-      size: file.size,
-      originalFilename: file.name,
-      uploadedBy: user.id,
+      ...baseData,
+      blurhash: blurhashData?.blurhash,
+      width: blurhashData?.width,
+      height: blurhashData?.height,
     })
   }
 
@@ -167,6 +224,10 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
     createdAt: Date
     url: string
     expiresAt: string
+    thumbnailUrl?: string
+    blurhash?: string
+    width?: number
+    height?: number
   }>
 > {
   const logger = getLogger('attachment.service:getAttachmentsByIds')
@@ -196,6 +257,25 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
         dispositionFilename: attachment.originalFilename,
       })
 
+      // Generate signed URL for thumbnail if it exists
+      let thumbnailUrl: string | undefined
+      if (attachment.thumbnailPathname) {
+        try {
+          thumbnailUrl = await storage.getSignedUrl(
+            attachment.thumbnailPathname,
+            {
+              expiresInSec,
+              dispositionFilename: `thumb_${attachment.originalFilename}`,
+            },
+          )
+        } catch (error) {
+          logger.warn(
+            { error, attachmentId: attachment.id },
+            'Failed to generate thumbnail URL',
+          )
+        }
+      }
+
       return {
         id: attachment.id,
         originalFilename: attachment.originalFilename,
@@ -204,6 +284,10 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
         createdAt: attachment.createdAt,
         url,
         expiresAt: expiresAt.toISOString(),
+        thumbnailUrl,
+        blurhash: attachment.blurhash ?? undefined,
+        width: attachment.width ?? undefined,
+        height: attachment.height ?? undefined,
       }
     }),
   )

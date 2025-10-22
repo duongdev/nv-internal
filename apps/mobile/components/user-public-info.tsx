@@ -25,7 +25,7 @@ export const UserPublicInfo: FC<
   }
 
   if (!data) {
-    return '[deleted]'
+    return <Text className={className}>[deleted]</Text>
   }
 
   return <>{children(data)}</>
