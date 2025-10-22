@@ -228,6 +228,7 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
     blurhash?: string
     width?: number
     height?: number
+    uploadedBy: string
   }>
 > {
   const logger = getLogger('attachment.service:getAttachmentsByIds')
@@ -288,6 +289,7 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
         blurhash: attachment.blurhash ?? undefined,
         width: attachment.width ?? undefined,
         height: attachment.height ?? undefined,
+        uploadedBy: attachment.uploadedBy,
       }
     }),
   )

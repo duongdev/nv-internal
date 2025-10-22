@@ -13,6 +13,7 @@ export interface Attachment {
   blurhash?: string
   width?: number
   height?: number
+  uploadedBy: string
 }
 
 export async function fetchAttachmentsByIds(ids: string[]) {

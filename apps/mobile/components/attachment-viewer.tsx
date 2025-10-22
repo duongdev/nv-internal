@@ -9,6 +9,7 @@ import { AttachmentViewerPdf } from './attachment-viewer-pdf'
 import { AttachmentViewerVideo } from './attachment-viewer-video'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
+import { UserFullName } from './user-public-info'
 
 interface AttachmentViewerProps {
   visible: boolean
@@ -79,7 +80,15 @@ export function AttachmentViewer({
     }
 
     if (isPdf) {
-      return <AttachmentViewerPdf attachment={attachment} />
+      // Calculate header height to prevent overlap
+      // Header includes: safe area top + paddingTop(12) + py-3(12) + content(~50) + py-3(12)
+      const headerHeight = insets.top + 12 + 12 + 50 + 12
+      return (
+        <AttachmentViewerPdf
+          attachment={attachment}
+          headerHeight={headerHeight}
+        />
+      )
     }
 
     return (
@@ -107,10 +116,16 @@ export function AttachmentViewer({
             <Text className="font-sans-medium text-white" numberOfLines={1}>
               {currentAttachment.originalFilename}
             </Text>
-            <Text className="text-white/70 text-xs">
-              {currentIndex + 1} / {attachments.length} •{' '}
-              {formatUploadDate(currentAttachment.createdAt)}
-            </Text>
+            <View className="flex-row items-center gap-1">
+              <Text className="text-white/70 text-xs">
+                {currentIndex + 1} / {attachments.length} •{' '}
+                {formatUploadDate(currentAttachment.createdAt)} •{' '}
+              </Text>
+              <UserFullName
+                className="text-white/70 text-xs"
+                userId={currentAttachment.uploadedBy}
+              />
+            </View>
           </View>
           <Pressable
             className="ml-3 rounded-full bg-black/50 p-2"

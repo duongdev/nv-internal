@@ -6,9 +6,13 @@ import { Text } from './ui/text'
 
 interface AttachmentViewerPdfProps {
   attachment: Attachment
+  headerHeight?: number
 }
 
-export function AttachmentViewerPdf({ attachment }: AttachmentViewerPdfProps) {
+export function AttachmentViewerPdf({
+  attachment,
+  headerHeight = 0,
+}: AttachmentViewerPdfProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,6 +35,7 @@ export function AttachmentViewerPdf({ attachment }: AttachmentViewerPdfProps) {
           #container {
             width: 100%;
             min-height: 100vh;
+            padding-top: ${headerHeight}px;
           }
           canvas {
             display: block;
@@ -59,51 +64,34 @@ export function AttachmentViewerPdf({ attachment }: AttachmentViewerPdfProps) {
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
         <script>
-          function log(msg) {
-            console.log('[PDF Viewer]', msg);
-            window.ReactNativeWebView?.postMessage('log:' + msg);
-          }
-
           function setLoadingText(text) {
             const loading = document.getElementById('loading');
             if (loading) loading.textContent = text;
           }
 
-          log('PDF Viewer initialized');
-
           const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
           if (!pdfjsLib) {
-            log('ERROR: PDF.js library not loaded');
             setLoadingText('Lỗi: Không tải được thư viện PDF.js');
             window.ReactNativeWebView?.postMessage('error:PDF.js library not loaded');
           } else {
-            log('PDF.js library loaded successfully');
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
             const pdfUrl = '${attachment.url}';
-            log('PDF URL: ' + pdfUrl);
-
             const container = document.getElementById('container');
 
             async function renderPDF() {
               try {
-                log('Starting PDF load...');
                 setLoadingText('Đang tải PDF...');
 
                 const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                log('PDF loading task created');
-
                 const pdf = await loadingTask.promise;
-                log('PDF loaded successfully. Pages: ' + pdf.numPages);
 
                 setLoadingText('Đang hiển thị PDF...');
                 document.getElementById('loading').style.display = 'none';
 
                 // Render all pages
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                  log('Rendering page ' + pageNum + '/' + pdf.numPages);
-
                   const page = await pdf.getPage(pageNum);
 
                   // Calculate scale to fit screen width
@@ -125,17 +113,12 @@ export function AttachmentViewerPdf({ attachment }: AttachmentViewerPdfProps) {
                     canvasContext: context,
                     viewport: scaledViewport
                   }).promise;
-
-                  log('Page ' + pageNum + ' rendered');
                 }
 
-                log('All pages rendered successfully');
                 window.ReactNativeWebView?.postMessage('loaded');
               } catch (err) {
                 const errorMsg = err.message || err.toString();
                 const errorStack = err.stack || 'No stack trace';
-                log('ERROR: ' + errorMsg);
-                log('Stack: ' + errorStack);
 
                 setLoadingText('Lỗi khi tải PDF: ' + errorMsg);
                 window.ReactNativeWebView?.postMessage('error:' + errorMsg + '|||' + errorStack);
@@ -176,21 +159,14 @@ export function AttachmentViewerPdf({ attachment }: AttachmentViewerPdfProps) {
         }}
         onMessage={(event) => {
           const message = event.nativeEvent.data
-          console.log('[PDF WebView Message]', message)
 
           if (message === 'loaded') {
-            console.log('[PDF] Loaded successfully')
             setLoading(false)
           } else if (message.startsWith('error:')) {
             const errorParts = message.substring(6).split('|||')
             const errorMsg = errorParts[0]
-            const errorStack = errorParts[1]
-            console.error('[PDF Error]', errorMsg)
-            console.error('[PDF Stack]', errorStack)
             setLoading(false)
             setError(`Lỗi: ${errorMsg}`)
-          } else if (message.startsWith('log:')) {
-            console.log('[PDF Log]', message.substring(4))
           }
         }}
         originWhitelist={['*']}
