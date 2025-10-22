@@ -10,7 +10,7 @@
 
 📋 **Feature Plans:**
 1. [Payment System](./01-payment-system.md) - Week 1-2 🔴
-2. [Check-in/Check-out](./02-checkin-checkout.md) - Week 3-4 🔴
+2. [Check-in/Check-out](./02-checkin-checkout.md) - Week 3-4 🔄 **Phase 1 Backend ✅**
 3. [Monthly Reports](./03-monthly-reports.md) - Week 5 🔴
 4. [Task CRUD Enhancements](./04-task-crud.md) - Week 5 🟡
 5. [Employee Management](./05-employee-management.md) - Week 6 🟡
@@ -59,7 +59,15 @@ The plan addresses gaps between current implementation and contract requirements
 
 ### ⏳ In Progress
 
-Nothing currently in progress.
+**Check-in/Check-out System (Phase 1/4):**
+- ✅ Backend API completed (2025-10-22)
+  - GPS utilities with Haversine formula
+  - Check-in/out endpoints with multipart uploads
+  - Activity-based event logging
+  - 22 tests all passing
+- ⏳ Phase 2: Mobile UI implementation (next)
+- ⏳ Phase 3: Admin features
+- ⏳ Phase 4: Testing & polish
 
 ### ❌ Critical Gaps (Blockers for v1)
 
@@ -69,10 +77,10 @@ Nothing currently in progress.
    - Cannot upload invoices
    - [→ See Payment System Plan](./01-payment-system.md)
 
-2. **Check-in/Check-out System** 🔴
-   - No GPS + photo verification
-   - No dedicated check-in/out endpoints
-   - Status updates not location-verified
+2. **Check-in/Check-out System** 🔄 **Backend Complete**
+   - ✅ Backend API with GPS verification (Phase 1 done)
+   - ⏳ Mobile UI not yet implemented (Phase 2)
+   - ⏳ Admin monitoring features pending (Phase 3)
    - [→ See Check-in/Check-out Plan](./02-checkin-checkout.md)
 
 3. **Monthly Reports** 🔴
@@ -98,12 +106,12 @@ Nothing currently in progress.
 | **Admin: Create tasks** | ✅ 100% | - | - |
 | **Admin: Edit tasks** | ❌ 0% | Phase 3b | 🟡 |
 | **Admin: Assign workers** | ✅ 100% | - | - |
-| **Admin: Track check-ins** | ❌ 0% | Phase 2 | 🔴 |
+| **Admin: Track check-ins** | 🔄 25% | Phase 2 | 🔴 |
 | **Admin: Track payments** | ❌ 0% | Phase 1 | 🔴 |
 | **Admin: Monthly reports** | ❌ 0% | Phase 3 | 🔴 |
 | **Worker: View tasks** | ✅ 100% | - | - |
-| **Worker: Check-in** | ❌ 0% | Phase 2 | 🔴 |
-| **Worker: Check-out** | ❌ 0% | Phase 2 | 🔴 |
+| **Worker: Check-in** | 🔄 25% | Phase 2 | 🔴 |
+| **Worker: Check-out** | 🔄 25% | Phase 2 | 🔴 |
 | **Worker: Upload invoices** | ❌ 0% | Phase 1 | 🔴 |
 | **Worker: Update task status** | ✅ 100% | - | - |
 

@@ -141,6 +141,52 @@ Examples:
 - **Activity Logging**: Log all state changes to Activity table
 - **Pagination**: Use cursor-based pagination for lists
 
+### GPS Verification Pattern
+
+When implementing location-based features:
+
+- Use Haversine formula for distance calculation (see `apps/api/src/lib/geo.ts`)
+- Store coordinates in GeoLocation model
+- Set configurable threshold via environment variable (default 100m)
+- Return warnings instead of hard failures for UX
+- Example: Check-in system allows 100m threshold with warnings
+
+**Anti-pattern**: Don't use simple lat/lng subtraction - it's inaccurate
+
+```typescript
+// ✅ Good - Haversine formula
+import { calculateDistance } from '@/lib/geo'
+const distance = calculateDistance(lat1, lon1, lat2, lon2)
+
+// ❌ Bad - Simple subtraction
+const distance = Math.sqrt((lat2-lat1)**2 + (lon2-lon1)**2) // Inaccurate!
+```
+
+### Activity-Based Event Pattern
+
+When implementing task events (check-in/out, status changes):
+
+- Reuse existing Activity model for event logging
+- Store event-specific data in JSON payload field
+- Upload attachments via existing `uploadTaskAttachments` service
+- Create abstracted service functions for code reuse
+
+Example from check-in/out implementation:
+
+```typescript
+// Activity payload structure for events
+{
+  type: 'CHECK_IN' | 'CHECK_OUT',
+  geoLocation: { id, lat, lng },
+  distanceFromTask: number,
+  attachments: [{ id, mimeType, originalFilename }],
+  notes?: string,
+  warnings?: string[]
+}
+```
+
+See `.claude/tasks/20251022-211855-implement-checkin-checkout-system.md` for implementation details.
+
 ### Mobile App Structure
 
 - **Routing**: Expo Router file-based routing in `apps/mobile/app/`
