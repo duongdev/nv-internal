@@ -1,8 +1,9 @@
 import { Link } from 'expo-router'
 // ...existing code...
-import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native'
+import { FlatList, RefreshControl, View } from 'react-native'
 import { useTaskInfiniteList } from '@/api/task/use-task-infinite-list'
 import { TaskListItem } from './task-list-item'
+import { TaskListItemSkeleton } from './task-list-item-skeleton'
 import { EmptyState } from './ui/empty-state'
 
 export type AdminTaskListProps = {
@@ -35,7 +36,15 @@ export function AdminTaskList({
   }
 
   if (isLoading) {
-    return <ActivityIndicator className="my-2" />
+    return (
+      <View className={contentContainerClassName}>
+        <TaskListItemSkeleton />
+        <TaskListItemSkeleton />
+        <TaskListItemSkeleton />
+        <TaskListItemSkeleton />
+        <TaskListItemSkeleton />
+      </View>
+    )
   }
 
   return (

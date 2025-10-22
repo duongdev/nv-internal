@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { RefreshControl, SectionList, View } from 'react-native'
 import { useAssignedTaskInfiniteList } from '@/api/task/use-assigned-task-infinite-list'
 import { TaskListItem } from '@/components/task-list-item'
+import { TaskListItemSkeleton } from '@/components/task-list-item-skeleton'
 import { Text } from '@/components/ui/text'
 
 export default function WorkerIndex() {
@@ -11,6 +12,7 @@ export default function WorkerIndex() {
     data: activeTasks,
     refetch: refetchActiveTasks,
     isRefetching: isRefetchingActiveTasks,
+    isLoading: isLoadingActiveTasks,
   } = useAssignedTaskInfiniteList({
     status: [TaskStatus.READY, TaskStatus.IN_PROGRESS],
     limit: 50,
@@ -22,6 +24,7 @@ export default function WorkerIndex() {
     isRefetching: isRefetchingCompletedTasks,
     fetchNextPage: fetchNextPageCompletedTasks,
     hasNextPage: hasNextPageCompletedTasks,
+    isLoading: isLoadingCompletedTasks,
   } = useAssignedTaskInfiniteList({
     status: [TaskStatus.COMPLETED],
     limit: 50,
@@ -58,6 +61,29 @@ export default function WorkerIndex() {
     refetchCompletedTasks()
   }
   const isRefetching = isRefetchingActiveTasks || isRefetchingCompletedTasks
+  const isLoading = isLoadingActiveTasks || isLoadingCompletedTasks
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 gap-2 px-4 pt-safe">
+        <View className="-mb-2 bg-background pb-1">
+          <Text className="font-sans-medium" variant="h4">
+            Việc đang làm
+          </Text>
+        </View>
+        <TaskListItemSkeleton />
+        <TaskListItemSkeleton />
+
+        <View className="-mb-2 bg-background pt-2 pb-1">
+          <Text className="font-sans-medium" variant="h4">
+            Việc tiếp theo
+          </Text>
+        </View>
+        <TaskListItemSkeleton />
+        <TaskListItemSkeleton />
+      </View>
+    )
+  }
 
   return (
     <View className="flex-1 pt-safe">
