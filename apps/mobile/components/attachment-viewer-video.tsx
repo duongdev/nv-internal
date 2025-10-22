@@ -8,10 +8,12 @@ import { Icon } from './ui/icon'
 
 interface AttachmentViewerVideoProps {
   attachment: Attachment
+  isActive: boolean
 }
 
 export function AttachmentViewerVideo({
   attachment,
+  isActive,
 }: AttachmentViewerVideoProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasStarted, setHasStarted] = useState(false)
@@ -31,6 +33,13 @@ export function AttachmentViewerVideo({
       subscription.remove()
     }
   }, [player])
+
+  // Pause video when it's no longer the active item
+  useEffect(() => {
+    if (!isActive && player.playing) {
+      player.pause()
+    }
+  }, [isActive, player])
 
   const handlePlayPress = () => {
     setHasStarted(true)

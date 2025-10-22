@@ -70,7 +70,12 @@ export function AttachmentViewer({
     }
 
     if (isVideo) {
-      return <AttachmentViewerVideo attachment={attachment} />
+      return (
+        <AttachmentViewerVideo
+          attachment={attachment}
+          isActive={index === currentIndex}
+        />
+      )
     }
 
     if (isPdf) {
