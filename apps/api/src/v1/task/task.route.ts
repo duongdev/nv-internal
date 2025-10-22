@@ -168,8 +168,11 @@ const router = new Hono()
         .filter((f): f is File => f instanceof File)
 
       try {
+        // Select storage provider based on STORAGE_PROVIDER env var
+        // Default to vercel-blob if not set
+        const storageProvider = process.env.STORAGE_PROVIDER || 'vercel-blob'
         const storage =
-          process.env.NODE_ENV === 'development'
+          storageProvider === 'local'
             ? new LocalDiskProvider()
             : new VercelBlobProvider()
 
@@ -196,12 +199,19 @@ const router = new Hono()
             ? derivedStatus
             : 500
         ) as 400 | 403 | 404 | 500
-        const message =
-          status === 403
-            ? 'Bạn không có quyền tải tệp lên công việc này.'
-            : status === 404
-              ? 'Không tìm thấy công việc.'
-              : 'Không thể tải tệp lên.'
+
+        // Use specific error message if available (e.g., file validation errors)
+        let message: string
+        if (status === 400 && errMsg) {
+          message = errMsg
+        } else if (status === 403) {
+          message = 'Bạn không có quyền tải tệp lên công việc này.'
+        } else if (status === 404) {
+          message = 'Không tìm thấy công việc.'
+        } else {
+          message = 'Không thể tải tệp lên.'
+        }
+
         throw new HTTPException(status, { message, cause: error })
       }
     },

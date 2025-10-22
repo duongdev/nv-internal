@@ -35,6 +35,8 @@ export const defaultUploadConfig: UploadConfig = {
     'image/jpeg',
     'image/png',
     'image/webp',
+    'image/heic',
+    'image/heif',
     // videos
     'video/mp4',
     'video/quicktime',

@@ -58,12 +58,17 @@ export async function uploadTaskAttachments({
 
   for (const f of files) {
     if (f.size > defaultUploadConfig.maxPerFileBytes) {
-      const err = new Error('FILE_TOO_LARGE') as Error & { status?: number }
+      const maxMB = defaultUploadConfig.maxPerFileBytes / 1024 / 1024
+      const err = new Error(
+        `Tệp "${f.name}" quá lớn (${Math.round(f.size / 1024 / 1024)}MB). Kích thước tối đa: ${maxMB}MB`,
+      ) as Error & { status?: number }
       err.status = 400
       throw err
     }
     if (!defaultUploadConfig.allowedMimeTypes.includes(f.type)) {
-      const err = new Error('UNSUPPORTED_MIME') as Error & { status?: number }
+      const err = new Error(
+        `Loại tệp "${f.type}" không được hỗ trợ. Chỉ chấp nhận: ${defaultUploadConfig.allowedMimeTypes.join(', ')}`,
+      ) as Error & { status?: number }
       err.status = 400
       throw err
     }
@@ -86,7 +91,12 @@ export async function uploadTaskAttachments({
       date.getUTCMonth() + 1
     }/${date.getUTCDate()}/${crypto.randomUUID()}-${safeName}`
 
-    await storage.put({ key, body: file, contentType: file.type })
+    try {
+      await storage.put({ key, body: file, contentType: file.type })
+    } catch (storageError) {
+      logger.error({ error: String(storageError), key, fileName: file.name }, 'Failed to upload file to storage')
+      throw storageError
+    }
 
     uploaded.push({
       provider: storage.name,

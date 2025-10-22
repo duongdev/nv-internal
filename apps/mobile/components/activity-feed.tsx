@@ -104,6 +104,10 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
         </View>
       )
     }
+    if (action === 'TASK_ATTACHMENTS_UPLOADED' && payload?.attachments) {
+      const count = (payload.attachments as Array<unknown>).length
+      return <Text>Đã tải lên {count} tệp đính kèm</Text>
+    }
 
     return <Text className="text-muted-foreground text-sm">{action}</Text>
   }, [action, pl])

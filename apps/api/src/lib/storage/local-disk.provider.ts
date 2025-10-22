@@ -6,8 +6,13 @@ import type {
   StorageProvider,
 } from './storage.types'
 
-const UPLOAD_ROOT = join(process.cwd(), 'apps', 'api', '.uploads')
+const UPLOAD_ROOT = join(process.cwd(), '.uploads')
 
+/**
+ * Local disk storage provider for development
+ * Stores files in .uploads directory
+ * Supports both web File objects (Blob) and React Native files
+ */
 export class LocalDiskProvider implements StorageProvider {
   public readonly name = 'local-disk'
 
@@ -17,13 +22,22 @@ export class LocalDiskProvider implements StorageProvider {
 
     let buffer: Buffer
     const body = input.body
-    if (body instanceof Blob) {
-      buffer = Buffer.from(await body.arrayBuffer())
-    } else if (body instanceof ArrayBuffer) {
-      buffer = Buffer.from(body)
-    } else {
-      throw new Error('Unsupported body type for LocalDiskProvider')
+
+    try {
+      // Handle web File objects (includes React Native files via Hono FormData)
+      if (body instanceof Blob) {
+        buffer = Buffer.from(await body.arrayBuffer())
+      } else if (body instanceof ArrayBuffer) {
+        buffer = Buffer.from(body)
+      } else if (Buffer.isBuffer(body)) {
+        buffer = body
+      } else {
+        throw new Error(`Unsupported body type: ${typeof body}, constructor: ${body?.constructor?.name}`)
+      }
+    } catch (error) {
+      throw new Error(`Failed to convert body to buffer: ${error}`)
     }
+
     writeFileSync(filePath, buffer)
     return { key: input.key }
   }

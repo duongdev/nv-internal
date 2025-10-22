@@ -35,7 +35,7 @@ export class VercelBlobProvider implements StorageProvider {
       }
     ).put
     await putFn(input.key, input.body as Blob | ArrayBuffer | ReadableStream, {
-      access: 'private',
+      access: 'public',
       addRandomSuffix: false,
       contentType: input.contentType,
     })

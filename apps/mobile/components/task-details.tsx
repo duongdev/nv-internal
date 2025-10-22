@@ -3,6 +3,8 @@ import { type FC, useEffect, useState } from 'react'
 import { Linking, View } from 'react-native'
 import type { Task } from '@/api/task/use-task'
 import { useUpdateTaskAssignees } from '@/api/task/use-update-task-assignees'
+import { AttachmentList } from './attachment-list'
+import { AttachmentUploader } from './attachment-uploader'
 import { TaskAction } from './task-action'
 import { Button } from './ui/button'
 import { ContentSection } from './ui/content-section'
@@ -81,6 +83,10 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             </Button>
           )}
         </View>
+      </ContentSection>
+      <ContentSection label="Tệp đính kèm">
+        <AttachmentList attachments={task.attachments || []} />
+        <AttachmentUploader assigneeIds={task.assigneeIds} taskId={task.id} />
       </ContentSection>
     </>
   )
