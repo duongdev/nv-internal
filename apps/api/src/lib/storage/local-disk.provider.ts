@@ -1,6 +1,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import jwt from 'jsonwebtoken'
 import type {
+  GetSignedUrlOptions,
   PutObjectInput,
   PutObjectResult,
   StorageProvider,
@@ -32,7 +34,9 @@ export class LocalDiskProvider implements StorageProvider {
       } else if (Buffer.isBuffer(body)) {
         buffer = body
       } else {
-        throw new Error(`Unsupported body type: ${typeof body}, constructor: ${body?.constructor?.name}`)
+        throw new Error(
+          `Unsupported body type: ${typeof body}, constructor: ${body?.constructor?.name}`,
+        )
       }
     } catch (error) {
       throw new Error(`Failed to convert body to buffer: ${error}`)
@@ -46,7 +50,26 @@ export class LocalDiskProvider implements StorageProvider {
     return undefined
   }
 
-  async getSignedUrl(key: string): Promise<string> {
-    return `/dev-uploads/${key}`
+  async getSignedUrl(key: string, opts?: GetSignedUrlOptions): Promise<string> {
+    const secret = process.env.ATTACHMENT_JWT_SECRET
+    if (!secret) {
+      throw new Error(
+        'ATTACHMENT_JWT_SECRET environment variable is required for local storage',
+      )
+    }
+
+    const expiresInSec = opts?.expiresInSec ?? 3600 // Default: 1 hour
+    const dispositionFilename = opts?.dispositionFilename
+
+    const payload = {
+      key,
+      ...(dispositionFilename && { filename: dispositionFilename }),
+    }
+
+    const token = jwt.sign(payload, secret, {
+      expiresIn: expiresInSec,
+    })
+
+    return `/v1/attachments/view/${token}`
   }
 }

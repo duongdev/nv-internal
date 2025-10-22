@@ -55,7 +55,7 @@ export const AttachmentUploadSheet = forwardRef<
             text: 'Mở Cài đặt',
             onPress: () => Linking.openSettings(),
           },
-        ]
+        ],
       )
       return
     }
@@ -118,7 +118,10 @@ export const AttachmentUploadSheet = forwardRef<
   }
 
   const uploadFiles = async (
-    assets: (ImagePicker.ImagePickerAsset | DocumentPicker.DocumentPickerAsset)[],
+    assets: (
+      | ImagePicker.ImagePickerAsset
+      | DocumentPicker.DocumentPickerAsset
+    )[],
   ) => {
     // Pass assets directly - they will be converted to FormData in the mutation
     await uploadMutation.mutateAsync({ taskId, assets })
@@ -150,7 +153,6 @@ export const AttachmentUploadSheet = forwardRef<
 
   return (
     <BottomSheet
-      ref={ref}
       onChange={(index) => {
         if (index === -1) {
           // Sheet dismissed, reset state
@@ -158,6 +160,7 @@ export const AttachmentUploadSheet = forwardRef<
           setMode('choice')
         }
       }}
+      ref={ref}
       snapPoints={mode === 'choice' ? ['35%'] : ['60%', '90%']}
       {...props}
     >
@@ -240,9 +243,7 @@ export const AttachmentUploadSheet = forwardRef<
           {/* Action Buttons */}
           <View className="gap-2">
             <Button
-              disabled={
-                uploadMutation.isPending || capturedPhotos.length >= 10
-              }
+              disabled={uploadMutation.isPending || capturedPhotos.length >= 10}
               onPress={addMorePhotos}
               size="default"
               variant="outline"

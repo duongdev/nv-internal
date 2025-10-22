@@ -6,6 +6,11 @@ import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 
 export const authMiddleware = createMiddleware(async (c, next) => {
+  // Bypass auth for attachment view endpoint (uses JWT token instead)
+  if (c.req.path.startsWith('/v1/attachments/view/')) {
+    return next()
+  }
+
   await clerkMiddleware()(c, () => Promise.resolve())
   const auth = getAuth(c)
 

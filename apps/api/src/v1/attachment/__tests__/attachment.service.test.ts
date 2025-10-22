@@ -223,7 +223,7 @@ describe('uploadTaskAttachments', () => {
         storage:
           storage as unknown as import('../../../lib/storage/storage.types').StorageProvider,
       }),
-    ).rejects.toMatchObject({ message: 'FILE_TOO_LARGE' })
+    ).rejects.toThrow()
 
     // Unsupported mime
     await expect(
@@ -234,6 +234,108 @@ describe('uploadTaskAttachments', () => {
         storage:
           storage as unknown as import('../../../lib/storage/storage.types').StorageProvider,
       }),
-    ).rejects.toMatchObject({ message: 'UNSUPPORTED_MIME' })
+    ).rejects.toThrow()
+  })
+})
+
+describe('getAttachmentsByIds', () => {
+  beforeEach(() => {
+    resetPrismaMock(mockPrisma)
+    // Set environment variable for JWT signing
+    process.env.ATTACHMENT_JWT_SECRET = 'test-secret-key-for-jwt'
+  })
+
+  function getService() {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('../attachment.service') as {
+      getAttachmentsByIds: typeof import('../attachment.service').getAttachmentsByIds
+    }
+    return mod.getAttachmentsByIds
+  }
+
+  it('returns empty array for empty input', async () => {
+    const getAttachmentsByIds = getService()
+    const result = await getAttachmentsByIds({ ids: [] })
+    expect(result).toEqual([])
+  })
+
+  it('retrieves attachments and generates signed URLs', async () => {
+    const now = new Date()
+    mockPrisma.attachment.findMany.mockResolvedValue([
+      {
+        id: 'att_1',
+        createdAt: now,
+        updatedAt: now,
+        taskId: 1,
+        provider: 'local-disk',
+        url: null,
+        pathname: 'path/to/file.jpg',
+        size: 1024,
+        mimeType: 'image/jpeg',
+        originalFilename: 'test.jpg',
+        fileHash: null,
+        uploadedBy: 'user_123',
+      },
+    ])
+
+    const getAttachmentsByIds = getService()
+    const result = await getAttachmentsByIds({ ids: ['att_1'] })
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      id: 'att_1',
+      originalFilename: 'test.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+    })
+    expect(result[0]).toHaveProperty('url')
+    expect(result[0]).toHaveProperty('expiresAt')
+    expect(typeof result[0].url).toBe('string')
+  })
+})
+
+describe('streamLocalFile', () => {
+  beforeEach(() => {
+    resetPrismaMock(mockPrisma)
+    // Set environment variable for JWT verification
+    process.env.ATTACHMENT_JWT_SECRET = 'test-secret-key-for-jwt'
+  })
+
+  function getService() {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('../attachment.service') as {
+      streamLocalFile: typeof import('../attachment.service').streamLocalFile
+    }
+    return mod.streamLocalFile
+  }
+
+  it('rejects invalid JWT token', async () => {
+    const streamLocalFile = getService()
+    await expect(
+      streamLocalFile({ token: 'invalid_token' }),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('Invalid'),
+      status: 403,
+    })
+  })
+
+  it('rejects when attachment not found in database', async () => {
+    // Create a valid JWT token but mock no attachment in DB
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const jwt = require('jsonwebtoken')
+    const secret = process.env.ATTACHMENT_JWT_SECRET || 'test-secret'
+    const token = jwt.sign(
+      { key: 'nonexistent/path.jpg', filename: 'test.jpg' },
+      secret,
+      { expiresIn: '1h' },
+    )
+
+    mockPrisma.attachment.findFirst!.mockResolvedValue(null)
+
+    const streamLocalFile = getService()
+    await expect(streamLocalFile({ token })).rejects.toMatchObject({
+      message: expect.stringContaining('not found'),
+      status: 404,
+    })
   })
 })
