@@ -9,7 +9,9 @@ import { isUserAdmin } from '../user/user.service'
 const DEFAULT_TASK_INCLUDE: Prisma.TaskInclude = {
   customer: true,
   geoLocation: true,
-  attachments: true,
+  attachments: {
+    where: { deletedAt: null },
+  },
 }
 
 export async function canUserCreateTask({ user }: { user: User }) {

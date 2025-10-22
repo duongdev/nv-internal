@@ -1,10 +1,58 @@
 import { type FC, Fragment, useMemo } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
 import { type Activity, useActivities } from '@/api/activity/use-activities'
+import { useAttachments } from '@/api/attachment/use-attachments'
 import { AttachmentList } from './attachment-list'
 import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
+
+function AttachmentsWithDeletedPlaceholders({
+  attachmentIds,
+  compact = false,
+}: {
+  attachmentIds: string[]
+  compact?: boolean
+}) {
+  const { data: resolvedAttachments, isLoading } = useAttachments(attachmentIds)
+
+  if (isLoading) {
+    return (
+      <AttachmentList
+        attachments={attachmentIds.map((id) => ({ id }))}
+        compact={compact}
+      />
+    )
+  }
+
+  // Create a map of resolved attachments by ID for quick lookup
+  const resolvedMap = new Map(
+    resolvedAttachments?.map((att) => [att.id, att]) || [],
+  )
+
+  // Calculate deleted count
+  const deletedCount = attachmentIds.length - (resolvedAttachments?.length ?? 0)
+  const activeAttachments = attachmentIds
+    .filter((id) => resolvedMap.has(id))
+    .map((id) => ({ id }))
+
+  return (
+    <View className="gap-2">
+      {activeAttachments.length > 0 ? (
+        <AttachmentList attachments={activeAttachments} compact={compact} />
+      ) : deletedCount > 0 ? (
+        <Text className="text-muted-foreground text-sm">
+          {deletedCount} tệp đã bị xóa
+        </Text>
+      ) : null}
+      {activeAttachments.length > 0 && deletedCount > 0 && (
+        <Text className="text-muted-foreground text-xs">
+          {deletedCount} tệp đã bị xóa
+        </Text>
+      )}
+    </View>
+  )
+}
 
 export type ActivityFeedProps = {
   topic: string
@@ -113,11 +161,12 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
       const hasIds = attachments.every((att) => att.id)
 
       if (hasIds && attachments.length > 0) {
+        const attachmentIds = attachments.map((att) => att.id as string)
         return (
           <View className="gap-2">
             <Text>Đã tải lên {count} tệp đính kèm</Text>
-            <AttachmentList
-              attachments={attachments as Array<{ id: string }>}
+            <AttachmentsWithDeletedPlaceholders
+              attachmentIds={attachmentIds}
               compact
             />
           </View>

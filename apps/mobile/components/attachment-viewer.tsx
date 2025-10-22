@@ -1,3 +1,4 @@
+import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { Image } from 'expo-image'
 import { Trash2Icon, XIcon } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
@@ -49,6 +50,8 @@ export function AttachmentViewer({
       return
     }
 
+    impactAsync(ImpactFeedbackStyle.Light)
+
     Alert.alert(
       'Xóa tệp đính kèm',
       `Bạn có chắc chắn muốn xóa "${currentAttachment.originalFilename}"?`,
@@ -61,12 +64,30 @@ export function AttachmentViewer({
           text: 'Xóa',
           style: 'destructive',
           onPress: async () => {
+            impactAsync(ImpactFeedbackStyle.Medium)
             try {
-              await deleteAttachmentMutation.mutateAsync(currentAttachment.id)
-              // Close viewer if all attachments deleted or navigate to next
+              // If this is the last attachment, close the viewer
               if (attachments.length === 1) {
+                await deleteAttachmentMutation.mutateAsync(currentAttachment.id)
                 onClose()
+                return
               }
+
+              // Calculate which attachment to navigate to after deletion
+              let nextIndex = currentIndex
+              if (currentIndex > 0) {
+                // Navigate to previous attachment
+                nextIndex = currentIndex - 1
+              } else {
+                // If we're at the first attachment, stay at index 0 (which will show the next attachment)
+                nextIndex = 0
+              }
+
+              // Optimistically navigate before deletion
+              setCurrentIndex(nextIndex)
+
+              // Delete the attachment (optimistic update will handle UI immediately)
+              await deleteAttachmentMutation.mutateAsync(currentAttachment.id)
             } catch (_error) {
               Alert.alert(
                 'Lỗi',

@@ -350,7 +350,9 @@ describe('Task Service Unit Tests', () => {
           assigneeIds: ['worker_456', 'worker_789'],
         },
         include: {
-          attachments: true,
+          attachments: {
+            where: { deletedAt: null },
+          },
           customer: true,
           geoLocation: true,
         },
@@ -392,7 +394,9 @@ describe('Task Service Unit Tests', () => {
           status: TaskStatus.READY,
         },
         include: {
-          attachments: true,
+          attachments: {
+            where: { deletedAt: null },
+          },
           customer: true,
           geoLocation: true,
         },
