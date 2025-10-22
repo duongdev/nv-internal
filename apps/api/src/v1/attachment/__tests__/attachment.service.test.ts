@@ -339,3 +339,180 @@ describe('streamLocalFile', () => {
     })
   })
 })
+
+describe('softDeleteAttachment', () => {
+  beforeEach(() => {
+    resetPrismaMock(mockPrisma)
+  })
+
+  function getService() {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('../attachment.service') as {
+      softDeleteAttachment: typeof import('../attachment.service').softDeleteAttachment
+    }
+    return mod.softDeleteAttachment
+  }
+
+  it('allows admin to delete any attachment', async () => {
+    const admin = createMockAdminUser()
+    const now = new Date()
+
+    // Mock finding attachment
+    mockPrisma.attachment.findFirst!.mockResolvedValue({
+      id: 'att_1',
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      taskId: 1,
+      provider: 'local-disk',
+      url: null,
+      pathname: 'path/to/file.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+      originalFilename: 'test.jpg',
+      fileHash: null,
+      uploadedBy: 'user_other',
+      thumbnailPathname: null,
+      blurhash: null,
+      width: null,
+      height: null,
+      task: null,
+    })
+
+    // Mock update
+    mockPrisma.attachment.update.mockResolvedValue({
+      id: 'att_1',
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: new Date(),
+      taskId: 1,
+      provider: 'local-disk',
+      url: null,
+      pathname: 'path/to/file.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+      originalFilename: 'test.jpg',
+      fileHash: null,
+      uploadedBy: 'user_other',
+      thumbnailPathname: null,
+      blurhash: null,
+      width: null,
+      height: null,
+    })
+
+    const softDeleteAttachment = getService()
+    const result = await softDeleteAttachment({
+      attachmentId: 'att_1',
+      user: admin as unknown as import('@clerk/backend').User,
+    })
+
+    expect(result.deletedAt).toBeTruthy()
+    expect(mockPrisma.attachment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'att_1' },
+        data: { deletedAt: expect.any(Date) },
+      }),
+    )
+  })
+
+  it('allows uploader to delete their own attachment', async () => {
+    const worker = createMockWorkerUser({ id: 'user_uploader' })
+    const now = new Date()
+
+    mockPrisma.attachment.findFirst!.mockResolvedValue({
+      id: 'att_1',
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      taskId: 1,
+      provider: 'local-disk',
+      url: null,
+      pathname: 'path/to/file.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+      originalFilename: 'test.jpg',
+      fileHash: null,
+      uploadedBy: 'user_uploader',
+      thumbnailPathname: null,
+      blurhash: null,
+      width: null,
+      height: null,
+      task: null,
+    })
+
+    mockPrisma.attachment.update.mockResolvedValue({
+      id: 'att_1',
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: new Date(),
+      taskId: 1,
+      provider: 'local-disk',
+      url: null,
+      pathname: 'path/to/file.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+      originalFilename: 'test.jpg',
+      fileHash: null,
+      uploadedBy: 'user_uploader',
+      thumbnailPathname: null,
+      blurhash: null,
+      width: null,
+      height: null,
+    })
+
+    const softDeleteAttachment = getService()
+    const result = await softDeleteAttachment({
+      attachmentId: 'att_1',
+      user: worker as unknown as import('@clerk/backend').User,
+    })
+
+    expect(result.deletedAt).toBeTruthy()
+  })
+
+  it('rejects when attachment not found', async () => {
+    const admin = createMockAdminUser()
+    mockPrisma.attachment.findFirst!.mockResolvedValue(null)
+
+    const softDeleteAttachment = getService()
+    await expect(
+      softDeleteAttachment({
+        attachmentId: 'att_nonexistent',
+        user: admin as unknown as import('@clerk/backend').User,
+      }),
+    ).rejects.toThrow('ATTACHMENT_NOT_FOUND')
+  })
+
+  it('rejects when user is not admin and not uploader', async () => {
+    const worker = createMockWorkerUser({ id: 'user_other' })
+    const now = new Date()
+
+    mockPrisma.attachment.findFirst!.mockResolvedValue({
+      id: 'att_1',
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      taskId: 1,
+      provider: 'local-disk',
+      url: null,
+      pathname: 'path/to/file.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+      originalFilename: 'test.jpg',
+      fileHash: null,
+      uploadedBy: 'user_uploader',
+      thumbnailPathname: null,
+      blurhash: null,
+      width: null,
+      height: null,
+      task: null,
+    })
+
+    const softDeleteAttachment = getService()
+    await expect(
+      softDeleteAttachment({
+        attachmentId: 'att_1',
+        user: worker as unknown as import('@clerk/backend').User,
+      }),
+    ).rejects.toMatchObject({ message: 'FORBIDDEN', status: 403 })
+  })
+})

@@ -83,6 +83,7 @@ model Attachment {
   id               String   @id @default(cuid())
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  deletedAt        DateTime? // Soft delete timestamp
 
   // Nullable to allow attachments for other entities in future
   task             Task?    @relation(fields: [taskId], references: [id])
@@ -105,4 +106,5 @@ model Attachment {
 
   @@index([taskId])
   @@index([uploadedBy])
+  @@index([deletedAt])
 }

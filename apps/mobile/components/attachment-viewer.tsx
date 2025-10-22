@@ -1,10 +1,18 @@
 import { Image } from 'expo-image'
-import { XIcon } from 'lucide-react-native'
+import { Trash2Icon, XIcon } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
-import { Modal, Pressable, StatusBar, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  StatusBar,
+  View,
+} from 'react-native'
 import Gallery from 'react-native-awesome-gallery'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { Attachment } from '@/api/attachment/use-attachments'
+import { useDeleteAttachment } from '@/api/attachment/use-delete-attachment'
 import { AttachmentViewerPdf } from './attachment-viewer-pdf'
 import { AttachmentViewerVideo } from './attachment-viewer-video'
 import { Icon } from './ui/icon'
@@ -26,6 +34,7 @@ export function AttachmentViewer({
 }: AttachmentViewerProps) {
   const insets = useSafeAreaInsets()
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const deleteAttachmentMutation = useDeleteAttachment()
 
   const currentAttachment = attachments[currentIndex]
 
@@ -34,6 +43,41 @@ export function AttachmentViewer({
       setCurrentIndex(initialIndex)
     }
   }, [visible, initialIndex])
+
+  const handleDelete = () => {
+    if (!currentAttachment) {
+      return
+    }
+
+    Alert.alert(
+      'Xóa tệp đính kèm',
+      `Bạn có chắc chắn muốn xóa "${currentAttachment.originalFilename}"?`,
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAttachmentMutation.mutateAsync(currentAttachment.id)
+              // Close viewer if all attachments deleted or navigate to next
+              if (attachments.length === 1) {
+                onClose()
+              }
+            } catch (_error) {
+              Alert.alert(
+                'Lỗi',
+                'Không thể xóa tệp đính kèm. Vui lòng thử lại.',
+              )
+            }
+          },
+        },
+      ],
+    )
+  }
 
   if (!currentAttachment) {
     return null
@@ -127,12 +171,26 @@ export function AttachmentViewer({
               />
             </View>
           </View>
-          <Pressable
-            className="ml-3 rounded-full bg-black/50 p-2"
-            onPress={onClose}
-          >
-            <Icon as={XIcon} className="text-white" size={24} />
-          </Pressable>
+          <View className="ml-3 flex-row gap-2">
+            <Pressable
+              className="rounded-full bg-black/50 p-2"
+              disabled={deleteAttachmentMutation.isPending}
+              onPress={handleDelete}
+            >
+              {deleteAttachmentMutation.isPending ? (
+                <ActivityIndicator color="#ef4444" size={24} />
+              ) : (
+                <Icon as={Trash2Icon} className="text-red-500" size={24} />
+              )}
+            </Pressable>
+            <Pressable
+              className="rounded-full bg-black/50 p-2"
+              disabled={deleteAttachmentMutation.isPending}
+              onPress={onClose}
+            >
+              <Icon as={XIcon} className="text-white" size={24} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Unified Gallery for all attachment types */}
