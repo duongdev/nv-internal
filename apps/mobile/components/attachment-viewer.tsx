@@ -66,28 +66,14 @@ export function AttachmentViewer({
           onPress: async () => {
             impactAsync(ImpactFeedbackStyle.Medium)
             try {
-              // If this is the last attachment, close the viewer
-              if (attachments.length === 1) {
-                await deleteAttachmentMutation.mutateAsync(currentAttachment.id)
-                onClose()
-                return
-              }
-
-              // Calculate which attachment to navigate to after deletion
-              let nextIndex = currentIndex
-              if (currentIndex > 0) {
-                // Navigate to previous attachment
-                nextIndex = currentIndex - 1
-              } else {
-                // If we're at the first attachment, stay at index 0 (which will show the next attachment)
-                nextIndex = 0
-              }
-
-              // Optimistically navigate before deletion
-              setCurrentIndex(nextIndex)
-
-              // Delete the attachment (optimistic update will handle UI immediately)
+              // Delete the attachment
               await deleteAttachmentMutation.mutateAsync(currentAttachment.id)
+
+              // If this was the last attachment, close the viewer
+              // Otherwise, the refetch will update the attachments array
+              if (attachments.length === 1) {
+                onClose()
+              }
             } catch (_error) {
               Alert.alert(
                 'Lỗi',

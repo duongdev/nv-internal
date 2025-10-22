@@ -3,17 +3,14 @@ import { FileIcon, PlayIcon } from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import { useAttachments } from '@/api/attachment/use-attachments'
-import type { Task } from '@/api/task/use-task'
 import { cn } from '@/lib/utils'
 import { AttachmentViewer } from './attachment-viewer'
 import { Icon } from './ui/icon'
 import { Skeleton } from './ui/skeleton'
 import { Text } from './ui/text'
 
-type Attachment = NonNullable<Task['attachments']>[number]
-
 // Simplified type for components that only need the ID
-type AttachmentWithId = Pick<Attachment, 'id'> | { id: string }
+type AttachmentWithId = { id: string }
 
 function VideoPlaceholder() {
   return (
@@ -71,6 +68,7 @@ export function AttachmentList({
     )
   }
 
+  // Show skeleton on initial load
   if (isLoading) {
     return (
       <View className="gap-2">
@@ -148,9 +146,7 @@ export function AttachmentList({
       {/* Full-screen viewer modal */}
       {resolvedAttachments && (
         <AttachmentViewer
-          attachments={
-            resolvedAttachments as unknown as import('@/api/attachment/use-attachments').Attachment[]
-          }
+          attachments={resolvedAttachments}
           initialIndex={selectedIndex}
           onClose={() => setViewerVisible(false)}
           visible={viewerVisible}
