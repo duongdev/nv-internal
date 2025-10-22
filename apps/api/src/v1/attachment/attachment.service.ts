@@ -186,22 +186,30 @@ export async function uploadTaskAttachments({
   const result = await prisma.$transaction(async (tx) => {
     await tx.attachment.createMany({ data: toCreate })
 
-    await createActivity(
-      {
-        action: 'TASK_ATTACHMENTS_UPLOADED',
-        userId: user.id,
-        topic: { entityType: 'TASK', entityId: taskId },
-        payload: { attachments: uploaded },
-      },
-      tx,
-    )
-
     // Return the rows for the response
     const attachments = await tx.attachment.findMany({
       where: { taskId },
       orderBy: { createdAt: 'desc' },
       take: uploaded.length,
     })
+
+    // Create activity with attachment IDs for frontend display
+    const attachmentSummary = attachments.map((att) => ({
+      id: att.id,
+      mimeType: att.mimeType,
+      originalFilename: att.originalFilename,
+    }))
+
+    await createActivity(
+      {
+        action: 'TASK_ATTACHMENTS_UPLOADED',
+        userId: user.id,
+        topic: { entityType: 'TASK', entityId: taskId },
+        payload: { attachments: attachmentSummary },
+      },
+      tx,
+    )
+
     return attachments
   })
 

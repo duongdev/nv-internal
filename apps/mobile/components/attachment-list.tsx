@@ -4,11 +4,16 @@ import { useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import { useAttachments } from '@/api/attachment/use-attachments'
 import type { Task } from '@/api/task/use-task'
+import { cn } from '@/lib/utils'
 import { AttachmentViewer } from './attachment-viewer'
 import { Icon } from './ui/icon'
+import { Skeleton } from './ui/skeleton'
 import { Text } from './ui/text'
 
 type Attachment = NonNullable<Task['attachments']>[number]
+
+// Simplified type for components that only need the ID
+type AttachmentWithId = Pick<Attachment, 'id'> | { id: string }
 
 function VideoPlaceholder() {
   return (
@@ -37,11 +42,26 @@ function ImageWithBlurhash({ imageUrl, blurhash }: ImageWithBlurhashProps) {
   )
 }
 
-export function AttachmentList({ attachments }: { attachments: Attachment[] }) {
+export function AttachmentList({
+  attachments,
+  compact = false,
+}: {
+  attachments: AttachmentWithId[]
+  compact?: boolean
+}) {
   const attachmentIds = attachments.map((a) => a.id)
   const { data: resolvedAttachments, isLoading } = useAttachments(attachmentIds)
   const [viewerVisible, setViewerVisible] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
+
+  const handleAttachmentPress = (index: number) => {
+    setSelectedIndex(index)
+    setViewerVisible(true)
+  }
+
+  // Size classes: normal is 96px (h-24 w-24), compact is ~77px (h-[77px] w-[77px]) = 20% smaller
+  const iconSize = compact ? 24 : 32
+  const skeletonSizeClass = compact ? 'h-[77px] w-[77px]' : 'h-24 w-24'
 
   if (attachments.length === 0) {
     return (
@@ -53,23 +73,37 @@ export function AttachmentList({ attachments }: { attachments: Attachment[] }) {
 
   if (isLoading) {
     return (
-      <Text className="text-muted-foreground text-sm">
-        Đang tải tệp đính kèm...
-      </Text>
+      <View className="gap-2">
+        {!compact && (
+          <Text className="font-sans-medium text-muted-foreground text-sm">
+            {attachments.length} tệp đính kèm
+          </Text>
+        )}
+        <ScrollView
+          className="flex-row gap-2"
+          contentContainerClassName="gap-2"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {attachments.map((attachment) => (
+            <Skeleton
+              className={cn('rounded-lg', skeletonSizeClass)}
+              key={attachment.id}
+            />
+          ))}
+        </ScrollView>
+      </View>
     )
-  }
-
-  const handleAttachmentPress = (index: number) => {
-    setSelectedIndex(index)
-    setViewerVisible(true)
   }
 
   return (
     <>
       <View className="gap-2">
-        <Text className="font-sans-medium text-muted-foreground text-sm">
-          {attachments.length} tệp đính kèm
-        </Text>
+        {!compact && (
+          <Text className="font-sans-medium text-muted-foreground text-sm">
+            {attachments.length} tệp đính kèm
+          </Text>
+        )}
         <ScrollView
           className="flex-row gap-2"
           contentContainerClassName="gap-2"
@@ -82,7 +116,10 @@ export function AttachmentList({ attachments }: { attachments: Attachment[] }) {
 
             return (
               <Pressable
-                className="h-24 w-24 rounded-lg bg-muted"
+                className={cn(
+                  'rounded-lg bg-muted',
+                  compact ? 'h-[77px] w-[77px]' : 'h-24 w-24',
+                )}
                 key={attachment.id}
                 onPress={() => handleAttachmentPress(index)}
               >
@@ -98,7 +135,7 @@ export function AttachmentList({ attachments }: { attachments: Attachment[] }) {
                     <Icon
                       as={FileIcon}
                       className="text-muted-foreground"
-                      size={32}
+                      size={iconSize}
                     />
                   </View>
                 )}

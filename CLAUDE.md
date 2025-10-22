@@ -17,6 +17,7 @@ NV Internal is a task management application for an air conditioning service com
 ## Common Development Commands
 
 ### Root Level Commands
+
 ```bash
 # Install dependencies for all packages
 pnpm install
@@ -40,6 +41,7 @@ pnpm biome:format        # Format code
 ```
 
 ### API Development (apps/api/)
+
 ```bash
 # Start local development (requires database first)
 docker compose -f docker-compose.dev.yml up    # Start local PostgreSQL
@@ -61,6 +63,7 @@ npx prisma migrate dev # Create and apply migrations in development
 ```
 
 ### Mobile Development (apps/mobile/)
+
 ```bash
 # Development
 pnpm dev               # Start Expo development server
@@ -71,6 +74,7 @@ pnpm clean             # Clean .expo and node_modules
 ```
 
 ### Shared Packages
+
 ```bash
 # Build Prisma client package
 pnpm --filter @nv-internal/prisma-client build
@@ -85,17 +89,20 @@ pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/val
 ## Code Quality and Commit Workflow
 
 ### Pre-commit Requirements
+
 1. **Format and lint**: `pnpm exec biome check --write .`
 2. **Run API tests**: `pnpm --filter @nv-internal/api test`
 3. **Build packages** (optional, when changing shared code): `pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/validation build`
 
 ### Conventional Commits
+
 Format: `<type>(<scope>): <description>`
 
 **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 **Common scopes**: `api`, `mobile`, `prisma`, `validation`, `ci`, `docs`
 
 Examples:
+
 - `feat(api): add check-in photo attachment endpoint`
 - `fix(mobile): prevent crash on task details for missing location`
 - `refactor(prisma): extract prefixed id helper to shared client`
@@ -103,6 +110,7 @@ Examples:
 ## Key Architecture Patterns
 
 ### API Structure
+
 - **Routes**: All routes in `apps/api/src/v1/` with authentication middleware from `@hono/clerk-auth`
 - **Services**: Business logic in service files (`*.service.ts`)
 - **Validation**: Use Zod schemas from `@nv-internal/validation`
@@ -113,35 +121,55 @@ Examples:
 - **Pagination**: Use cursor-based pagination for lists
 
 ### Mobile App Structure
+
 - **Routing**: Expo Router file-based routing in `apps/mobile/app/`
 - **Authentication**: Clerk SDK with protected routes using auth state
 - **API Calls**: Use `callHonoApi` utility for type-safe API calls
 - **State Management**: TanStack Query with aggressive caching (1 week gcTime)
 - **Styling**: NativeWind (Tailwind for React Native) with sorted classes
+  - **className Composition**: Use the `cn` utility from `@/lib/utils` for composing classNames with conditional logic
+  - The `cn` utility combines `clsx` and `tailwind-merge` to properly merge and deduplicate Tailwind classes
+  - Example:
+
+    ```tsx
+    import { cn } from "@/lib/utils";
+
+    <View
+      className={cn(
+        "rounded-lg bg-muted",
+        compact ? "h-[77px] w-[77px]" : "h-24 w-24"
+      )}
+    />;
+    ```
+
 - **Forms**: Present forms and inputs as modals
 - **Components**: Follow existing component structure in `components/` directory
 
 ### Database Schema
+
 - **Models**: Task, Customer, GeoLocation, Activity, Attachment
-- **IDs**: Use prefixed IDs for readability (cust*, geo*, act_)
+- **IDs**: Use prefixed IDs for readability (cust*, geo*, act\_)
 - **Task Status**: PREPARING → READY → IN_PROGRESS → ON_HOLD → COMPLETED
 - **Client**: Generated to `packages/prisma-client/generated/`
 
 ## Development Guidelines
 
 ### Code Style
+
 - **TypeScript**: Strict typing throughout
 - **Biome**: For formatting and linting (replaces ESLint/Prettier)
 - **File Size**: Keep files small and readable
 - **Language**: Support Vietnamese language where applicable
 
 ### Security
+
 - **Authentication**: All API routes require authentication middleware
 - **Input Validation**: Server-side validation with Zod schemas
 - **Transactions**: Use for multi-model operations
 - **No Secrets**: Never hardcode credentials; use environment variables
 
 ### Testing
+
 - **API Tests**: Jest tests in `__tests__/` directories
 - **Coverage**: Target critical paths
 - **Test Environment**: Node environment with ts-jest preset

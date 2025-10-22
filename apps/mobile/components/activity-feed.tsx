@@ -1,6 +1,7 @@
 import { type FC, Fragment, useMemo } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
 import { type Activity, useActivities } from '@/api/activity/use-activities'
+import { AttachmentList } from './attachment-list'
 import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
@@ -105,7 +106,25 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
       )
     }
     if (action === 'TASK_ATTACHMENTS_UPLOADED' && payload?.attachments) {
-      const count = (payload.attachments as Array<unknown>).length
+      const attachments = payload.attachments as Array<{ id?: string }>
+      const count = attachments.length
+
+      // Check if attachments have IDs (new format)
+      const hasIds = attachments.every((att) => att.id)
+
+      if (hasIds && attachments.length > 0) {
+        return (
+          <View className="gap-2">
+            <Text>Đã tải lên {count} tệp đính kèm</Text>
+            <AttachmentList
+              attachments={attachments as Array<{ id: string }>}
+              compact
+            />
+          </View>
+        )
+      }
+
+      // Fallback for old activities without IDs
       return <Text>Đã tải lên {count} tệp đính kèm</Text>
     }
 
