@@ -127,6 +127,14 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
       // Fallback for old activities without IDs
       return <Text>Đã tải lên {count} tệp đính kèm</Text>
     }
+    if (action === 'ATTACHMENT_DELETED' && payload?.originalFilename) {
+      return (
+        <Text>
+          Đã xóa tệp đính kèm{' '}
+          <Text className="font-sans-medium">{payload.originalFilename}</Text>
+        </Text>
+      )
+    }
 
     return <Text className="text-muted-foreground text-sm">{action}</Text>
   }, [action, pl])

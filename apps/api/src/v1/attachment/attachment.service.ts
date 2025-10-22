@@ -247,7 +247,7 @@ export async function getAttachmentsByIds({ ids }: { ids: string[] }): Promise<
   }
 
   const attachments = await prisma.attachment.findMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, deletedAt: null },
   })
 
   const expiresInSec = 3600 // 1 hour
@@ -356,7 +356,7 @@ export async function streamLocalFile({
   // Get attachment from database to verify it exists and get metadata
   const prisma = getPrisma()
   const attachment = await prisma.attachment.findFirst({
-    where: { pathname: key },
+    where: { pathname: key, deletedAt: null },
   })
 
   if (!attachment) {
@@ -484,4 +484,76 @@ export async function streamLocalFile({
     filename: filename || attachment.originalFilename,
     provider: 'local-disk',
   }
+}
+
+/**
+ * Soft delete an attachment by ID
+ * Only the uploader or an admin can delete an attachment
+ */
+export async function softDeleteAttachment({
+  attachmentId,
+  user,
+}: {
+  attachmentId: string
+  user: User
+}) {
+  const logger = getLogger('attachment.service:softDeleteAttachment')
+  const prisma = getPrisma()
+
+  // Find the attachment
+  const attachment = await prisma.attachment.findFirst({
+    where: { id: attachmentId, deletedAt: null },
+    include: { task: true },
+  })
+
+  if (!attachment) {
+    throw new Error('ATTACHMENT_NOT_FOUND')
+  }
+
+  // Check permissions: user must be admin or the uploader
+  const isAdmin = await isUserAdmin({ user })
+  const isUploader = attachment.uploadedBy === user.id
+
+  if (!isAdmin && !isUploader) {
+    const err = new Error('FORBIDDEN') as Error & { status?: number }
+    err.status = 403
+    throw err
+  }
+
+  // Soft delete the attachment
+  const deletedAttachment = await prisma.$transaction(async (tx) => {
+    const updated = await tx.attachment.update({
+      where: { id: attachmentId },
+      data: { deletedAt: new Date() },
+    })
+
+    // Log activity to the task feed if attachment is linked to a task
+    if (attachment.taskId) {
+      await createActivity(
+        {
+          action: 'ATTACHMENT_DELETED',
+          userId: user.id,
+          topic: {
+            entityType: 'TASK',
+            entityId: attachment.taskId,
+          },
+          payload: {
+            attachmentId,
+            originalFilename: attachment.originalFilename,
+            mimeType: attachment.mimeType,
+          },
+        },
+        tx,
+      )
+    }
+
+    return updated
+  })
+
+  logger.info(
+    { attachmentId, userId: user.id, taskId: attachment.taskId },
+    'Soft deleted attachment',
+  )
+
+  return deletedAttachment
 }

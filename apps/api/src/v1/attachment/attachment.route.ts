@@ -5,7 +5,11 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 import { getAuthUserStrict } from '../middlewares/auth'
-import { getAttachmentsByIds, streamLocalFile } from './attachment.service'
+import {
+  getAttachmentsByIds,
+  softDeleteAttachment,
+  streamLocalFile,
+} from './attachment.service'
 
 const router = new Hono()
   // Get attachments by IDs with signed URLs (requires auth - handled by global middleware)
@@ -164,6 +168,44 @@ const router = new Hono()
           message = 'Phạm vi yêu cầu không hợp lệ.'
         } else {
           message = errMsg || 'Không thể tải tệp.'
+        }
+
+        throw new HTTPException(status, { message, cause: error })
+      }
+    },
+  )
+  // Delete attachment (soft delete)
+  .delete(
+    '/:id',
+    zValidator('param', z.object({ id: z.string() })),
+    async (c) => {
+      const { id } = c.req.valid('param')
+      const user = getAuthUserStrict(c)
+      const logger = getLogger('attachment.route:deleteAttachment')
+
+      try {
+        await softDeleteAttachment({ attachmentId: id, user })
+        logger.info({ attachmentId: id, userId: user.id }, 'Deleted attachment')
+        return c.json({ success: true })
+      } catch (error: unknown) {
+        logger.error({ error, attachmentId: id }, 'Failed to delete attachment')
+        const errMsg = (error as { message?: string } | null | undefined)
+          ?.message
+        const rawStatus = (error as { status?: number } | null | undefined)
+          ?.status
+        const derivedStatus =
+          errMsg === 'ATTACHMENT_NOT_FOUND' ? 404 : rawStatus
+        const status = (
+          derivedStatus === 403 || derivedStatus === 404 ? derivedStatus : 500
+        ) as 403 | 404 | 500
+
+        let message: string
+        if (status === 403) {
+          message = 'Bạn không có quyền xóa tệp đính kèm này.'
+        } else if (status === 404) {
+          message = 'Không tìm thấy tệp đính kèm.'
+        } else {
+          message = 'Không thể xóa tệp đính kèm.'
         }
 
         throw new HTTPException(status, { message, cause: error })
