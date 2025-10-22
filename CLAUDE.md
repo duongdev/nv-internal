@@ -247,6 +247,36 @@ Examples:
    - Documents architectural decisions
    - Makes it easy to review past implementations
 
+## V1 Feature Planning
+
+**IMPORTANT**: Before implementing v1 features, review and improve the plans in `.claude/plans/v1/`:
+
+### Planning Structure
+
+- **Master Plan**: `.claude/plans/v1/README.md` - Navigation, progress tracking, timeline
+- **Feature Plans**: Detailed specifications for each major feature
+  - `01-payment-system.md` - Payment tracking & invoices
+  - `02-checkin-checkout.md` - GPS-verified check-in/out
+  - `03-monthly-reports.md` - Employee performance reports
+  - `04-task-crud.md` - Edit/delete tasks
+  - `05-employee-management.md` - Profile updates & deletion
+
+### Before Implementation
+
+1. **Review the feature plan** - Read the complete specification
+2. **Brainstorm improvements** - Identify edge cases, security issues, performance concerns
+3. **Update the plan** - Document improvements before writing code
+4. **Create task file** - Link task documentation to the v1 plan
+5. **Implement** - Follow the improved plan
+6. **Update status** - Mark plan sections as completed
+
+### Linking Plans to Tasks
+
+When creating task files for v1 features:
+- Reference the plan file: "Implements Phase 1 from `.claude/plans/v1/01-payment-system.md`"
+- Note any deviations from the plan with rationale
+- Update plan status when task is completed
+
 ## Important File Locations
 
 - **API Routes**: `apps/api/src/v1/*/` (route.ts and service.ts files)
@@ -255,6 +285,7 @@ Examples:
 - **Shared Validation**: `packages/validation/`
 - **Shared Prisma Client**: `packages/prisma-client/`
 - **Task Documentation**: `.claude/tasks/` (implementation tracking)
+- **V1 Feature Plans**: `.claude/plans/v1/` (detailed feature specifications & roadmap)
 - **Cursor Rules**: `.cursor/rules/` (project-specific guidelines)
 - **Commit Commands**: `.cursor/commands/commit-changes.md`
 
