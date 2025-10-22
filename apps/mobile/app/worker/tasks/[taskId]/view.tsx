@@ -1,12 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Stack, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, RefreshControl, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { activitiesQueryOptions } from '@/api/activity/use-activities'
 import { useTask } from '@/api/task/use-task'
 import { ActivityFeed } from '@/components/activity-feed'
 import { TaskCommentBox } from '@/components/task-comment-box'
 import { TaskDetails } from '@/components/task-details'
+import { TaskDetailsSkeleton } from '@/components/task-details-skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatTaskId } from '@/utils/task-id-helper'
@@ -44,7 +45,12 @@ export default function WorkerTaskView() {
             title: '',
           }}
         />
-        <ActivityIndicator className="my-4" />
+        <KeyboardAwareScrollView
+          bottomOffset={40}
+          contentContainerClassName="pb-safe"
+        >
+          <TaskDetailsSkeleton />
+        </KeyboardAwareScrollView>
       </>
     )
   }

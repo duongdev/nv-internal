@@ -28,14 +28,22 @@ interface ImageWithBlurhashProps {
 }
 
 function ImageWithBlurhash({ imageUrl, blurhash }: ImageWithBlurhashProps) {
+  const [isLoading, setIsLoading] = useState(!blurhash)
+
   return (
-    <ExpoImage
-      contentFit="cover"
-      placeholder={blurhash ? { blurhash } : undefined}
-      source={{ uri: imageUrl }}
-      style={{ width: '100%', height: '100%', borderRadius: 8 }}
-      transition={200}
-    />
+    <>
+      {isLoading && !blurhash && (
+        <Skeleton className="absolute inset-0 rounded-lg bg-black/20" />
+      )}
+      <ExpoImage
+        contentFit="cover"
+        onLoadEnd={() => setIsLoading(false)}
+        placeholder={blurhash ? { blurhash } : undefined}
+        source={{ uri: imageUrl }}
+        style={{ width: '100%', height: '100%', borderRadius: 8 }}
+        transition={200}
+      />
+    </>
   )
 }
 
@@ -85,7 +93,7 @@ export function AttachmentList({
         >
           {attachments.map((attachment) => (
             <Skeleton
-              className={cn('rounded-lg', skeletonSizeClass)}
+              className={cn('rounded-lg bg-black/20', skeletonSizeClass)}
               key={attachment.id}
             />
           ))}

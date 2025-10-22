@@ -101,6 +101,17 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
         >
           <Icon as={PhoneCallIcon} />
         </Button>
+
+        {/* Assign Button (Admin Only) */}
+        {appRole === 'admin' && (
+          <Button
+            onPress={() => assigneeModalRef.current?.present()}
+            size="icon"
+            variant="outline"
+          >
+            <Icon as={UsersIcon} />
+          </Button>
+        )}
       </View>
 
       {/* Work Location & Customer Info Card */}
