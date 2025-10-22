@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import type { Task } from '@nv-internal/prisma-client'
 import { TaskStatus } from '@nv-internal/prisma-client'
 import {
   createMockAdminUser,

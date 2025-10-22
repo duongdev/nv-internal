@@ -12,10 +12,9 @@ function makeFile(name: string, type: string, size: number) {
 
 // Mock the streamLocalFile service function for Vercel Blob redirect tests
 jest.mock('../attachment.service', () => {
-  const actual =
-    jest.requireActual<typeof import('../attachment.service')>(
-      '../attachment.service',
-    )
+  const actual = jest.requireActual<typeof import('../attachment.service')>(
+    '../attachment.service',
+  )
   const mockFn = jest.fn()
   return {
     ...actual,
@@ -26,8 +25,9 @@ jest.mock('../attachment.service', () => {
 // Import after mocking to get the mocked version
 import * as attachmentService from '../attachment.service'
 
-// biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing for test setup
-const mockStreamLocalFile = attachmentService.streamLocalFile as any as jest.Mock
+const mockStreamLocalFile =
+  // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing for test setup
+  attachmentService.streamLocalFile as any as jest.Mock
 
 describe('GET /v1/attachments', () => {
   it('requires authentication', async () => {
@@ -218,7 +218,9 @@ describe('GET /v1/attachments/view/:token', () => {
         expect(res.headers.get('Location')).toBeNull()
         // Check for CORS headers
         expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
-        expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, HEAD, OPTIONS')
+        expect(res.headers.get('Access-Control-Allow-Methods')).toBe(
+          'GET, HEAD, OPTIONS',
+        )
       }
     })
   })
@@ -232,7 +234,9 @@ describe('GET /v1/attachments/view/:token', () => {
 
       expect(res.status).toBe(204)
       expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
-      expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, HEAD, OPTIONS')
+      expect(res.headers.get('Access-Control-Allow-Methods')).toBe(
+        'GET, HEAD, OPTIONS',
+      )
       expect(res.headers.get('Access-Control-Allow-Headers')).toBe('Range')
       expect(res.headers.get('Access-Control-Max-Age')).toBe('86400')
     })
@@ -269,7 +273,9 @@ describe('GET /v1/attachments/view/:token', () => {
 
       if (res.status === 200) {
         expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
-        expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, HEAD, OPTIONS')
+        expect(res.headers.get('Access-Control-Allow-Methods')).toBe(
+          'GET, HEAD, OPTIONS',
+        )
       }
     })
   })
