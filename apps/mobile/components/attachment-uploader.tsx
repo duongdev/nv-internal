@@ -30,9 +30,8 @@ export function AttachmentUploader({
   return (
     <>
       <Button
-        className="mt-2"
+        className="dark:border-white/20"
         onPress={() => sheetRef.current?.present()}
-        size="sm"
         variant="outline"
       >
         <Icon as={PlusIcon} />

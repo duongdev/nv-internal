@@ -1,20 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Stack } from 'expo-router'
 import { useLocalSearchParams } from 'expo-router/build/hooks'
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native'
+import { ActivityIndicator, RefreshControl, View } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { activitiesQueryOptions } from '@/api/activity/use-activities'
 import { useTask } from '@/api/task/use-task'
 import { ActivityFeed } from '@/components/activity-feed'
-import { TaskAction } from '@/components/task-action'
-import { TaskAssignees, TaskDetails } from '@/components/task-details'
+import { TaskCommentBox } from '@/components/task-comment-box'
+import { TaskDetails } from '@/components/task-details'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Separator } from '@/components/ui/separator'
-import { Text } from '@/components/ui/text'
 import { formatTaskId } from '@/utils/task-id-helper'
 
 export default function TaskViewScreen() {
@@ -69,32 +64,32 @@ export default function TaskViewScreen() {
           />
 
           {task && (
-            <View className="flex-1 justify-between">
-              <ScrollView
-                contentContainerClassName="gap-2 p-4 pb-safe"
-                refreshControl={
-                  <RefreshControl
-                    onRefresh={handleRefetch}
-                    refreshing={isRefetching}
-                  />
-                }
-              >
-                <TaskDetails task={task} />
-                <TaskAssignees
-                  assigneeIds={task.assigneeIds}
-                  taskId={task.id}
+            <KeyboardAwareScrollView
+              bottomOffset={40}
+              contentContainerClassName="gap-3 p-4 pb-safe"
+              refreshControl={
+                <RefreshControl
+                  onRefresh={handleRefetch}
+                  refreshing={isRefetching}
                 />
-                <Separator className="my-2" />
-                <Text className="font-sans-medium" variant="h4">
-                  Hoạt động
-                </Text>
-                <ActivityFeed topic={`TASK_${taskId}`} />
-              </ScrollView>
+              }
+            >
+              <TaskDetails task={task} />
 
-              <View className="px-6 pb-safe shadow-lg">
-                <TaskAction task={task!} />
-              </View>
-            </View>
+              {/* Activities Card with Comment Box */}
+              <Card className="bg-muted dark:border-white/20">
+                <CardHeader>
+                  <CardTitle>Hoạt động</CardTitle>
+                </CardHeader>
+                <CardContent className="gap-4">
+                  <TaskCommentBox
+                    onCommentSent={handleRefetch}
+                    taskId={task.id}
+                  />
+                  <ActivityFeed topic={`TASK_${taskId}`} />
+                </CardContent>
+              </Card>
+            </KeyboardAwareScrollView>
           )}
         </>
       )}

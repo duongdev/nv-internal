@@ -1,19 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Stack, useLocalSearchParams } from 'expo-router'
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native'
+import { ActivityIndicator, RefreshControl, View } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { activitiesQueryOptions } from '@/api/activity/use-activities'
 import { useTask } from '@/api/task/use-task'
 import { ActivityFeed } from '@/components/activity-feed'
-import { TaskBottomActions } from '@/components/task-bottom-actions'
+import { TaskCommentBox } from '@/components/task-comment-box'
 import { TaskDetails } from '@/components/task-details'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Separator } from '@/components/ui/separator'
-import { Text } from '@/components/ui/text'
 import { formatTaskId } from '@/utils/task-id-helper'
 
 export default function WorkerTaskView() {
@@ -67,26 +62,32 @@ export default function WorkerTaskView() {
             }}
           />
 
-          <View className="flex-1 justify-between">
-            <ScrollView
-              contentContainerClassName="mb-safe gap-2 p-4 pb-safe-offset-4"
-              refreshControl={
-                <RefreshControl
-                  onRefresh={handleRefetch}
-                  refreshing={isRefetching}
+          <KeyboardAwareScrollView
+            bottomOffset={40}
+            contentContainerClassName="gap-3 p-4 pb-safe"
+            refreshControl={
+              <RefreshControl
+                onRefresh={handleRefetch}
+                refreshing={isRefetching}
+              />
+            }
+          >
+            {task && <TaskDetails task={task} />}
+
+            {/* Activities Card with Comment Box */}
+            <Card className="bg-muted dark:border-white/20">
+              <CardHeader>
+                <CardTitle>Hoạt động</CardTitle>
+              </CardHeader>
+              <CardContent className="gap-4">
+                <TaskCommentBox
+                  onCommentSent={handleRefetch}
+                  taskId={task.id}
                 />
-              }
-            >
-              {task && <TaskDetails task={task} />}
-              <Separator className="my-2" />
-              <Text className="font-sans-medium" variant="h4">
-                Hoạt động
-              </Text>
-              <ActivityFeed topic={`TASK_${taskId}`} />
-              <View className="pb-safe" />
-            </ScrollView>
-            <TaskBottomActions />
-          </View>
+                <ActivityFeed topic={`TASK_${taskId}`} />
+              </CardContent>
+            </Card>
+          </KeyboardAwareScrollView>
         </>
       )}
     </View>

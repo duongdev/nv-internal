@@ -72,10 +72,29 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
     await mutateAsync({ taskId: task.id, status })
   }
 
+  // If task is completed, show disabled button
+  if (task.status === TaskStatus.COMPLETED) {
+    return (
+      <Button className="w-full" disabled size="default">
+        <Text className="font-sans-medium">Hoàn thành</Text>
+      </Button>
+    )
+  }
+
+  // If admin viewing READY status, show disabled button
+  if (appRole === 'admin' && task.status === TaskStatus.READY) {
+    return (
+      <Button className="w-full" disabled size="default">
+        <Text className="font-sans-medium">Đã sẵn sàng làm việc</Text>
+      </Button>
+    )
+  }
+
   const action = TASK_STATUS_TO_NEXT_ACTION[appRole][task.status]
   if (action) {
     return (
       <Button
+        className="w-full"
         onPress={() => {
           if (action.alert) {
             Alert.alert(
@@ -95,17 +114,18 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
             handleUpdateStatus(action.nextStatus)
           }
         }}
-        size="sm"
+        size="default"
       >
         <Text className="font-sans-medium">{action.label}</Text>
       </Button>
     )
   }
 
-  if (task.status === 'PREPARING') {
+  // For PREPARING status in admin view
+  if (task.status === TaskStatus.PREPARING) {
     return (
       <Button
-        className="h-14 w-full"
+        className="w-full"
         onPress={() => {
           Alert.alert(
             'Cho phép bắt đầu?',
@@ -120,9 +140,9 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
             ],
           )
         }}
-        size="lg"
+        size="default"
       >
-        <Text className="font-sans-medium text-base">Sẵn sàng làm việc</Text>
+        <Text className="font-sans-medium">Sẵn sàng làm việc</Text>
       </Button>
     )
   }

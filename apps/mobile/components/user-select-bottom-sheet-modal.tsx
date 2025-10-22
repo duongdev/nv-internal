@@ -18,6 +18,7 @@ import {
   getUserRoles,
   isUserBanned,
 } from '@/utils/user-helper'
+import { Button } from './ui/button'
 import { Icon } from './ui/icon'
 import { SearchBox } from './ui/search-box'
 import { Text } from './ui/text'
@@ -26,11 +27,13 @@ import { UserRoleBadge } from './user-role-badge'
 export type UserSelectBottomSheetModalProps = {
   selectedUserIds: string[]
   onChangeSelectedUserIds: (userIds: string[]) => void
+  onCancel?: () => void
+  onSave?: () => void
 }
 
 export const UserSelectBottomSheetModal: FC<
   UserSelectBottomSheetModalProps
-> = ({ selectedUserIds, onChangeSelectedUserIds }) => {
+> = ({ selectedUserIds, onChangeSelectedUserIds, onCancel, onSave }) => {
   const [searchText, setSearchText] = useState('')
   const { data, isLoading, refetch, isRefetching } = useUserList()
 
@@ -58,7 +61,7 @@ export const UserSelectBottomSheetModal: FC<
   }, [data, searchText])
 
   return (
-    <BottomSheetView className="h-full flex-1 gap-2 px-4 pb-safe">
+    <BottomSheetView className="h-full flex-1 gap-2 px-4">
       <SearchBox
         isInBottomSheet
         onChangeTextDebounced={setSearchText}
@@ -111,6 +114,20 @@ export const UserSelectBottomSheetModal: FC<
           </Pressable>
         )}
       />
+      {(onCancel || onSave) && (
+        <View className="flex-row gap-2 pb-4">
+          {onCancel && (
+            <Button className="flex-1" onPress={onCancel} variant="outline">
+              <Text>Hủy</Text>
+            </Button>
+          )}
+          {onSave && (
+            <Button className="flex-1" onPress={onSave}>
+              <Text>Lưu</Text>
+            </Button>
+          )}
+        </View>
+      )}
     </BottomSheetView>
   )
 }

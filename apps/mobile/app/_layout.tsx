@@ -22,6 +22,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
 import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { Toasts } from '@/components/ui/toasts'
 import { queryClient } from '@/lib/api-client'
 import { FONT_FAMILY, NAV_THEME } from '@/lib/theme'
@@ -38,14 +39,16 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView className="flex-1 font-gilroy">
-            <BottomSheetModalProvider>
-              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-              <Routes />
-              <Toasts />
-              <PortalHost />
-            </BottomSheetModalProvider>
-          </GestureHandlerRootView>
+          <KeyboardProvider>
+            <GestureHandlerRootView className="flex-1 font-gilroy">
+              <BottomSheetModalProvider>
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+                <Routes />
+                <Toasts />
+                <PortalHost />
+              </BottomSheetModalProvider>
+            </GestureHandlerRootView>
+          </KeyboardProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </ClerkProvider>

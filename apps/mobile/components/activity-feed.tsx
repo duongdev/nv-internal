@@ -1,8 +1,10 @@
-import { type FC, Fragment, useMemo } from 'react'
+import { type FC, Fragment, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
 import { type Activity, useActivities } from '@/api/activity/use-activities'
 import { useAttachments } from '@/api/attachment/use-attachments'
 import { AttachmentList } from './attachment-list'
+import { Separator } from './ui/separator'
+import { Switch } from './ui/switch'
 import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
@@ -59,19 +61,40 @@ export type ActivityFeedProps = {
   removeDuplicate?: boolean
 }
 
+// Define unimportant activity types
+const UNIMPORTANT_ACTIVITIES = [
+  'ATTACHMENT_DELETED',
+  'TASK_ATTACHMENTS_UPLOADED',
+]
+
 export const ActivityFeed: FC<ActivityFeedProps> = ({
   topic,
   removeDuplicate = true,
 }) => {
   const { data, isLoading } = useActivities({ topic })
+  const [hideUnimportant, setHideUnimportant] = useState(true)
 
   const activities = useMemo(() => {
-    if (!data || !removeDuplicate) {
+    if (!data) {
       return data
     }
 
+    let filteredData = data
+
+    // Filter out unimportant activities if enabled
+    if (hideUnimportant) {
+      filteredData = data.filter(
+        (activity) => !UNIMPORTANT_ACTIVITIES.includes(activity.action),
+      )
+    }
+
+    // Remove duplicates if enabled
+    if (!removeDuplicate) {
+      return filteredData
+    }
+
     const activityItems: Activity[] = []
-    data.forEach((activity) => {
+    filteredData.forEach((activity) => {
       // Don't add item if the previous item has the same action and timestamp is within 1 minute
       if (
         activityItems.length === 0 ||
@@ -84,23 +107,34 @@ export const ActivityFeed: FC<ActivityFeedProps> = ({
       }
     })
     return activityItems
-  }, [data, removeDuplicate])
+  }, [data, removeDuplicate, hideUnimportant])
 
   if (isLoading && !activities) {
     return <ActivityIndicator />
   }
 
   return (
-    <FlatList
-      contentContainerClassName="gap-3"
-      data={activities}
-      keyExtractor={(item) => item.id}
-      ListEmptyComponent={
-        <Text className="text-muted-foreground">Chưa có hoạt động</Text>
-      }
-      renderItem={({ item }) => <ActivityItem activity={item} />}
-      scrollEnabled={false}
-    />
+    <View className="gap-3">
+      {/* Filter Toggle */}
+      <View className="flex-row items-center justify-between rounded-lg border border-border bg-muted p-3 dark:border-white/20">
+        <Text className="text-sm">Ẩn hoạt động không quan trọng</Text>
+        <Switch
+          checked={hideUnimportant}
+          onCheckedChange={setHideUnimportant}
+        />
+      </View>
+
+      <FlatList
+        data={activities}
+        ItemSeparatorComponent={() => <Separator className="my-3" />}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <Text className="text-muted-foreground">Chưa có hoạt động</Text>
+        }
+        renderItem={({ item }) => <ActivityItem activity={item} />}
+        scrollEnabled={false}
+      />
+    </View>
   )
 }
 
@@ -189,14 +223,14 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
   }, [action, pl])
 
   return (
-    <View className="rounded-md border border-border bg-secondary px-3 py-2">
+    <View>
       <View className="flex-row items-baseline justify-between">
         {activity.userId ? (
           <UserFullName className="font-sans-medium" userId={activity.userId} />
         ) : (
           <Text className="font-sans-medium">Hệ thống</Text>
         )}
-        <Text className="text-gray-500 text-sm">
+        <Text className="text-muted-foreground text-sm">
           {new Date(activity.createdAt).toLocaleString()}
         </Text>
       </View>

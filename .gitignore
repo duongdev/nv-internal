@@ -18,3 +18,5 @@ server.tspackages/WebDriverAgent/
 
 # Uploaded files (local development)
 apps/api/.uploads/
+.DS_Store
+.playwright-mcp/

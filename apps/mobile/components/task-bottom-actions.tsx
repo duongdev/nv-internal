@@ -1,3 +1,10 @@
+/**
+ * @deprecated This component is deprecated and no longer used.
+ * Comment functionality has been moved to TaskCommentBox component
+ * which is integrated into the Activities card on the task details screen.
+ * See: apps/mobile/components/task-comment-box.tsx
+ */
+
 import BottomSheet, {
   type BottomSheetBackgroundProps,
   BottomSheetTextInput,
@@ -13,6 +20,9 @@ import { Button } from './ui/button'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
 
+/**
+ * @deprecated Use TaskCommentBox instead
+ */
 export type TaskBottomActionsProps = {}
 
 export const TaskBottomActions: FC<TaskBottomActionsProps> = () => {
