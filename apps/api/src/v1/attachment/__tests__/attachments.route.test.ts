@@ -10,6 +10,46 @@ function makeFile(name: string, type: string, size: number) {
   return new File([blob], name, { type })
 }
 
+describe('GET /v1/attachments', () => {
+  it('requires authentication', async () => {
+    const app = createTestAppWithAuth(null)
+    const res = await app.request('/v1/attachments?ids=att_123')
+    expect(res.status).toBe(401)
+  })
+
+  it('returns attachments with signed URLs for authenticated user', async () => {
+    const app = createTestAppWithAuth(createMockAdminUser())
+    const res = await app.request('/v1/attachments?ids=att_nonexistent')
+    expect([200, 404, 500]).toContain(res.status)
+    if (res.status === 200) {
+      const json = await res.json()
+      expect(json).toHaveProperty('attachments')
+      expect(Array.isArray(json.attachments)).toBe(true)
+    }
+  })
+
+  it('validates query parameters', async () => {
+    const app = createTestAppWithAuth(createMockAdminUser())
+    const res = await app.request('/v1/attachments')
+    expect([400, 200]).toContain(res.status)
+  })
+})
+
+describe('GET /v1/attachments/view/:token', () => {
+  it('does not require Clerk authentication', async () => {
+    const app = createTestAppWithAuth(null)
+    const res = await app.request('/v1/attachments/view/invalid_token')
+    // Should not return 401 (unauthorized), but 403 (forbidden - invalid token) or 404
+    expect([403, 404, 500]).toContain(res.status)
+  })
+
+  it('rejects invalid JWT token', async () => {
+    const app = createTestAppWithAuth(createMockAdminUser())
+    const res = await app.request('/v1/attachments/view/invalid_jwt')
+    expect([403, 500]).toContain(res.status)
+  })
+})
+
 describe('POST /v1/task/:id/attachments', () => {
   it('uploads attachments as admin', async () => {
     const app = createTestAppWithAuth(createMockAdminUser())

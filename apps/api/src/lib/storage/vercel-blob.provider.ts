@@ -1,4 +1,5 @@
 import type {
+  GetSignedUrlOptions,
   PutObjectInput,
   PutObjectResult,
   StorageProvider,
@@ -31,7 +32,7 @@ export class VercelBlobProvider implements StorageProvider {
           key: string,
           body: Blob | ArrayBuffer | ReadableStream,
           options?: PutOptions,
-        ) => Promise<unknown>
+        ) => Promise<{ url: string }>
       }
     ).put
     await putFn(input.key, input.body as Blob | ArrayBuffer | ReadableStream, {
@@ -48,8 +49,32 @@ export class VercelBlobProvider implements StorageProvider {
     return undefined
   }
 
-  async getSignedUrl(key: string): Promise<string> {
-    // To be implemented later via @vercel/blob signing API
-    return key
+  async getSignedUrl(key: string, opts?: GetSignedUrlOptions): Promise<string> {
+    // Note: Vercel Blob SDK doesn't support signed URLs with expiration
+    // For public access files, we return a URL that will be proxied through
+    // the API's /v1/attachments/view/:token endpoint with JWT validation
+    // This ensures time-limited access even for Vercel Blob storage
+
+    // We'll use the same JWT approach as LocalDiskProvider
+    const secret = process.env.ATTACHMENT_JWT_SECRET
+    if (!secret) {
+      throw new Error('ATTACHMENT_JWT_SECRET environment variable is required')
+    }
+
+    const expiresInSec = opts?.expiresInSec ?? 3600 // Default: 1 hour
+    const dispositionFilename = opts?.dispositionFilename
+
+    const payload = {
+      key,
+      provider: this.name,
+      ...(dispositionFilename && { filename: dispositionFilename }),
+    }
+
+    const jwt = await import('jsonwebtoken')
+    const token = jwt.default.sign(payload, secret, {
+      expiresIn: expiresInSec,
+    })
+
+    return `/v1/attachments/view/${token}`
   }
 }

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import activityApp from './activity/activity.route'
+import attachmentApp from './attachment/attachment.route'
 import { authMiddleware } from './middlewares/auth'
 import taskApp from './task/task.route'
 import userApp from './user/user.route'
@@ -11,3 +12,4 @@ export const hono = new Hono()
   .route('/activity', activityApp)
   .route('/task', taskApp)
   .route('/user', userApp)
+  .route('/attachments', attachmentApp)

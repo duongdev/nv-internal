@@ -1,5 +1,5 @@
-import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useUser } from '@clerk/clerk-expo'
+import type { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { PlusIcon } from 'lucide-react-native'
 import { useRef } from 'react'
 import { AttachmentUploadSheet } from './attachment-upload-sheet'
@@ -29,10 +29,10 @@ export function AttachmentUploader({
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
-        onPress={() => sheetRef.current?.present()}
         className="mt-2"
+        onPress={() => sheetRef.current?.present()}
+        size="sm"
+        variant="outline"
       >
         <Icon as={PlusIcon} />
         <Text>Thêm tệp đính kèm</Text>
