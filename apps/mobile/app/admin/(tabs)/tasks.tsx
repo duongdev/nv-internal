@@ -30,7 +30,7 @@ export default function AdminTasksScreen() {
         }}
       />
       <View className="flex-1">
-        <AdminTaskList contentContainerClassName="flex-1 gap-2 p-4" />
+        <AdminTaskList contentContainerClassName="gap-2 p-4 pb-safe" />
       </View>
     </>
   )

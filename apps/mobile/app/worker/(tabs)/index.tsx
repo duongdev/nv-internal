@@ -88,7 +88,7 @@ export default function WorkerIndex() {
   return (
     <View className="flex-1 pt-safe">
       <SectionList
-        contentContainerClassName="flex-1 gap-2 px-4"
+        contentContainerClassName="gap-2 px-4 pb-safe"
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
           <Text className="text-muted-foreground">Chưa có công việc nào.</Text>
