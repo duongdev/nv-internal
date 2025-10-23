@@ -65,7 +65,7 @@ export default function WorkerIndex() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 gap-2 px-4 pt-safe">
+      <View className="flex-1 gap-2 bg-background px-4 pt-safe">
         <View className="-mb-2 bg-background pb-1">
           <Text className="font-sans-medium" variant="h4">
             Việc đang làm
@@ -86,9 +86,9 @@ export default function WorkerIndex() {
   }
 
   return (
-    <View className="flex-1 pt-safe">
+    <View className="flex-1 bg-background pt-safe">
       <SectionList
-        contentContainerClassName="gap-2 px-4 pb-safe"
+        contentContainerClassName="gap-2 px-4 pb-24"
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
           <Text className="text-muted-foreground">Chưa có công việc nào.</Text>
@@ -113,7 +113,7 @@ export default function WorkerIndex() {
             }}
             key={task.id}
           >
-            <View className="rounded-lg border border-border bg-secondary p-3 active:bg-card">
+            <View className="rounded-lg border border-border bg-card p-3 active:opacity-80">
               <TaskListItem task={task} />
             </View>
           </Link>
@@ -126,6 +126,7 @@ export default function WorkerIndex() {
           </View>
         )}
         sections={sections}
+        stickySectionHeadersEnabled
       />
     </View>
   )

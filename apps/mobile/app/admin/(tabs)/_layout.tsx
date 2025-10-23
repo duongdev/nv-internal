@@ -1,57 +1,78 @@
-import { Stack, Tabs } from 'expo-router'
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { Stack } from 'expo-router'
 import {
-  HouseIcon,
-  ListTodoIcon,
-  SettingsIcon,
-  UsersIcon,
-} from 'lucide-react-native'
+  Icon,
+  Label,
+  NativeTabs,
+  VectorIcon,
+} from 'expo-router/unstable-native-tabs'
 import { useColorScheme } from 'nativewind'
+import { Platform } from 'react-native'
 import { FONT_FAMILY, THEME } from '@/lib/theme'
 
 export default function AdminTabLayout() {
   const { colorScheme } = useColorScheme()
+  const isDark = colorScheme === 'dark'
+  const primaryColor = THEME[colorScheme ?? 'light'].primary
+
   return (
     <>
       <Stack.Screen options={{ title: 'Quản lý', headerShown: false }} />
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: THEME[colorScheme ?? 'light'].primary,
-          tabBarLabelStyle: { fontFamily: FONT_FAMILY.medium },
+      <NativeTabs
+        iconColor={{
+          default: isDark ? '#9ca3af' : '#6b7280',
+          selected: primaryColor,
         }}
+        labelStyle={{
+          fontFamily: FONT_FAMILY.medium,
+          fontSize: 10,
+        }}
+        {...(Platform.OS === 'ios' && {
+          blurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
+        })}
+        {...(Platform.OS === 'android' && {
+          backgroundColor: isDark ? '#000000' : '#ffffff',
+          labelVisibilityMode: 'labeled',
+        })}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Trang chủ',
-            headerShown: false,
-            tabBarIcon: ({ color }) => <HouseIcon color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="users"
-          options={{
-            title: 'Nhân viên',
-            tabBarIcon: ({ color }) => <UsersIcon color={color} />,
-            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
-          }}
-        />
-        <Tabs.Screen
-          name="tasks"
-          options={{
-            title: 'Công việc',
-            tabBarIcon: ({ color }) => <ListTodoIcon color={color} />,
-            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: 'Cài đặt',
-            tabBarIcon: ({ color }) => <SettingsIcon color={color} />,
-            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
-          }}
-        />
-      </Tabs>
+        <NativeTabs.Trigger name="index">
+          <Icon
+            src={<VectorIcon family={MaterialCommunityIcons} name="home" />}
+          />
+          <Label>Trang chủ</Label>
+        </NativeTabs.Trigger>
+
+        <NativeTabs.Trigger name="users">
+          <Icon
+            src={
+              <VectorIcon
+                family={MaterialCommunityIcons}
+                name="account-group"
+              />
+            }
+          />
+          <Label>Nhân viên</Label>
+        </NativeTabs.Trigger>
+
+        <NativeTabs.Trigger name="tasks">
+          <Icon
+            src={
+              <VectorIcon
+                family={MaterialCommunityIcons}
+                name="format-list-checks"
+              />
+            }
+          />
+          <Label>Công việc</Label>
+        </NativeTabs.Trigger>
+
+        <NativeTabs.Trigger name="settings">
+          <Icon
+            src={<VectorIcon family={MaterialCommunityIcons} name="cog" />}
+          />
+          <Label>Cài đặt</Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
     </>
   )
 }

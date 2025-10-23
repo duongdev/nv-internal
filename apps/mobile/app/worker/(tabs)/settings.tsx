@@ -3,7 +3,11 @@ import { UserSettingsScreen } from '@/components/user-settings/user-settings-scr
 
 export default function WorkerSettingsScreen() {
   return (
-    <ScrollView contentContainerClassName="mt-4 flex-1">
+    <ScrollView
+      bounces={false}
+      className="flex-1 bg-background"
+      contentContainerClassName="px-4 pt-4 pb-safe"
+    >
       <UserSettingsScreen isAdminView={false} />
     </ScrollView>
   )

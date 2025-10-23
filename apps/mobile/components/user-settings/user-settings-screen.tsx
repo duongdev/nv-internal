@@ -46,7 +46,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
   }
 
   return (
-    <View className="flex-1 gap-4 px-4">
+    <View className="gap-4">
       <UserHeader
         user={
           {
