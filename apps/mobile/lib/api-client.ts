@@ -10,8 +10,27 @@ export const clerk = getClerkInstance({
   tokenCache,
 })
 
+// Token cache to avoid repeated getToken() calls
+let cachedToken: string | null = null
+let tokenCacheTime = 0
+const TOKEN_CACHE_DURATION = 30000 // 30 seconds
+
 export const getHonoClient = async () => {
-  const token = await clerk.session?.getToken()
+  const now = Date.now()
+
+  // Use cached token if it's still valid (within 30 seconds)
+  let token: string | null | undefined = cachedToken
+
+  if (!token || now - tokenCacheTime > TOKEN_CACHE_DURATION) {
+    // Token is stale or doesn't exist, fetch new one
+    token = await clerk.session?.getToken()
+
+    // Cache the new token
+    if (token) {
+      cachedToken = token
+      tokenCacheTime = now
+    }
+  }
 
   const headers: Record<string, string> = {}
 

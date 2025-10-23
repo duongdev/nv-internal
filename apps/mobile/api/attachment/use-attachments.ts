@@ -60,7 +60,7 @@ export function useAttachments(
     queryKey: ['attachments', 'v2', ids.sort().join(',')] as const, // Added v2 to bust cache
     queryFn: () => fetchAttachmentsByIds(ids),
     enabled: options?.enabled !== false && ids.length > 0,
-    staleTime: 0, // Always refetch to get fresh signed URLs
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes (signed URLs are valid for 1 hour)
+    gcTime: 1000 * 60 * 60, // 1 hour (match signed URL expiry)
   })
 }

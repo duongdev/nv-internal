@@ -1,4 +1,9 @@
-import { type UseQueryOptions, useQuery } from '@tanstack/react-query'
+import {
+  type UseQueryOptions,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { activitiesQueryOptions } from '@/api/activity/use-activities'
 import { callHonoApi } from '@/lib/api-client'
 
 export async function fetchTaskById(taskId: number) {
@@ -24,8 +29,20 @@ export function useTask(
   variables: { id: number },
   queryOptions?: Partial<UseQueryOptions<FetchTaskByIdResponse>>,
 ) {
-  return useQuery<FetchTaskByIdResponse>({
+  const queryClient = useQueryClient()
+
+  const query = useQuery<FetchTaskByIdResponse>({
     ...taskQueryOptions(variables),
     ...queryOptions,
   })
+
+  // Prefetch activities for this task to reduce sequential requests
+  // This runs in parallel with the task query
+  if (variables.id && query.isSuccess) {
+    queryClient.prefetchQuery(
+      activitiesQueryOptions({ topic: `TASK_${variables.id}` }),
+    )
+  }
+
+  return query
 }

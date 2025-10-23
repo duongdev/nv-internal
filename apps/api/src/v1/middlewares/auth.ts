@@ -1,9 +1,9 @@
 import type { User } from '@clerk/backend'
 import { clerkMiddleware, getAuth } from '@hono/clerk-auth'
+import type { UserPublicMetadata } from '@nv-internal/validation'
 import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
-import { getLogger } from '../../lib/log'
 
 export const authMiddleware = createMiddleware(async (c, next) => {
   // Bypass auth for attachment view endpoint (uses JWT token instead)
@@ -22,26 +22,37 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 
   c.set('userId', auth.userId)
 
-  // IMPORTANT: We need to fetch the full user object from Clerk to get publicMetadata
-  // The JWT sessionClaims don't contain publicMetadata.roles - they only have org info
-  // This is a necessary API call until we store roles in a custom JWT claim
-  const clerkClient = c.get('clerk')
-  const logger = getLogger('auth-middleware')
+  // PERFORMANCE OPTIMIZATION: Read user metadata from JWT session claims
+  // instead of fetching from Clerk API on every request
+  //
+  // Custom claims are configured in Clerk Dashboard → Sessions → Customize session token
+  // This eliminates ~2000ms API call in dev, ~300-500ms in prod
+  //
+  // JWT structure includes:
+  // {
+  //   metadata: {
+  //     roles: ['nv_internal_admin', 'nv_internal_worker'],
+  //     phoneNumber: '0123456789',
+  //     defaultPasswordChanged: false
+  //   }
+  // }
+  const sessionClaims = auth.sessionClaims as CustomJwtSessionClaims
 
-  try {
-    const user = await clerkClient.users.getUser(auth.userId)
-    c.set('user', user)
-    c.header('x-user-id', auth.userId)
-  } catch (error) {
-    logger.error(`Failed to fetch user from Clerk ${error}`)
-    // Set minimal user with empty metadata as fallback
-    const minimalUser: Partial<User> = {
-      id: auth.userId,
-      publicMetadata: {},
-    }
-    c.set('user', minimalUser as User)
-    c.header('x-user-id', auth.userId)
+  // Build minimal user object from JWT claims
+  // This contains only publicMetadata which is used for authorization
+  const defaultMetadata: UserPublicMetadata = {
+    roles: [],
+    defaultPasswordChanged: false,
   }
+
+  const user: Partial<User> = {
+    id: auth.userId,
+    // biome-ignore lint/suspicious/noExplicitAny: <ignore>
+    publicMetadata: (sessionClaims.metadata ?? defaultMetadata) as any,
+  }
+
+  c.set('user', user as User)
+  c.header('x-user-id', auth.userId)
 
   await next()
 })
