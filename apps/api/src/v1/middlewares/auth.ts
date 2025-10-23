@@ -22,14 +22,25 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 
   c.set('userId', auth.userId)
 
+  // IMPORTANT: We need to fetch the full user object from Clerk to get publicMetadata
+  // The JWT sessionClaims don't contain publicMetadata.roles - they only have org info
+  // This is a necessary API call until we store roles in a custom JWT claim
+  const clerkClient = c.get('clerk')
+  const logger = getLogger('auth-middleware')
+
   try {
-    const clerkClient = c.get('clerk')
     const user = await clerkClient.users.getUser(auth.userId)
     c.set('user', user)
     c.header('x-user-id', auth.userId)
   } catch (error) {
-    const logger = getLogger('auth-middleware')
     logger.error(`Failed to fetch user from Clerk ${error}`)
+    // Set minimal user with empty metadata as fallback
+    const minimalUser: Partial<User> = {
+      id: auth.userId,
+      publicMetadata: {},
+    }
+    c.set('user', minimalUser as User)
+    c.header('x-user-id', auth.userId)
   }
 
   await next()

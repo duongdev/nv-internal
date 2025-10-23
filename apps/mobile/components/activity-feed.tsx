@@ -1,13 +1,27 @@
+import { AlertTriangleIcon, MessageSquareIcon } from 'lucide-react-native'
 import { type FC, Fragment, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
 import { type Activity, useActivities } from '@/api/activity/use-activities'
 import { useAttachments } from '@/api/attachment/use-attachments'
 import { AttachmentList } from './attachment-list'
+import { Icon } from './ui/icon'
 import { Separator } from './ui/separator'
 import { Switch } from './ui/switch'
 import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
 import { UserFullName } from './user-public-info'
+
+/**
+ * Format distance in a friendly way
+ * - Less than 1000m: show in meters (e.g., "50m")
+ * - 1000m or more: show in kilometers with 1 decimal (e.g., "1.5km")
+ */
+function formatDistance(meters: number): string {
+  if (meters < 1000) {
+    return `${Math.round(meters)}m`
+  }
+  return `${(meters / 1000).toFixed(1)}km`
+}
 
 function AttachmentsWithDeletedPlaceholders({
   attachmentIds,
@@ -216,6 +230,138 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
           Đã xóa tệp đính kèm{' '}
           <Text className="font-sans-medium">{payload.originalFilename}</Text>
         </Text>
+      )
+    }
+    if (action === 'TASK_CHECKED_IN' && payload) {
+      const attachments = payload.attachments as Array<{ id?: string }>
+      const distance = payload.distanceFromTask as number | undefined
+      const notes = payload.notes as string | undefined
+      const warnings = (payload.warnings as string[]) || []
+
+      // Format distance
+      const distanceText =
+        distance !== undefined ? formatDistance(distance) : null
+
+      return (
+        <View className="gap-2">
+          <Text>Đã bắt đầu làm việc</Text>
+          {distanceText && (
+            <Text className="text-muted-foreground text-sm">
+              Khoảng cách: {distanceText}
+            </Text>
+          )}
+          {warnings.length > 0 && (
+            <View className="flex-row gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-700 dark:bg-amber-950/20">
+              <Icon
+                as={AlertTriangleIcon}
+                className="mt-0.5 text-amber-600 dark:text-amber-500"
+                size={16}
+              />
+              <View className="flex-1 gap-1">
+                {warnings.map((warning) => {
+                  const distanceMatch = warning.match(/(\d+)m/)
+                  const distanceValue = distanceMatch
+                    ? Number.parseInt(distanceMatch[1], 10)
+                    : 0
+                  const formattedWarning = distanceMatch
+                    ? warning.replace(/(\d+)m/, formatDistance(distanceValue))
+                    : warning
+
+                  return (
+                    <Text
+                      className="text-amber-700 text-xs dark:text-amber-400"
+                      key={warning}
+                    >
+                      {formattedWarning}
+                    </Text>
+                  )
+                })}
+              </View>
+            </View>
+          )}
+          {notes && (
+            <View className="flex-row gap-2 rounded-lg border border-border bg-card p-2">
+              <Icon
+                as={MessageSquareIcon}
+                className="mt-1 text-muted-foreground"
+                size={16}
+              />
+              <Text className="flex-1 text-sm">{notes}</Text>
+            </View>
+          )}
+          {attachments && attachments.length > 0 && (
+            <AttachmentsWithDeletedPlaceholders
+              attachmentIds={attachments.map((att) => att.id as string)}
+              compact
+            />
+          )}
+        </View>
+      )
+    }
+    if (action === 'TASK_CHECKED_OUT' && payload) {
+      const attachments = payload.attachments as Array<{ id?: string }>
+      const distance = payload.distanceFromTask as number | undefined
+      const notes = payload.notes as string | undefined
+      const warnings = (payload.warnings as string[]) || []
+
+      // Format distance
+      const distanceText =
+        distance !== undefined ? formatDistance(distance) : null
+
+      return (
+        <View className="gap-2">
+          <Text>Đã hoàn thành công việc</Text>
+          {distanceText && (
+            <Text className="text-muted-foreground text-sm">
+              Khoảng cách: {distanceText}
+            </Text>
+          )}
+          {warnings.length > 0 && (
+            <View className="flex-row gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-700 dark:bg-amber-950/20">
+              <Icon
+                as={AlertTriangleIcon}
+                className="mt-0.5 text-amber-600 dark:text-amber-500"
+                size={16}
+              />
+              <View className="flex-1 gap-1">
+                {warnings.map((warning) => {
+                  const distanceMatch = warning.match(/(\d+)m/)
+                  const distanceValue = distanceMatch
+                    ? Number.parseInt(distanceMatch[1], 10)
+                    : 0
+                  const formattedWarning = distanceMatch
+                    ? warning.replace(/(\d+)m/, formatDistance(distanceValue))
+                    : warning
+
+                  return (
+                    <Text
+                      className="text-amber-700 text-xs dark:text-amber-400"
+                      key={warning}
+                    >
+                      {formattedWarning}
+                    </Text>
+                  )
+                })}
+              </View>
+            </View>
+          )}
+          {notes && (
+            <View className="flex-row gap-2 rounded-lg border border-border bg-card p-2">
+              <Icon
+                as={MessageSquareIcon}
+                className="mt-1 text-muted-foreground"
+                size={16}
+              />
+              <Text className="flex-1 text-sm">{notes}</Text>
+            </View>
+          )}
+          {attachments && attachments.length > 0 && (
+            <AttachmentsWithDeletedPlaceholders
+              attachmentIds={attachments.map((att) => att.id as string)}
+              compact
+            />
+          )}
+        </View>
       )
     }
 

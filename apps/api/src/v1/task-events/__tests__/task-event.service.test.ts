@@ -327,7 +327,7 @@ describe('task-event service', () => {
       ).rejects.toThrow('chưa sẵn sàng')
     })
 
-    it('should throw error when no files provided', async () => {
+    it('should allow check-in without files', async () => {
       const worker = createMockWorkerUser()
       const storage = createMockStorage()
       const { checkInToTask } = getService()
@@ -336,25 +336,78 @@ describe('task-event service', () => {
         id: 1,
         status: 'READY',
         assigneeIds: [worker.id],
-        geoLocation: {
-          id: 'geo_1',
-          lat: 21.0285,
-          lng: 105.8542,
-        },
+        geoLocation: null, // No location requirement
       })
 
-      await expect(
-        checkInToTask(
-          {
-            taskId: 1,
-            userId: worker.id,
-            latitude: 21.0285,
-            longitude: 105.8542,
-            files: [],
-          },
-          storage,
-        ),
-      ).rejects.toThrow('tệp đính kèm')
+      // Mock geoLocation creation for the event
+      mockPrisma.geoLocation.create.mockResolvedValueOnce({
+        id: 'geo_event_1',
+        lat: 21.0285,
+        lng: 105.8542,
+        name: null,
+        address: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+
+      // Mock task update in transaction
+      mockPrisma.task.update.mockResolvedValueOnce({
+        id: 1,
+        status: 'IN_PROGRESS',
+        title: 'Test Task',
+        description: 'Test Description',
+        assigneeIds: [worker.id],
+        customerId: 'cust_123',
+        geoLocationId: null,
+        startedAt: new Date(),
+        completedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        customer: {
+          id: 'cust_123',
+          name: 'Test Customer',
+          phone: '0123456789',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        geoLocation: null,
+        attachments: [],
+      })
+
+      const result = await checkInToTask(
+        {
+          taskId: 1,
+          userId: worker.id,
+          latitude: 21.0285,
+          longitude: 105.8542,
+          files: [],
+        },
+        storage,
+      )
+
+      // Verify result structure
+      expect(result).toHaveProperty('event')
+      expect(result).toHaveProperty('task')
+      expect(result).toHaveProperty('warnings')
+      expect(result.event.type).toBe('CHECK_IN')
+      expect(result.task.status).toBe('IN_PROGRESS')
+
+      // Verify NO attachments were uploaded since files array was empty
+      expect(mockUploadTaskAttachments).not.toHaveBeenCalled()
+
+      // Verify activity was created
+      expect(mockCreateActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'TASK_CHECKED_IN',
+          userId: worker.id,
+          topic: { entityType: 'TASK', entityId: 1 },
+          payload: expect.objectContaining({
+            type: 'CHECK_IN',
+            attachments: [],
+          }),
+        }),
+        expect.anything(),
+      )
     })
   })
 

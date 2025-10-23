@@ -1,3 +1,4 @@
+import { getAuth } from '@hono/clerk-auth'
 import { zValidator } from '@hono/zod-validator'
 import { UserRole, z, zCreateUser } from '@nv-internal/validation'
 import { Hono } from 'hono'
@@ -16,9 +17,15 @@ import {
 } from './user.service'
 
 const router = new Hono()
-  // Get current user
-  .get('/me', (c) => {
-    const user = getAuthUserStrict(c)
+  // Get current user (fetch full user data from Clerk on-demand)
+  .get('/me', async (c) => {
+    const auth = getAuth(c)
+    if (!auth?.userId) {
+      throw new HTTPException(401, { message: 'unauthorized' })
+    }
+
+    const clerkClient = c.get('clerk')
+    const user = await clerkClient.users.getUser(auth.userId)
     return c.json(user)
   })
   // Create a new user

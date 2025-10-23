@@ -14,6 +14,8 @@
 3. [Monthly Reports](./03-monthly-reports.md) - Week 5 🔴
 4. [Task CRUD Enhancements](./04-task-crud.md) - Week 5 🟡
 5. [Employee Management](./05-employee-management.md) - Week 6 🟡
+6. [Admin Dashboard](./06-admin-dashboard.md) - Week 7 🟡
+7. [Task Comments](./07-task-comments.md) - Week 5 (Parallel) 🟡 **Ready to implement**
 
 📊 **Status Tracking:**
 - [Implementation Progress](#implementation-progress)
@@ -31,7 +33,7 @@ This is the master plan for NV Internal v1, a task management application for an
 - **Auth:** Clerk
 - **Storage:** Vercel Blob
 
-The plan addresses gaps between current implementation and contract requirements, organized into 5 phases over 6-7 weeks.
+The plan addresses gaps between current implementation and contract requirements, organized into 7 phases over 6-7 weeks.
 
 ---
 
@@ -109,6 +111,7 @@ The plan addresses gaps between current implementation and contract requirements
 | **Admin: Track check-ins** | 🔄 25% | Phase 2 | 🔴 |
 | **Admin: Track payments** | ❌ 0% | Phase 1 | 🔴 |
 | **Admin: Monthly reports** | ❌ 0% | Phase 3 | 🔴 |
+| **Admin: Dashboard view** | ❌ 0% | Phase 5 | 🟡 |
 | **Worker: View tasks** | ✅ 100% | - | - |
 | **Worker: Check-in** | 🔄 25% | Phase 2 | 🔴 |
 | **Worker: Check-out** | 🔄 25% | Phase 2 | 🔴 |
@@ -193,18 +196,49 @@ The plan addresses gaps between current implementation and contract requirements
 
 ---
 
+### Phase 5: Admin Dashboard (Week 7) 🟡
+
+**Goal:** Provide real-time visibility into operations
+
+**Deliverables:**
+- Dashboard statistics API endpoints
+- Card-based mobile UI with 5 cards
+- Pull-to-refresh functionality
+- Admin role enforcement
+- Performance metrics and insights
+
+[→ Full Admin Dashboard Plan](./06-admin-dashboard.md)
+
+---
+
+### Phase 6: Task Comments (Week 5 - Parallel) 🟡
+
+**Goal:** Enable collaborative communication on tasks
+
+**Deliverables:**
+- Comment API endpoint with text and photos
+- Wire existing TaskCommentBox component
+- Comments in activity feed
+- Photo attachments (1-5 per comment)
+- Zero database changes (Activity-based)
+
+[→ Full Task Comments Plan](./07-task-comments.md)
+
+---
+
 ## Timeline
 
 ```
 Week 1-2: Payment System (Phase 1)
 Week 3-4: Check-in/Check-out (Phase 2)
-Week 5:   Monthly Reports (Phase 3) + Task CRUD (Phase 3b)
+Week 5:   Monthly Reports (Phase 3) + Task CRUD (Phase 3b) + Task Comments (Phase 6)
 Week 6:   Employee Management (Phase 4)
-Week 7:   Testing, Polish, Documentation
+Week 7:   Admin Dashboard (Phase 5)
+Week 8:   Testing, Polish, Documentation
 ```
 
-**Total Duration:** 7 weeks
-**Go-live Target:** Week 8
+**Total Duration:** 8 weeks
+**Go-live Target:** Week 9
 
 ---
 
@@ -330,15 +364,26 @@ Week 7:   Testing, Polish, Documentation
 
 ```
 Phase 1 (Payment) ─┐
-                   ├─→ Phase 3 (Reports)
-Phase 2 (Check-in) ┘
+                   ├─→ Phase 3 (Reports) ─→ Phase 5 (Dashboard - Phase 3+4)
+Phase 2 (Check-in) ┘                    ─→ Phase 5 (Dashboard - Phase 2)
 
 Phase 3b (Task CRUD) ─→ Independent, can run parallel
 
 Phase 4 (Employee) ─→ Independent
+
+Phase 6 (Task Comments) ─→ Independent, can run parallel
+                          Uses existing Activity/Attachment models
+                          TaskCommentBox UI component already exists
+
+Phase 5 (Dashboard):
+  Phase 1: Independent (uses existing Task/Activity models)
+  Phase 2: Requires Check-in/out mobile UI
+  Phase 3: Requires Payment System
+  Phase 4: Requires Monthly Reports
 ```
 
-**Critical Path:** Phase 1 → Phase 2 → Phase 3
+**Critical Path:** Phase 1 → Phase 2 → Phase 3 → Phase 5 (full features)
+**Fast Track Features:** Phase 3b (Task CRUD), Phase 6 (Comments) - can start immediately
 
 ---
 
@@ -373,8 +418,10 @@ Phase 4 (Employee) ─→ Independent
 - [x] Phase 1: Payment System
 - [x] Phase 2: Check-in/Check-out
 - [x] Phase 3: Monthly Reports
-- [x] Phase 4: Task CRUD
-- [x] Phase 5: Employee Management
+- [x] Phase 3b: Task CRUD
+- [x] Phase 4: Employee Management
+- [x] Phase 5: Admin Dashboard
+- [x] Phase 6: Task Comments
 - [ ] API documentation (Swagger/OpenAPI)
 - [ ] Mobile app user guide
 - [ ] Admin user guide

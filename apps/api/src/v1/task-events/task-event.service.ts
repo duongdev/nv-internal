@@ -110,14 +110,7 @@ export async function recordTaskEvent(
     }
   }
 
-  // 5. Validate files provided
-  if (!data.files || data.files.length === 0) {
-    throw new HTTPException(400, {
-      message: 'Cần ít nhất một tệp đính kèm',
-    })
-  }
-
-  // 6. GPS verification (only if task has location)
+  // 5. GPS verification (only if task has location)
   let distance = 0
   let warnings: string[] = []
 
@@ -139,22 +132,28 @@ export async function recordTaskEvent(
     )
   }
 
-  // 7. Upload attachments using existing service
+  // 6. Upload attachments if provided
   // This creates Attachment records with taskId set, so they appear in task.attachments
   // It also creates TASK_ATTACHMENTS_UPLOADED activity
-  const attachments = await uploadTaskAttachments({
-    taskId: data.taskId,
-    files: data.files,
-    user: { id: data.userId } as User,
-    storage,
-  })
+  let attachments: Awaited<ReturnType<typeof uploadTaskAttachments>> = []
 
-  logger.info(
-    { count: attachments.length },
-    'Uploaded attachments for task event',
-  )
+  if (data.files && data.files.length > 0) {
+    attachments = await uploadTaskAttachments({
+      taskId: data.taskId,
+      files: data.files,
+      user: { id: data.userId } as User,
+      storage,
+    })
 
-  // 8. Create event in transaction
+    logger.info(
+      { count: attachments.length },
+      'Uploaded attachments for task event',
+    )
+  } else {
+    logger.info('No attachments provided for task event')
+  }
+
+  // 7. Create event in transaction
   const result = await prisma.$transaction(async (tx) => {
     // Create GeoLocation for event
     const geoLocation = await tx.geoLocation.create({

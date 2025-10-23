@@ -1,4 +1,5 @@
 import { TaskStatus } from '@nv-internal/prisma-client'
+import { useRouter } from 'expo-router'
 import type { FC } from 'react'
 import { Alert } from 'react-native'
 import type { Task } from '@/api/task/use-task'
@@ -12,7 +13,8 @@ const TASK_STATUS_TO_NEXT_ACTION: Record<
   {
     [Key in TaskStatus]?: {
       label: string
-      nextStatus: Task['status']
+      nextStatus?: Task['status']
+      route?: string
       alert?: {
         title: string
         message: string
@@ -36,26 +38,12 @@ const TASK_STATUS_TO_NEXT_ACTION: Record<
   },
   worker: {
     [TaskStatus.READY]: {
-      label: 'Bắt đầu',
-      nextStatus: TaskStatus.IN_PROGRESS,
-      alert: {
-        title: 'Xác nhận bắt đầu công việc?',
-        message:
-          'Công việc sẽ được đánh dấu là đang tiến hành. Vị trí hiện tại của bạn sẽ được chia sẻ với quản trị viên.',
-        confirmText: 'Xác nhận',
-        cancelText: 'Hủy',
-      },
+      label: 'Bắt đầu làm việc',
+      route: 'check-in',
     },
     [TaskStatus.IN_PROGRESS]: {
-      label: 'Hoàn thành',
-      nextStatus: TaskStatus.COMPLETED,
-      alert: {
-        title: 'Xác nhận hoàn thành công việc?',
-        message:
-          'Công việc sẽ được đánh dấu là hoàn thành và không thể thay đổi trạng thái nữa. Vị trí hiện tại của bạn sẽ được chia sẻ với quản trị viên.',
-        confirmText: 'Xác nhận',
-        cancelText: 'Hủy',
-      },
+      label: 'Hoàn thành công việc',
+      route: 'check-out',
     },
   },
 }
@@ -67,6 +55,7 @@ export type TaskActionProps = {
 export const TaskAction: FC<TaskActionProps> = ({ task }) => {
   const { mutateAsync } = useUpdateTaskStatus()
   const appRole = useAppRole()
+  const router = useRouter()
 
   const handleUpdateStatus = async (status: Task['status']) => {
     await mutateAsync({ taskId: task.id, status })
@@ -90,13 +79,31 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
     )
   }
 
+  // If admin viewing IN_PROGRESS status, show disabled button
+  if (appRole === 'admin' && task.status === TaskStatus.IN_PROGRESS) {
+    return (
+      <Button className="w-full" disabled size="default">
+        <Text className="font-sans-medium">Đang tiến hành</Text>
+      </Button>
+    )
+  }
+
   const action = TASK_STATUS_TO_NEXT_ACTION[appRole][task.status]
   if (action) {
     return (
       <Button
         className="w-full"
         onPress={() => {
-          if (action.alert) {
+          // If action has a route, navigate to it (check-in/check-out)
+          if (action.route) {
+            router.push(
+              `/worker/tasks/${task.id}/${action.route}` as '/worker/tasks/[taskId]/check-in',
+            )
+            return
+          }
+
+          // Otherwise, handle status update with optional alert
+          if (action.alert && action.nextStatus) {
             Alert.alert(
               action.alert.title,
               action.alert.message,
@@ -105,12 +112,16 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
                 {
                   text: action.alert.confirmText || 'Xác nhận',
                   style: 'default',
-                  onPress: () => handleUpdateStatus(action.nextStatus),
+                  onPress: () => {
+                    if (action.nextStatus) {
+                      handleUpdateStatus(action.nextStatus)
+                    }
+                  },
                 },
               ],
               { cancelable: true },
             )
-          } else {
+          } else if (action.nextStatus) {
             handleUpdateStatus(action.nextStatus)
           }
         }}
