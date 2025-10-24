@@ -1037,6 +1037,81 @@ See `.claude/enhancements/` for detailed specifications:
 
 Priority roadmap: `.claude/enhancements/20251024-120300-enhancement-priorities.md`
 
+## Backend Architecture Refactoring (Planned)
+
+**Status**: 📋 Planning complete, awaiting team approval
+
+A comprehensive backend refactoring plan has been created to improve code quality, maintainability, and align with SOLID principles while optimizing for Hono + Vercel serverless environments.
+
+### Refactoring Principles (Post-Implementation)
+
+**Core Architecture**:
+- Request-scoped dependency injection (not singleton)
+- Selective repository pattern (complex queries only)
+- No controller layer (idiomatic Hono)
+- Lazy service initialization
+- Upload files BEFORE transactions
+
+**Key Patterns**:
+
+#### Request-Scoped DI Container
+```typescript
+// Hono Context provides request-scoped dependencies
+export function createRequestContainer(c: Context): Container {
+  const prisma = getPrisma()  // Singleton connection pool
+  const user = c.get('user')  // Request-specific
+
+  return {
+    get taskService() {
+      return new TaskService(/* lazy init */)
+    }
+  }
+}
+```
+
+#### Selective Repository Pattern
+```typescript
+// ✅ Repository for complex queries
+taskRepo.findCompleteTask(id)  // 5+ includes
+
+// ✅ Direct Prisma for simple CRUD
+prisma.task.findUnique({ where: { id } })
+```
+
+#### Unified Error Handling
+```typescript
+// AppError hierarchy for consistent errors
+throw new NotFoundError('Task')  // 404
+throw new ForbiddenError('Permission denied')  // 403
+throw new ValidationError('Invalid data', errors)  // 400
+```
+
+#### Stateless Authorization Service
+```typescript
+// Pass user to methods, not constructor
+authService.canCreateTask(user)
+authService.canViewTask(user, task)
+```
+
+### Performance Targets
+
+- **Cold Start**: <200ms (p95)
+- **Memory Usage**: <800MB peak
+- **Bundle Size**: +50% max increase
+- **Test Coverage**: 60% → 70%
+- **Code Duplication**: <20%
+
+### Documentation
+
+- **Full Plan**: `.claude/tasks/20251024-212000-backend-refactoring-plan-solid.md`
+- **Executive Summary**: `.claude/tasks/REFACTORING-EXECUTIVE-SUMMARY.md`
+- **Timeline**: 18-20 weeks (Week 0 + Phases 0-6)
+- **Expert Review**: 3 specialized agents (backend, documentation, quality)
+
+### When to Apply
+
+**Not yet implemented** - This is a planned architectural improvement. Current code should follow existing patterns documented above. Post-refactoring, these new patterns will replace current service layer implementation.
+
 ## Important File Locations
 
 - **API Routes**: `apps/api/src/v1/*/` (route.ts and service.ts files)
@@ -1047,6 +1122,7 @@ Priority roadmap: `.claude/enhancements/20251024-120300-enhancement-priorities.m
 - **Task Documentation**: `.claude/tasks/` (implementation tracking)
 - **V1 Feature Plans**: `.claude/plans/v1/` (detailed feature specifications & roadmap)
 - **Enhancement Ideas**: `.claude/enhancements/` (future features & optimizations)
+- **Refactoring Plans**: `.claude/tasks/REFACTORING-*.md` (architecture refactoring documentation)
 - **Cursor Rules**: `.cursor/rules/` (project-specific guidelines)
 - **Commit Commands**: `.cursor/commands/commit-changes.md`
 
