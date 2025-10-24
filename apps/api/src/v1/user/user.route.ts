@@ -1,8 +1,8 @@
 import { getAuth } from '@hono/clerk-auth'
-import { zValidator } from '@hono/zod-validator'
 import { UserRole, z, zCreateUser } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
+import { zValidator } from '../../lib/z-validator'
 import { getAuthUserStrict } from '../middlewares/auth'
 import {
   banUser,

@@ -1,6 +1,6 @@
-import { zValidator } from '@hono/zod-validator'
 import { zActivityListQuery } from '@nv-internal/validation/src/activity.zod'
 import { Hono } from 'hono'
+import { zValidator } from '../../lib/z-validator'
 import { getAuthUserStrict } from '../middlewares/auth'
 import { getActivityList } from './activity.service'
 

@@ -1,9 +1,9 @@
-import { zValidator } from '@hono/zod-validator'
 import { zCuidParam, zUpdatePayment } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 import { getStorageProvider } from '../../lib/storage/get-storage-provider'
+import { zValidator } from '../../lib/z-validator'
 import { getAuthUserStrict } from '../middlewares/auth'
 import { updatePayment } from './payment.service'
 
@@ -40,19 +40,7 @@ const router = new Hono()
   .put(
     '/:id',
     zValidator('param', zCuidParam),
-    zValidator('form', zUpdatePayment, (result, c) => {
-      if (!result.success) {
-        const logger = getLogger('payment.route:updatePayment:validation')
-        logger.error({ errors: result.error.issues }, 'Validation failed')
-        return c.json(
-          {
-            error: 'Validation failed',
-            details: result.error.issues,
-          },
-          400,
-        )
-      }
-    }),
+    zValidator('form', zUpdatePayment),
     async (c) => {
       const logger = getLogger('payment.route:updatePayment')
       const { id: paymentId } = c.req.valid('param')

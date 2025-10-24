@@ -1,4 +1,3 @@
-import { zValidator } from '@hono/zod-validator'
 import { TaskStatus } from '@nv-internal/prisma-client'
 import {
   z,
@@ -12,6 +11,7 @@ import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 import { LocalDiskProvider } from '../../lib/storage/local-disk.provider'
 import { VercelBlobProvider } from '../../lib/storage/vercel-blob.provider'
+import { zValidator } from '../../lib/z-validator'
 import { uploadTaskAttachments } from '../attachment/attachment.service'
 import { getAuthUserStrict } from '../middlewares/auth'
 import {

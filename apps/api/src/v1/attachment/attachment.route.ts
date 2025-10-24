@@ -1,9 +1,9 @@
 import { Readable } from 'node:stream'
-import { zValidator } from '@hono/zod-validator'
 import { z } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
+import { zValidator } from '../../lib/z-validator'
 import { getAuthUserStrict } from '../middlewares/auth'
 import {
   getAttachmentsByIds,
