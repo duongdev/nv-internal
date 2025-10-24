@@ -6,6 +6,7 @@ import { getPrisma } from '../../lib/prisma'
 import type { StorageProvider } from '../../lib/storage/storage.types'
 import { createActivity } from '../activity/activity.service'
 import { uploadTaskAttachments } from '../attachment/attachment.service'
+import { createPaymentInTransaction } from '../payment/payment.service'
 
 /**
  * Input data for task event (check-in or check-out)
@@ -17,6 +18,11 @@ export interface TaskEventData {
   longitude: number
   files: File[]
   notes?: string
+  // Payment collection fields (optional, only for check-out)
+  paymentCollected?: boolean
+  paymentAmount?: number
+  paymentNotes?: string
+  invoiceFile?: File
 }
 
 /**
@@ -153,6 +159,32 @@ export async function recordTaskEvent(
     logger.info('No attachments provided for task event')
   }
 
+  // 6b. Upload invoice file BEFORE transaction (optional, only for checkout with payment)
+  let invoiceAttachment:
+    | Awaited<ReturnType<typeof uploadTaskAttachments>>[0]
+    | null = null
+
+  if (
+    config.type === 'CHECK_OUT' &&
+    data.paymentCollected &&
+    data.invoiceFile
+  ) {
+    logger.info(
+      { filename: data.invoiceFile.name },
+      'Uploading invoice file for payment',
+    )
+
+    const invoiceAttachments = await uploadTaskAttachments({
+      taskId: data.taskId,
+      files: [data.invoiceFile],
+      user: { id: data.userId } as User,
+      storage,
+    })
+
+    invoiceAttachment = invoiceAttachments[0]
+    logger.info({ attachmentId: invoiceAttachment.id }, 'Invoice uploaded')
+  }
+
   // 7. Create event in transaction
   const result = await prisma.$transaction(async (tx) => {
     // Create GeoLocation for event
@@ -169,6 +201,28 @@ export async function recordTaskEvent(
       mimeType: att.mimeType,
       originalFilename: att.originalFilename,
     }))
+
+    // Create payment if collected (only for check-out)
+    let payment = null
+    if (
+      config.type === 'CHECK_OUT' &&
+      data.paymentCollected &&
+      data.paymentAmount
+    ) {
+      logger.info(
+        { taskId: data.taskId, amount: data.paymentAmount },
+        'Creating payment in transaction',
+      )
+
+      payment = await createPaymentInTransaction({
+        taskId: data.taskId,
+        amount: data.paymentAmount,
+        collectedBy: data.userId,
+        invoiceAttachment,
+        notes: data.paymentNotes,
+        tx,
+      })
+    }
 
     // Create Activity with check-in/out data
     // This follows the same pattern as TASK_ATTACHMENTS_UPLOADED
@@ -188,6 +242,7 @@ export async function recordTaskEvent(
           attachments: attachmentSummary,
           notes: data.notes,
           warnings: warnings.length > 0 ? warnings : undefined,
+          paymentCollected: !!payment,
         },
       },
       tx,
@@ -206,10 +261,11 @@ export async function recordTaskEvent(
         attachments: {
           where: { deletedAt: null },
         },
+        payments: true,
       },
     })
 
-    return { geoLocation, task: updatedTask }
+    return { geoLocation, task: updatedTask, payment }
   })
 
   logger.info(
@@ -229,6 +285,7 @@ export async function recordTaskEvent(
       attachments,
     },
     task: result.task,
+    payment: result.payment,
     warnings,
   }
 }

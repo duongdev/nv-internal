@@ -1,0 +1,74 @@
+// RECOMMENDED PAYMENT SCHEMA FOR V1
+// This is the improved schema based on technical review
+// DO NOT apply directly - use as reference for implementation
+
+// ============================================================================
+// PAYMENT MODEL (New)
+// ============================================================================
+model Payment {
+  id                  String      @id @default(cuid())  // Use client-side `pay_${cuid()}` generation
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relationships
+  taskId              Int
+  task                Task        @relation(fields: [taskId], references: [id], onDelete: Restrict)
+
+  // Financial data
+  amount              Decimal     @db.Decimal(15, 4)  // Increased precision for GAAP compliance
+  currency            String      @default("VND")     // ISO 4217 code, future multi-currency support
+
+  // Collection metadata
+  collectedAt         DateTime    @default(now())
+  collectedBy         String      // Clerk userId (worker who collected payment)
+
+  // Invoice attachment (optional)
+  invoiceAttachmentId String?
+  invoiceAttachment   Attachment? @relation(fields: [invoiceAttachmentId], references: [id], onDelete: SetNull)
+
+  // Notes and context
+  notes               String?     @db.Text
+
+  // Indexes
+  @@index([taskId])
+  @@index([collectedBy])
+  @@index([collectedAt])
+  @@index([currency])
+
+  // Constraints (add in migration SQL)
+  // ALTER TABLE "Payment" ADD CONSTRAINT "payment_amount_positive" CHECK (amount > 0);
+}
+
+// ============================================================================
+// TASK MODEL (Extensions)
+// ============================================================================
+model Task {
+  // ... all existing fields ...
+
+  // Payment tracking fields (add these)
+  expectedRevenue     Decimal?    @db.Decimal(15, 4)  // Match Payment precision
+  expectedCurrency    String?     @default("VND")     // Match Payment currency
+  payments            Payment[]   // One-to-many relationship
+
+  // Add index for payment queries
+  @@index([expectedRevenue])
+}
+
+// ============================================================================
+// ATTACHMENT MODEL (Extensions)
+// ============================================================================
+model Attachment {
+  // ... all existing fields ...
+
+  // Add reverse relation for invoice attachments
+  paymentInvoices     Payment[]   // Payments that use this as invoice
+}
+
+// ============================================================================
+// MIGRATION NOTES
+// ============================================================================
+// 1. Run: npx prisma migrate dev --name add_payment_system
+// 2. Manually add CHECK constraint in migration file:
+//    ALTER TABLE "Payment" ADD CONSTRAINT "payment_amount_positive" CHECK (amount > 0);
+// 3. Test migration on staging database first
+// 4. Backup production before applying: npx prisma migrate deploy

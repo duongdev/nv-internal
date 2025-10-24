@@ -1,8 +1,7 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
   // Output the generated Prisma client into the prisma-client workspace package
-  output          = "../../../packages/prisma-client/generated"
-  previewFeatures = ["driverAdapters"]
+  output   = "../../../packages/prisma-client/generated"
 }
 
 datasource db {
@@ -36,6 +35,11 @@ model Task {
   completedAt   DateTime?
   geoLocation   GeoLocation? @relation(fields: [geoLocationId], references: [id])
   geoLocationId String?
+
+  // Payment tracking (GAAP-compliant precision)
+  expectedRevenue  Decimal?  @db.Decimal(15, 4)  // Set by admin - expected payment amount
+  expectedCurrency String    @default("VND")     // Support for future multi-currency
+  payments         Payment[]                      // Auto-created at checkout
 
   // Attachments linked to this task
   attachments   Attachment[]
@@ -104,7 +108,40 @@ model Attachment {
   width             Int?     // Original width in pixels
   height            Int?     // Original height in pixels
 
+  // Payment invoice relation (one-to-one)
+  invoiceForPayment Payment?
+
   @@index([taskId])
   @@index([uploadedBy])
   @@index([deletedAt])
+}
+
+model Payment {
+  id                  String      @id @default(cuid())
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  taskId              Int
+  task                Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  // Financial data - GAAP compliant precision (15 digits total, 4 after decimal)
+  // Supports up to 999,999,999,999.9999 (nearly 1 trillion with 4 decimal precision)
+  amount              Decimal     @db.Decimal(15, 4)
+  currency            String      @default("VND")     // ISO 4217 currency code
+
+  // Collection metadata
+  collectedAt         DateTime    @default(now())
+  collectedBy         String      // Clerk userId (worker who collected payment)
+
+  // Invoice attachment (OPTIONAL - trust workers)
+  invoiceAttachmentId String?     @unique
+  invoiceAttachment   Attachment? @relation(fields: [invoiceAttachmentId], references: [id], onDelete: SetNull)
+
+  notes               String?     @db.Text
+
+  @@index([taskId])
+  @@index([collectedBy])
+  @@index([collectedAt])
+  @@index([currency])
 }

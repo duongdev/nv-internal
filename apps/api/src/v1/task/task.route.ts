@@ -1,6 +1,12 @@
 import { zValidator } from '@hono/zod-validator'
 import { TaskStatus } from '@nv-internal/prisma-client'
-import { z, zCreateTask, zTaskListQuery } from '@nv-internal/validation'
+import {
+  z,
+  zCreateTask,
+  zNumericIdParam,
+  zTaskExpectedRevenue,
+  zTaskListQuery,
+} from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
@@ -8,6 +14,10 @@ import { LocalDiskProvider } from '../../lib/storage/local-disk.provider'
 import { VercelBlobProvider } from '../../lib/storage/vercel-blob.provider'
 import { uploadTaskAttachments } from '../attachment/attachment.service'
 import { getAuthUserStrict } from '../middlewares/auth'
+import {
+  getTaskPayments,
+  setTaskExpectedRevenue,
+} from '../payment/payment.service'
 import {
   canUserCreateTask,
   canUserListTasks,
@@ -86,35 +96,143 @@ const router = new Hono()
     }
   })
   // Get task by ID
-  .get(
-    '/:id',
-    zValidator('param', z.object({ id: z.string().regex(/^\d+$/) })),
-    async (c) => {
-      const taskId = parseInt(c.req.valid('param').id, 10)
-      const user = getAuthUserStrict(c)
-      const task = await getTaskById({ id: taskId })
+  .get('/:id', zValidator('param', zNumericIdParam), async (c) => {
+    const { id: taskId } = c.req.valid('param')
+    const user = getAuthUserStrict(c)
+    const task = await getTaskById({ id: taskId })
 
+    if (!task) {
+      throw new HTTPException(404, {
+        message: 'Không tìm thấy công việc.',
+        cause: 'Task not found',
+      })
+    }
+
+    if (!(await canUserViewTask({ user, task }))) {
+      throw new HTTPException(403, {
+        message: 'Bạn không có quyền xem công việc.',
+        cause: 'Permission denied',
+      })
+    }
+
+    return c.json(task)
+  })
+  /**
+   * GET /v1/task/:id/payments
+   *
+   * Get all payments for a task with summary
+   *
+   * Authorization:
+   * - Admin: Can view any task's payments
+   * - Worker: Can only view payments for assigned tasks
+   *
+   * Response:
+   * - payments: Array of payment records with invoice attachments
+   * - summary: { expectedRevenue, totalCollected, hasPayment }
+   */
+  .get('/:id/payments', zValidator('param', zNumericIdParam), async (c) => {
+    const logger = getLogger('task.route:getTaskPayments')
+    const { id: taskId } = c.req.valid('param')
+    const user = getAuthUserStrict(c)
+
+    try {
+      // Verify user can view this task
+      const task = await getTaskById({ id: taskId })
       if (!task) {
         throw new HTTPException(404, {
-          message: 'Không tìm thấy công việc.',
-          cause: 'Task not found',
+          message: 'Không tìm thấy công việc',
+          cause: 'TASK_NOT_FOUND',
         })
       }
 
-      if (!(await canUserViewTask({ user, task }))) {
+      const canView = await canUserViewTask({ user, task })
+      if (!canView) {
         throw new HTTPException(403, {
-          message: 'Bạn không có quyền xem công việc.',
-          cause: 'Permission denied',
+          message: 'Bạn không có quyền xem thanh toán của công việc này',
+          cause: 'INSUFFICIENT_PERMISSIONS',
         })
       }
 
-      return c.json(task)
+      const result = await getTaskPayments({ taskId })
+
+      logger.info(
+        { taskId, userId: user.id, paymentCount: result.payments.length },
+        'Retrieved task payments',
+      )
+
+      return c.json(result, 200)
+    } catch (error) {
+      if (error instanceof HTTPException) {
+        throw error
+      }
+
+      logger.error(
+        { error, taskId, userId: user.id },
+        'Failed to get task payments',
+      )
+      throw new HTTPException(500, {
+        message: 'Không thể lấy thông tin thanh toán. Vui lòng thử lại.',
+        cause: error,
+      })
+    }
+  })
+  /**
+   * PUT /v1/task/:id/expected-revenue
+   *
+   * Set expected revenue for a task (admin only)
+   *
+   * Authorization: Admin only
+   *
+   * Request body:
+   * - expectedRevenue: number | null - Expected payment amount (null = no payment expected)
+   * - expectedCurrency?: string - Currency code (default: VND)
+   *
+   * Response:
+   * - task: Updated task record with all relations
+   */
+  .put(
+    '/:id/expected-revenue',
+    zValidator('param', zNumericIdParam),
+    zValidator('json', zTaskExpectedRevenue),
+    async (c) => {
+      const logger = getLogger('task.route:setTaskExpectedRevenue')
+      const { id: taskId } = c.req.valid('param')
+      const { expectedRevenue } = c.req.valid('json')
+      const user = getAuthUserStrict(c)
+
+      try {
+        const updatedTask = await setTaskExpectedRevenue({
+          taskId,
+          expectedRevenue,
+          user,
+        })
+
+        logger.info(
+          { taskId, expectedRevenue, userId: user.id },
+          'Expected revenue set successfully',
+        )
+
+        return c.json({ task: updatedTask }, 200)
+      } catch (error) {
+        if (error instanceof HTTPException) {
+          throw error
+        }
+
+        logger.error(
+          { error, taskId, userId: user.id },
+          'Failed to set expected revenue',
+        )
+        throw new HTTPException(500, {
+          message: 'Không thể đặt doanh thu dự kiến. Vui lòng thử lại.',
+          cause: error,
+        })
+      }
     },
   )
   // Update task assignees
   .put(
     '/:id/assignees',
-    zValidator('param', z.object({ id: z.string() })),
+    zValidator('param', zNumericIdParam),
     zValidator(
       'json',
       z.object({
@@ -122,7 +240,7 @@ const router = new Hono()
       }),
     ),
     async (c) => {
-      const taskId = parseInt(c.req.valid('param').id, 10)
+      const { id: taskId } = c.req.valid('param')
       const { assigneeIds } = c.req.valid('json')
       const user = getAuthUserStrict(c)
       const logger = getLogger('task.route:updateAssignees')
@@ -154,72 +272,65 @@ const router = new Hono()
     },
   )
   // Upload attachments
-  .post(
-    '/:id/attachments',
-    zValidator('param', z.object({ id: z.string().regex(/^\d+$/) })),
-    async (c) => {
-      const taskId = parseInt(c.req.valid('param').id, 10)
-      const user = getAuthUserStrict(c)
-      const logger = getLogger('task.route:uploadAttachments')
+  .post('/:id/attachments', zValidator('param', zNumericIdParam), async (c) => {
+    const { id: taskId } = c.req.valid('param')
+    const user = getAuthUserStrict(c)
+    const logger = getLogger('task.route:uploadAttachments')
 
-      const form = await c.req.formData()
-      const files = form
-        .getAll('files')
-        .filter((f): f is File => f instanceof File)
+    const form = await c.req.formData()
+    const files = form
+      .getAll('files')
+      .filter((f): f is File => f instanceof File)
 
-      try {
-        // Select storage provider based on STORAGE_PROVIDER env var
-        // Default to vercel-blob if not set
-        const storageProvider = process.env.STORAGE_PROVIDER || 'vercel-blob'
-        const storage =
-          storageProvider === 'local'
-            ? new LocalDiskProvider()
-            : new VercelBlobProvider()
+    try {
+      // Select storage provider based on STORAGE_PROVIDER env var
+      // Default to vercel-blob if not set
+      const storageProvider = process.env.STORAGE_PROVIDER || 'vercel-blob'
+      const storage =
+        storageProvider === 'local'
+          ? new LocalDiskProvider()
+          : new VercelBlobProvider()
 
-        const attachments = await uploadTaskAttachments({
-          taskId,
-          files,
-          user,
-          storage,
-        })
+      const attachments = await uploadTaskAttachments({
+        taskId,
+        files,
+        user,
+        storage,
+      })
 
-        c.status(201)
-        return c.json({ attachments })
-      } catch (error: unknown) {
-        logger.error({ error }, 'Failed to upload attachments')
-        const errMsg = (error as { message?: string } | null | undefined)
-          ?.message
-        const rawStatus = (error as { status?: number } | null | undefined)
-          ?.status
-        const derivedStatus = errMsg === 'TASK_NOT_FOUND' ? 404 : rawStatus
-        const status = (
-          derivedStatus === 400 ||
-          derivedStatus === 403 ||
-          derivedStatus === 404
-            ? derivedStatus
-            : 500
-        ) as 400 | 403 | 404 | 500
+      c.status(201)
+      return c.json({ attachments })
+    } catch (error: unknown) {
+      logger.error({ error }, 'Failed to upload attachments')
+      const errMsg = (error as { message?: string } | null | undefined)?.message
+      const rawStatus = (error as { status?: number } | null | undefined)
+        ?.status
+      const derivedStatus = errMsg === 'TASK_NOT_FOUND' ? 404 : rawStatus
+      const status = (
+        derivedStatus === 400 || derivedStatus === 403 || derivedStatus === 404
+          ? derivedStatus
+          : 500
+      ) as 400 | 403 | 404 | 500
 
-        // Use specific error message if available (e.g., file validation errors)
-        let message: string
-        if (status === 400 && errMsg) {
-          message = errMsg
-        } else if (status === 403) {
-          message = 'Bạn không có quyền tải tệp lên công việc này.'
-        } else if (status === 404) {
-          message = 'Không tìm thấy công việc.'
-        } else {
-          message = 'Không thể tải tệp lên.'
-        }
-
-        throw new HTTPException(status, { message, cause: error })
+      // Use specific error message if available (e.g., file validation errors)
+      let message: string
+      if (status === 400 && errMsg) {
+        message = errMsg
+      } else if (status === 403) {
+        message = 'Bạn không có quyền tải tệp lên công việc này.'
+      } else if (status === 404) {
+        message = 'Không tìm thấy công việc.'
+      } else {
+        message = 'Không thể tải tệp lên.'
       }
-    },
-  )
+
+      throw new HTTPException(status, { message, cause: error })
+    }
+  })
   // Update task status
   .put(
     '/:id/status',
-    zValidator('param', z.object({ id: z.string() })),
+    zValidator('param', zNumericIdParam),
     zValidator(
       'json',
       z.object({
@@ -227,7 +338,7 @@ const router = new Hono()
       }),
     ),
     async (c) => {
-      const taskId = parseInt(c.req.valid('param').id, 10)
+      const { id: taskId } = c.req.valid('param')
       const { status } = c.req.valid('json') as { status: TaskStatus }
       const user = getAuthUserStrict(c)
       const logger = getLogger('task.route:updateStatus')

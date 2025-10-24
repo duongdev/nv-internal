@@ -1,10 +1,9 @@
 import { zValidator } from '@hono/zod-validator'
-import { z, zCheckInInput, zCheckOutInput } from '@nv-internal/validation'
+import { z, zCheckInInput, zCheckoutWithPayment } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
-import { LocalDiskProvider } from '../../lib/storage/local-disk.provider'
-import { VercelBlobProvider } from '../../lib/storage/vercel-blob.provider'
+import { getStorageProvider } from '../../lib/storage/get-storage-provider'
 import { getAuthUserStrict } from '../middlewares/auth'
 import { checkInToTask, checkOutFromTask } from './task-event.service'
 
@@ -19,12 +18,7 @@ const router = new Hono()
       const taskId = parseInt(c.req.valid('param').id, 10)
       const formData = c.req.valid('form')
       const user = getAuthUserStrict(c)
-
-      // Determine storage provider
-      const storage =
-        process.env.STORAGE_PROVIDER === 'vercel-blob'
-          ? new VercelBlobProvider()
-          : new LocalDiskProvider()
+      const storage = getStorageProvider()
 
       try {
         // Convert base64 attachments to File objects if provided
@@ -75,22 +69,17 @@ const router = new Hono()
       }
     },
   )
-  // Check-out from task
+  // Check-out from task (with optional payment collection)
   .post(
     '/:id/check-out',
     zValidator('param', z.object({ id: z.string().regex(/^\d+$/) })),
-    zValidator('form', zCheckOutInput),
+    zValidator('form', zCheckoutWithPayment),
     async (c) => {
       const logger = getLogger('task-events.route:check-out')
       const taskId = parseInt(c.req.valid('param').id, 10)
       const formData = c.req.valid('form')
       const user = getAuthUserStrict(c)
-
-      // Determine storage provider
-      const storage =
-        process.env.STORAGE_PROVIDER === 'vercel-blob'
-          ? new VercelBlobProvider()
-          : new LocalDiskProvider()
+      const storage = getStorageProvider()
 
       try {
         // Convert base64 attachments to File objects if provided
@@ -111,12 +100,22 @@ const router = new Hono()
             longitude: formData.longitude,
             files,
             notes: formData.notes,
+            // Payment fields (optional)
+            paymentCollected: formData.paymentCollected,
+            paymentAmount: formData.paymentAmount,
+            paymentNotes: formData.paymentNotes,
+            invoiceFile: formData.invoiceFile,
           },
           storage,
         )
 
         logger.info(
-          { taskId, userId: user.id, warnings: result.warnings },
+          {
+            taskId,
+            userId: user.id,
+            warnings: result.warnings,
+            paymentCollected: !!result.payment,
+          },
           'Check-out successful',
         )
 
@@ -124,6 +123,7 @@ const router = new Hono()
           {
             checkOut: result.event,
             task: result.task,
+            payment: result.payment,
             warnings: result.warnings,
           },
           201,
