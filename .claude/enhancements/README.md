@@ -13,10 +13,11 @@ Enhancement files follow the naming pattern:
 - `20251024-105530-location-prefetch-optimization.md` - GPS prefetching for instant check-in/out
 
 ### User Experience
-- (Future enhancements will be added here)
+- `20251024-120000-pull-to-refresh-improvements.md` - Unified pull-to-refresh across all screens
+- `20251024-120100-search-and-filter-system.md` - Comprehensive task search and filtering
 
 ### Technical Improvements
-- (Future enhancements will be added here)
+- `20251024-120200-e2e-testing-strategy.md` - End-to-end testing with Maestro/Detox for mobile app
 
 ### Feature Extensions
 - (Future enhancements will be added here)
