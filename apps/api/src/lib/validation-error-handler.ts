@@ -75,16 +75,26 @@ function extractValidationErrors(
 
     // Extract expected type/constraint from the issue
     let expected: string | undefined
-    if (issue.code === 'invalid_type') {
-      expected = issue.expected
-    } else if (issue.code === 'too_small') {
-      expected = `min ${issue.minimum}`
-    } else if (issue.code === 'too_big') {
-      expected = `max ${issue.maximum}`
-    } else if (issue.code === 'invalid_enum_value') {
-      expected = `one of: ${issue.options.join(', ')}`
-    } else if (issue.code === 'invalid_string') {
-      expected = issue.validation
+    // biome-ignore lint/suspicious/noExplicitAny: Zod issue types vary by code
+    const anyIssue = issue as any
+    switch (issue.code) {
+      case 'invalid_type':
+        expected = anyIssue.expected
+        break
+      case 'too_small':
+        expected = `min ${anyIssue.minimum}`
+        break
+      case 'too_big':
+        expected = `max ${anyIssue.maximum}`
+        break
+      default:
+        // Handle other issue types that might have options or validation
+        if (anyIssue.options && Array.isArray(anyIssue.options)) {
+          expected = `one of: ${anyIssue.options.join(', ')}`
+        } else if (anyIssue.validation) {
+          expected = anyIssue.validation
+        }
+        break
     }
 
     return {

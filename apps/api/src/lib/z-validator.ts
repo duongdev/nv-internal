@@ -52,9 +52,22 @@ export function zValidator<
 ) {
   // If custom hook provided, use it without our error handler
   if (hook) {
+    // @ts-expect-error - Hook signature is compatible but TS can't verify it
     return honoZValidator(target, schema, hook)
   }
 
   // Otherwise, use our error handler with logging
-  return honoZValidator(target, schema, createValidationErrorHandler(target))
+  // Only use error handler for supported validation types
+  if (
+    target === 'param' ||
+    target === 'json' ||
+    target === 'form' ||
+    target === 'query'
+  ) {
+    // @ts-expect-error - Type is validated at runtime
+    return honoZValidator(target, schema, createValidationErrorHandler(target))
+  }
+
+  // For other validation types (like 'header'), use default behavior
+  return honoZValidator(target, schema)
 }
