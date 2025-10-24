@@ -25,16 +25,25 @@ None currently - all v1 features take precedence
 - **Recommendation**: Plan for v1.1 release
 - **Why**: Already experiencing findability issues with current task volume
 
+### Medium-High Priority (Strong ROI)
+
+#### 3. Client-Side Direct Upload to Vercel Blob
+- **Impact**: High - Removes 4.5 MB limit, enables large files, saves bandwidth costs
+- **Effort**: 4.5-6.5 days
+- **Dependencies**: Vercel Blob already enabled
+- **Recommendation**: Implement after v1 completion
+- **Why**: Eliminates hard upload limit, saves $0.05/GB bandwidth, better UX with progress
+
 ### Medium Priority (Plan for Next Quarter)
 
-#### 3. E2E Testing Strategy
+#### 4. E2E Testing Strategy
 - **Impact**: Medium-High - Prevents regressions
 - **Effort**: 12-15 days
 - **Dependencies**: Testing framework selection
 - **Recommendation**: Start with critical paths after v1
 - **Why**: Will save significant QA time as features grow
 
-#### 4. Location Prefetch Optimization
+#### 5. Location Prefetch Optimization
 - **Impact**: Medium - Improves check-in speed
 - **Effort**: 3-4 days
 - **Dependencies**: Check-in/out system must be live
@@ -56,19 +65,29 @@ None currently - all v1 features take precedence
    - Update Task Details screen first (highest pain point)
    - Roll out to other screens incrementally
 
+2. **Client-Side Direct Upload - Phase 1** (2-3 days)
+   - Backend token generation endpoint
+   - Upload callback implementation
+   - Feature flag setup
+
 ### Following Sprint (Week 3-4)
-2. **Search and Filter System - Phase 1** (3-4 days)
+3. **Client-Side Direct Upload - Phase 2** (2-3 days)
+   - Mobile implementation with progress tracking
+   - Testing and validation
+   - Gradual rollout with monitoring
+
+4. **Search and Filter System - Phase 1** (3-4 days)
    - Backend search API
    - Basic search UI
    - Quick status filters
 
 ### Next Quarter
-3. **E2E Testing - Phase 1** (5 days)
+5. **E2E Testing - Phase 1** (5 days)
    - Framework setup (Maestro recommended)
    - Critical path tests only
    - CI/CD integration
 
-4. **Search and Filter System - Phase 2** (3-4 days)
+6. **Search and Filter System - Phase 2** (3-4 days)
    - Advanced filters
    - Search suggestions
    - Performance optimization
@@ -138,6 +157,12 @@ If working alone, follow the timeline above sequentially.
 - **Cost**: 2-3 developer days
 - **Benefit**: Significant UX improvement, reduced frustration
 - **ROI**: High - Immediate user satisfaction
+
+### Client-Side Direct Upload
+- **Cost**: 4.5-6.5 developer days
+- **Benefit**: Remove 4.5 MB limit, save $0.05/GB bandwidth, enable progress tracking
+- **ROI**: Very High - Saves money, enables large files, better UX
+- **Break-even**: 6-12 months based on upload volume
 
 ### Search and Filter System
 - **Cost**: 7-8 developer days + database indexes

@@ -681,7 +681,15 @@ When implementing file uploads with Hono RPC client in React Native:
 
 **Issue**: Hono RPC client doesn't support FormData/file uploads properly
 
-**Solution**: Use raw fetch API for endpoints that accept file uploads:
+**Current Limitation**: Server uploads are limited to **4.5 MB** due to Vercel serverless function request body constraints. Files larger than this will receive `FUNCTION_PAYLOAD_TOO_LARGE` error.
+
+**Future Solution**: Client-side direct upload to Vercel Blob is documented in `.claude/enhancements/20251024-180000-client-side-direct-upload-optimization.md` which will:
+- Remove the 4.5 MB limit (enable up to 5 TB uploads)
+- Save $0.05/GB bandwidth costs
+- Provide upload progress tracking
+- Eliminate timeout risks
+
+**Current Solution**: Use raw fetch API for endpoints that accept file uploads:
 
 ```typescript
 // ❌ BAD - Hono RPC doesn't handle FormData with files
@@ -1005,6 +1013,29 @@ Development time estimate
 - **UX**: Offline mode with sync queue
 - **Technical**: Migration to React Query v5
 - **Feature**: Batch task assignment
+
+## Future Optimizations & Known Limitations
+
+### File Upload Optimization (Post-v1)
+
+**Current Limitation**: File uploads limited to 4.5 MB due to Vercel serverless constraints
+
+**Planned Solution**: Client-side direct upload to Vercel Blob
+- Implementation plan: `.claude/enhancements/20251024-180000-client-side-direct-upload-optimization.md`
+- Removes 4.5 MB limit (enables up to 5 TB uploads)
+- Saves $0.05/GB bandwidth costs
+- Provides upload progress tracking
+- Better reliability and performance
+
+### Other Documented Enhancements
+
+See `.claude/enhancements/` for detailed specifications:
+- Pull-to-refresh improvements
+- Search and filter system
+- E2E testing strategy
+- Location prefetch optimization
+
+Priority roadmap: `.claude/enhancements/20251024-120300-enhancement-priorities.md`
 
 ## Important File Locations
 
