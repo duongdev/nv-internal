@@ -960,6 +960,52 @@ When creating task files for v1 features:
 - Note any deviations from the plan with rationale
 - Update plan status when task is completed
 
+## Enhancement Ideas Documentation
+
+**For future features and optimizations not in v1 scope**, document in `.claude/enhancements/`:
+
+### When to Create Enhancement Documentation
+- Performance optimizations discovered during development
+- UX improvements suggested by users or identified during testing
+- Technical debt reduction opportunities
+- Feature extensions beyond v1 requirements
+- Edge case handling improvements
+
+### Enhancement File Structure
+```markdown
+# Enhancement Title
+
+## Overview
+What and why
+
+## Implementation Status
+⏳ Not Started / 📋 Planned / 🔄 In Progress / ✅ Completed
+
+## Problem Analysis
+Current behavior and pain points
+
+## Proposed Solution
+Technical approach
+
+## Implementation Plan
+Phases and steps
+
+## Benefits
+User and technical benefits
+
+## Priority
+Critical / High / Medium / Low
+
+## Estimated Effort
+Development time estimate
+```
+
+### Examples of Enhancements
+- **Performance**: Location prefetching for instant check-in/out
+- **UX**: Offline mode with sync queue
+- **Technical**: Migration to React Query v5
+- **Feature**: Batch task assignment
+
 ## Important File Locations
 
 - **API Routes**: `apps/api/src/v1/*/` (route.ts and service.ts files)
@@ -969,6 +1015,7 @@ When creating task files for v1 features:
 - **Shared Prisma Client**: `packages/prisma-client/`
 - **Task Documentation**: `.claude/tasks/` (implementation tracking)
 - **V1 Feature Plans**: `.claude/plans/v1/` (detailed feature specifications & roadmap)
+- **Enhancement Ideas**: `.claude/enhancements/` (future features & optimizations)
 - **Cursor Rules**: `.cursor/rules/` (project-specific guidelines)
 - **Commit Commands**: `.cursor/commands/commit-changes.md`
 
