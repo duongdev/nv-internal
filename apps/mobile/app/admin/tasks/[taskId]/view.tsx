@@ -35,6 +35,9 @@ export default function TaskViewScreen() {
     queryClient.invalidateQueries({
       queryKey: activitiesQueryOptions({ topic: `TASK_${taskId}` }).queryKey,
     })
+    queryClient.invalidateQueries({
+      queryKey: ['task-payments', taskId?.toString() ?? ''],
+    })
   }
 
   if (isLoading) {
@@ -67,7 +70,7 @@ export default function TaskViewScreen() {
               headerBackButtonDisplayMode: 'generic',
               title: `Chi tiết công việc ${formatTaskId(taskId ?? 0)}`,
               headerTransparent: true,
-              headerBlurEffect: 'extraLight',
+              headerBlurEffect: 'regular',
             }}
           />
 

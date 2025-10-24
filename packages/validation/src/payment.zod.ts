@@ -50,7 +50,19 @@ export const zCheckoutWithPayment = z
       .optional(),
 
     // Payment collection fields (optional - only if task has expectedRevenue)
-    paymentCollected: z.boolean().default(false),
+    // Note: FormData sends boolean as string 'true' or 'false', so we need to coerce
+    paymentCollected: z
+      .union([z.boolean(), z.string()])
+      .transform((val) => {
+        if (typeof val === 'boolean') {
+          return val
+        }
+        if (typeof val === 'string') {
+          return val.toLowerCase() === 'true'
+        }
+        return false
+      })
+      .default(false),
     paymentAmount: z.coerce
       .number()
       .positive('Số tiền phải lớn hơn 0')
@@ -130,10 +142,16 @@ export const zUpdatePayment = z
       )
       .optional(),
   })
-  .refine((data) => data.amount !== undefined || data.notes !== undefined, {
-    message: 'Vui lòng chỉnh sửa ít nhất một trường',
-    path: ['_form'],
-  })
+  .refine(
+    (data) =>
+      data.amount !== undefined ||
+      data.notes !== undefined ||
+      data.invoiceFile !== undefined,
+    {
+      message: 'Vui lòng chỉnh sửa ít nhất một trường',
+      path: ['_form'],
+    },
+  )
 
 /**
  * Task expected revenue validation (admin only)

@@ -40,7 +40,19 @@ const router = new Hono()
   .put(
     '/:id',
     zValidator('param', zCuidParam),
-    zValidator('form', zUpdatePayment),
+    zValidator('form', zUpdatePayment, (result, c) => {
+      if (!result.success) {
+        const logger = getLogger('payment.route:updatePayment:validation')
+        logger.error({ errors: result.error.issues }, 'Validation failed')
+        return c.json(
+          {
+            error: 'Validation failed',
+            details: result.error.issues,
+          },
+          400,
+        )
+      }
+    }),
     async (c) => {
       const logger = getLogger('payment.route:updatePayment')
       const { id: paymentId } = c.req.valid('param')

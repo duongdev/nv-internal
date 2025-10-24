@@ -1,9 +1,15 @@
-import { AlertTriangleIcon, MessageSquareIcon } from 'lucide-react-native'
+import {
+  AlertTriangleIcon,
+  DollarSignIcon,
+  EditIcon,
+  MessageSquareIcon,
+} from 'lucide-react-native'
 import { type FC, Fragment, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, View } from 'react-native'
 import { type Activity, useActivities } from '@/api/activity/use-activities'
 import { useAttachments } from '@/api/attachment/use-attachments'
 import { AttachmentList } from './attachment-list'
+import { formatCurrencyDisplay } from './ui/currency-input'
 import { Icon } from './ui/icon'
 import { Separator } from './ui/separator'
 import { Switch } from './ui/switch'
@@ -79,6 +85,7 @@ export type ActivityFeedProps = {
 const UNIMPORTANT_ACTIVITIES = [
   'ATTACHMENT_DELETED',
   'TASK_ATTACHMENTS_UPLOADED',
+  'TASK_EXPECTED_REVENUE_UPDATED',
 ]
 
 export const ActivityFeed: FC<ActivityFeedProps> = ({
@@ -363,6 +370,163 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
           )}
         </View>
       )
+    }
+
+    // PAYMENT_COLLECTED - Worker collected payment at checkout
+    if (action === 'PAYMENT_COLLECTED' && payload) {
+      const amount = payload.amount as number
+      const invoiceAttachmentId = payload.invoiceAttachmentId as
+        | string
+        | undefined
+      const notes = payload.notes as string | undefined
+
+      return (
+        <View className="gap-2">
+          <View className="flex-row items-start gap-2">
+            <Icon
+              as={DollarSignIcon}
+              className="mt-0.5 text-green-600 dark:text-green-500"
+              size={18}
+            />
+            <View className="flex-1 gap-2">
+              <Text>
+                Đã thu{' '}
+                <Text className="font-sans-bold">
+                  {formatCurrencyDisplay(amount)}
+                </Text>
+              </Text>
+              {notes && (
+                <View className="rounded-lg border border-border bg-card p-2">
+                  <Text className="text-muted-foreground text-xs">
+                    Ghi chú:
+                  </Text>
+                  <Text className="text-sm">{notes}</Text>
+                </View>
+              )}
+              {invoiceAttachmentId && (
+                <AttachmentsWithDeletedPlaceholders
+                  attachmentIds={[invoiceAttachmentId]}
+                  compact
+                />
+              )}
+            </View>
+          </View>
+        </View>
+      )
+    }
+
+    // PAYMENT_UPDATED - Admin edited payment
+    if (action === 'PAYMENT_UPDATED' && payload) {
+      const editReason = payload.editReason as string
+      const changes = payload.changes as
+        | {
+            amount?: { old: number; new: number }
+            notes?: { old: string | null; new: string | null }
+            invoiceReplaced?: boolean
+            newInvoiceAttachmentId?: string
+          }
+        | undefined
+
+      return (
+        <View className="gap-2">
+          <View className="flex-row items-start gap-2">
+            <Icon
+              as={EditIcon}
+              className="mt-0.5 text-amber-600 dark:text-amber-500"
+              size={18}
+            />
+            <View className="flex-1 gap-2">
+              <Text>Đã chỉnh sửa thanh toán</Text>
+
+              {/* Edit Reason */}
+              <View className="rounded-lg border border-amber-200 bg-amber-50 p-2 dark:border-amber-700 dark:bg-amber-950/20">
+                <Text className="text-amber-700 text-xs dark:text-amber-400">
+                  Lý do: {editReason}
+                </Text>
+              </View>
+
+              {/* Changes Summary */}
+              {changes && (
+                <View className="gap-2">
+                  {changes.amount && (
+                    <View className="flex-row items-center gap-1">
+                      <Text className="text-muted-foreground text-sm">
+                        Số tiền:
+                      </Text>
+                      <Text className="text-sm line-through">
+                        {formatCurrencyDisplay(changes.amount.old)}
+                      </Text>
+                      <Text className="text-muted-foreground text-sm">→</Text>
+                      <Text className="font-sans-bold text-sm">
+                        {formatCurrencyDisplay(changes.amount.new)}
+                      </Text>
+                    </View>
+                  )}
+                  {changes.notes?.new && (
+                    <View className="rounded-lg border border-border bg-card p-2">
+                      <Text className="text-muted-foreground text-xs">
+                        Ghi chú mới:
+                      </Text>
+                      <Text className="text-sm">{changes.notes.new}</Text>
+                    </View>
+                  )}
+                  {changes.newInvoiceAttachmentId && (
+                    <AttachmentsWithDeletedPlaceholders
+                      attachmentIds={[changes.newInvoiceAttachmentId]}
+                      compact
+                    />
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      )
+    }
+
+    // TASK_EXPECTED_REVENUE_UPDATED - Admin sets/updates/clears expected revenue
+    if (action === 'TASK_EXPECTED_REVENUE_UPDATED' && payload) {
+      const oldValue = payload.oldExpectedRevenue as number | null
+      const newValue = payload.newExpectedRevenue as number | null
+
+      let description: React.ReactNode
+      if (oldValue === null && newValue !== null) {
+        // Setting new value - bold the new value
+        description = (
+          <>
+            Đã thiết lập giá dịch vụ:{' '}
+            <Text className="font-sans-semibold">
+              {formatCurrencyDisplay(newValue)}
+            </Text>
+          </>
+        )
+      } else if (oldValue !== null && newValue !== null) {
+        // Updating value - bold the new value
+        description = (
+          <>
+            Đã cập nhật giá dịch vụ từ {formatCurrencyDisplay(oldValue)} thành{' '}
+            <Text className="font-sans-semibold">
+              {formatCurrencyDisplay(newValue)}
+            </Text>
+          </>
+        )
+      } else if (oldValue !== null && newValue === null) {
+        // Clearing value - bold the old value
+        description = (
+          <>
+            Đã xóa giá dịch vụ (trước đó:{' '}
+            <Text className="font-sans-semibold">
+              {formatCurrencyDisplay(oldValue)}
+            </Text>
+            )
+          </>
+        )
+      } else {
+        // Fallback for unexpected case
+        description = 'Đã cập nhật giá dịch vụ'
+      }
+
+      return <Text>{description}</Text>
     }
 
     return <Text className="text-muted-foreground text-sm">{action}</Text>

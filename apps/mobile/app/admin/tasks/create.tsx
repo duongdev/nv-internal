@@ -2,11 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { type CreateTaskValues, zCreateTask } from '@nv-internal/validation'
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Keyboard, Pressable, ScrollView } from 'react-native'
+import { Keyboard, Pressable, ScrollView, View } from 'react-native'
 import { useCreateTask } from '@/api/task/use-create-task'
 import { Button } from '@/components/ui/button'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Form, FormField, FormInput, FormTextarea } from '@/components/ui/form'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -25,9 +26,11 @@ export default function AdminTaskCreateScreen() {
       customerName: '',
       customerPhone: '',
       geoLocation: undefined,
+      expectedRevenue: null,
     },
   })
   const { mutateAsync: createTask } = useCreateTask()
+  const [expectedRevenue, setExpectedRevenue] = useState<number | null>(null)
 
   const geoLocation = form.watch('geoLocation')
 
@@ -35,7 +38,13 @@ export default function AdminTaskCreateScreen() {
     Keyboard.dismiss()
     impactAsync(ImpactFeedbackStyle.Light)
 
-    const task = await createTask(values)
+    // Add expectedRevenue to values
+    const taskData = {
+      ...values,
+      expectedRevenue,
+    }
+
+    const task = await createTask(taskData)
     if (!task) {
       return
     }
@@ -176,13 +185,27 @@ export default function AdminTaskCreateScreen() {
                 autoCapitalize="sentences"
                 keyboardType="phone-pad"
                 label="Số điện thoại khách hàng"
-                // onSubmitEditing={() => form.setFocus('description')}
                 placeholder="Nhập số điện thoại khách hàng"
                 returnKeyType="next"
                 {...field}
               />
             )}
           />
+
+          <Separator className="mt-4 mb-2" />
+
+          <Text variant="h4">Thanh toán</Text>
+          <View>
+            <CurrencyInput
+              label="Doanh thu dự kiến (tùy chọn)"
+              onValueChange={setExpectedRevenue}
+              placeholder="0"
+              value={expectedRevenue}
+            />
+            <Text className="mt-1 text-muted-foreground text-xs">
+              Số tiền công nhân cần thu từ khách hàng
+            </Text>
+          </View>
         </ScrollView>
       </Form>
       <Toasts />

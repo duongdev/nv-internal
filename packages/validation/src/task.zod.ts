@@ -26,6 +26,13 @@ export const zCreateTask = z.object({
       lng: z.number(),
     })
     .optional(),
+  expectedRevenue: z
+    .number()
+    .int('Số tiền phải là số nguyên')
+    .min(0, 'Số tiền không được âm')
+    .max(10_000_000_000, 'Số tiền không được vượt quá 10 tỷ VNĐ')
+    .nullable()
+    .optional(),
 })
 
 export type CreateTaskValues = z.infer<typeof zCreateTask>

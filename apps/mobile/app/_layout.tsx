@@ -117,6 +117,14 @@ function Routes() {
         />
         {/* Tasks */}
         <Stack.Screen name="admin/tasks/create" />
+        {/* Payments */}
+        <Stack.Screen
+          name="admin/payments/[paymentId]/edit"
+          options={{
+            presentation: 'modal',
+            gestureEnabled: true,
+          }}
+        />
         {/* User settings */}
         <Stack.Screen
           name="(user-settings)/theme-switcher"

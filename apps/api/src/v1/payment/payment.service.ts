@@ -196,6 +196,7 @@ export async function updatePayment({
                   }
                 : undefined,
             invoiceReplaced: !!newInvoiceAttachment,
+            newInvoiceAttachmentId: newInvoiceAttachment?.id,
           },
         },
       },
@@ -366,6 +367,7 @@ export async function createPaymentInTransaction({
         amount: Number(payment.amount),
         currency: payment.currency,
         hasInvoice: !!invoiceAttachment,
+        invoiceAttachmentId: invoiceAttachment?.id,
         notes: payment.notes,
       },
     },

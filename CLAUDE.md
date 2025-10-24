@@ -675,6 +675,62 @@ const task = await tx.task.update({
 
 See implementation: `.claude/plans/v1/01-payment-system.md`
 
+### Hono RPC File Upload Limitation Pattern
+
+When implementing file uploads with Hono RPC client in React Native:
+
+**Issue**: Hono RPC client doesn't support FormData/file uploads properly
+
+**Solution**: Use raw fetch API for endpoints that accept file uploads:
+
+```typescript
+// ❌ BAD - Hono RPC doesn't handle FormData with files
+import { hc } from 'hono/client'
+const client = hc<AppType>(API_URL)
+
+const formData = new FormData()
+formData.append('file', imageFile)
+formData.append('data', JSON.stringify(data))
+
+// This will fail with 400 error or type mismatch
+await client.v1.resource[':id'].$put({
+  param: { id },
+  form: formData  // Doesn't work!
+})
+
+// ✅ GOOD - Use raw fetch for file uploads
+const formData = new FormData()
+formData.append('file', imageFile)
+formData.append('data', JSON.stringify(data))
+
+const response = await fetch(`${API_URL}/v1/resource/${id}`, {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${await getToken()}`
+  },
+  body: formData
+})
+
+if (!response.ok) {
+  const error = await response.json()
+  throw new Error(error.message || 'Upload failed')
+}
+
+const result = await response.json()
+```
+
+**When to use raw fetch**:
+- ✅ Any endpoint accepting file uploads
+- ✅ Multipart form data with binary content
+- ✅ Image/document uploads
+
+**When Hono RPC works fine**:
+- ✅ JSON payloads
+- ✅ Query parameters
+- ✅ Simple form data (no files)
+
+See implementation: `.claude/tasks/20251024-payment-system-mobile-frontend.md#session-2-bug-fixes`
+
 ### Cache Invalidation Pattern
 
 When performing mutations that affect multiple queries in React Native:

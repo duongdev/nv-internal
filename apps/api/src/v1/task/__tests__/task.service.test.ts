@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import type { Task } from '@nv-internal/prisma-client'
 import { TaskStatus } from '@nv-internal/prisma-client'
+import { HTTPException } from 'hono/http-exception'
 import {
   createMockAdminUser,
   createMockWorkerUser,
@@ -10,6 +11,7 @@ import {
   createMockPrismaClient,
   resetPrismaMock,
 } from '../../../test/prisma-mock'
+import { setTaskExpectedRevenue } from '../../payment/payment.service'
 import {
   canUserCreateTask,
   canUserListTasks,
@@ -355,6 +357,10 @@ describe('Task Service Unit Tests', () => {
           },
           customer: true,
           geoLocation: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
         },
       })
     })
@@ -399,8 +405,199 @@ describe('Task Service Unit Tests', () => {
           },
           customer: true,
           geoLocation: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
         },
       })
+    })
+  })
+
+  describe('Expected Revenue Operations', () => {
+    it('should allow admin to set expected revenue', async () => {
+      const adminUser = createMockAdminUser()
+
+      const existingTask = {
+        id: 1,
+        title: 'Test Task',
+        description: 'Test description',
+        status: TaskStatus.PREPARING,
+        customerId: 'cust_123',
+        geoLocationId: 'geo_123',
+        assigneeIds: [],
+        expectedRevenue: null,
+        expectedCurrency: 'VND',
+        startedAt: null,
+        completedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      const updatedTask = {
+        ...existingTask,
+        expectedRevenue: 5000000,
+      }
+
+      mockPrisma.task.findUnique.mockResolvedValue(existingTask)
+      mockPrisma.task.update.mockResolvedValue(updatedTask)
+      mockPrisma.activity.create.mockResolvedValue({})
+
+      const result = await setTaskExpectedRevenue({
+        taskId: 1,
+        expectedRevenue: 5000000,
+        user: toUser(adminUser),
+      })
+
+      expect(result.expectedRevenue).toBe(5000000)
+      expect(mockPrisma.task.update).toHaveBeenCalled()
+    })
+
+    it('should allow admin to update expected revenue', async () => {
+      const adminUser = createMockAdminUser()
+
+      const existingTask = {
+        id: 1,
+        title: 'Test Task',
+        expectedRevenue: 3000000,
+        expectedCurrency: 'VND',
+      }
+
+      const updatedTask = {
+        ...existingTask,
+        expectedRevenue: 6000000,
+      }
+
+      mockPrisma.task.findUnique.mockResolvedValue(existingTask)
+      mockPrisma.task.update.mockResolvedValue(updatedTask)
+      mockPrisma.activity.create.mockResolvedValue({})
+
+      const result = await setTaskExpectedRevenue({
+        taskId: 1,
+        expectedRevenue: 6000000,
+        user: toUser(adminUser),
+      })
+
+      expect(result.expectedRevenue).toBe(6000000)
+    })
+
+    it('should allow admin to clear expected revenue with null', async () => {
+      const adminUser = createMockAdminUser()
+
+      const existingTask = {
+        id: 1,
+        title: 'Test Task',
+        expectedRevenue: 5000000,
+        expectedCurrency: 'VND',
+      }
+
+      const updatedTask = {
+        ...existingTask,
+        expectedRevenue: null,
+      }
+
+      mockPrisma.task.findUnique.mockResolvedValue(existingTask)
+      mockPrisma.task.update.mockResolvedValue(updatedTask)
+      mockPrisma.activity.create.mockResolvedValue({})
+
+      const result = await setTaskExpectedRevenue({
+        taskId: 1,
+        expectedRevenue: null,
+        user: toUser(adminUser),
+      })
+
+      expect(result.expectedRevenue).toBeNull()
+    })
+
+    it('should not allow worker to set expected revenue', async () => {
+      const workerUser = createMockWorkerUser()
+
+      await expect(
+        setTaskExpectedRevenue({
+          taskId: 1,
+          expectedRevenue: 5000000,
+          user: toUser(workerUser),
+        }),
+      ).rejects.toThrow(HTTPException)
+
+      // Verify the error is 403 Forbidden
+      try {
+        await setTaskExpectedRevenue({
+          taskId: 1,
+          expectedRevenue: 5000000,
+          user: toUser(workerUser),
+        })
+      } catch (error) {
+        expect(error).toBeInstanceOf(HTTPException)
+        expect((error as HTTPException).status).toBe(403)
+        expect((error as HTTPException).message).toContain('admin')
+      }
+    })
+
+    it('should return 404 for non-existent task', async () => {
+      const adminUser = createMockAdminUser()
+
+      mockPrisma.task.findUnique.mockResolvedValue(null)
+
+      await expect(
+        setTaskExpectedRevenue({
+          taskId: 99999,
+          expectedRevenue: 5000000,
+          user: toUser(adminUser),
+        }),
+      ).rejects.toThrow(HTTPException)
+
+      // Verify the error is 404 Not Found
+      try {
+        await setTaskExpectedRevenue({
+          taskId: 99999,
+          expectedRevenue: 5000000,
+          user: toUser(adminUser),
+        })
+      } catch (error) {
+        expect(error).toBeInstanceOf(HTTPException)
+        expect((error as HTTPException).status).toBe(404)
+        expect((error as HTTPException).message).toContain('Không tìm thấy')
+      }
+    })
+
+    it('should log activity when setting expected revenue', async () => {
+      const adminUser = createMockAdminUser()
+
+      const existingTask = {
+        id: 1,
+        title: 'Test Task',
+        expectedRevenue: null,
+        expectedCurrency: 'VND',
+      }
+
+      const updatedTask = {
+        ...existingTask,
+        expectedRevenue: 5000000,
+      }
+
+      mockPrisma.task.findUnique.mockResolvedValue(existingTask)
+      mockPrisma.task.update.mockResolvedValue(updatedTask)
+      mockPrisma.activity.create.mockResolvedValue({})
+
+      await setTaskExpectedRevenue({
+        taskId: 1,
+        expectedRevenue: 5000000,
+        user: toUser(adminUser),
+      })
+
+      expect(mockPrisma.activity.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'TASK_EXPECTED_REVENUE_UPDATED',
+            userId: adminUser.id,
+            payload: expect.objectContaining({
+              oldExpectedRevenue: null,
+              newExpectedRevenue: 5000000,
+            }),
+          }),
+        }),
+      )
     })
   })
 })

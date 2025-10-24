@@ -9,7 +9,7 @@
 ## Quick Navigation
 
 📋 **Feature Plans:**
-1. [Payment System](./01-payment-system.md) - Week 1-2 🔴
+1. [Payment System](./01-payment-system.md) - Week 1-2 ✅ **COMPLETED**
 2. [Check-in/Check-out](./02-checkin-checkout.md) - Week 3-4 🔄 **Phase 1 Backend ✅**
 3. [Monthly Reports](./03-monthly-reports.md) - Week 5 🔴
 4. [Task CRUD Enhancements](./04-task-crud.md) - Week 5 🟡
@@ -59,6 +59,16 @@ The plan addresses gaps between current implementation and contract requirements
 - Attachment viewer
 - Activity feed
 
+**Payment System (v1 Phase 1 - Completed 2025-10-24):**
+- Payment collection at checkout with progressive disclosure UI
+- Invoice photo upload (optional, inline camera)
+- Expected revenue management for admins
+- Payment editing with audit trail
+- Payment status badges (collected/not collected/mismatch)
+- Activity feed events (PAYMENT_COLLECTED, PAYMENT_UPDATED)
+- Currency input with VNĐ formatting
+- Amount mismatch detection and confirmation
+
 ### ⏳ In Progress
 
 **Check-in/Check-out System (Phase 1/4):**
@@ -73,10 +83,12 @@ The plan addresses gaps between current implementation and contract requirements
 
 ### ❌ Critical Gaps (Blockers for v1)
 
-1. **Payment Tracking** 🔴
-   - No payment model or endpoints
-   - Cannot track payment status
-   - Cannot upload invoices
+1. **Payment Tracking** ✅ **COMPLETED (2025-10-24)**
+   - ✅ Payment model with GAAP-compliant precision
+   - ✅ Payment collection at checkout
+   - ✅ Invoice photo upload (optional)
+   - ✅ Admin payment management
+   - ✅ Activity feed integration
    - [→ See Payment System Plan](./01-payment-system.md)
 
 2. **Check-in/Check-out System** 🔄 **Backend Complete**
@@ -109,31 +121,40 @@ The plan addresses gaps between current implementation and contract requirements
 | **Admin: Edit tasks** | ❌ 0% | Phase 3b | 🟡 |
 | **Admin: Assign workers** | ✅ 100% | - | - |
 | **Admin: Track check-ins** | 🔄 25% | Phase 2 | 🔴 |
-| **Admin: Track payments** | ❌ 0% | Phase 1 | 🔴 |
+| **Admin: Track payments** | ✅ 100% | Phase 1 | ✅ |
 | **Admin: Monthly reports** | ❌ 0% | Phase 3 | 🔴 |
 | **Admin: Dashboard view** | ❌ 0% | Phase 5 | 🟡 |
 | **Worker: View tasks** | ✅ 100% | - | - |
 | **Worker: Check-in** | 🔄 25% | Phase 2 | 🔴 |
 | **Worker: Check-out** | 🔄 25% | Phase 2 | 🔴 |
-| **Worker: Upload invoices** | ❌ 0% | Phase 1 | 🔴 |
+| **Worker: Upload invoices** | ✅ 100% | Phase 1 | ✅ |
 | **Worker: Update task status** | ✅ 100% | - | - |
 
-**Overall Progress:** 50% complete
+**Overall Progress:** 60% complete
 
 ---
 
 ## Phase Overview
 
-### Phase 1: Payment System (Weeks 1-2) 🔴
+### Phase 1: Payment System (Weeks 1-2) ✅ **COMPLETED**
 
 **Goal:** Track payments and invoices
 
-**Deliverables:**
-- Payment database model
-- Payment CRUD API endpoints
-- Admin payment management UI
-- Worker invoice upload UI
-- Revenue calculation logic
+**Deliverables Completed:**
+- ✅ Payment database model with GAAP-compliant precision
+- ✅ Payment CRUD API endpoints with checkout integration
+- ✅ Admin payment management UI with edit modal
+- ✅ Worker invoice upload UI (optional, inline camera)
+- ✅ Expected revenue management
+- ✅ Activity feed integration (PAYMENT_COLLECTED, PAYMENT_UPDATED)
+- ✅ Progressive disclosure UI pattern for mobile
+
+**Implementation Highlights:**
+- Checkout-based payment collection (trust workers)
+- Invoice photo is optional (encourages but doesn't block)
+- Admin can edit payments with audit trail
+- Full TypeScript type safety
+- Comprehensive test coverage (106+ tests passing)
 
 [→ Full Payment System Plan](./01-payment-system.md)
 

@@ -3,6 +3,7 @@ import { type FC, Fragment } from 'react'
 import { View } from 'react-native'
 import type { FetchTaskListResponse } from '@/api/task/use-task-infinite-list'
 import { formatTaskId } from '@/utils/task-id-helper'
+import { PaymentStatusBadge } from './payment/payment-status-badge'
 import { Icon } from './ui/icon'
 import { TaskStatusBadge } from './ui/task-status-badge'
 import { Text } from './ui/text'
@@ -14,12 +15,34 @@ export type TaskListItemProps = {
 }
 
 export const TaskListItem: FC<TaskListItemProps> = ({ task, className }) => {
+  // Calculate payment status
+  const hasExpectedRevenue =
+    task.expectedRevenue && Number(task.expectedRevenue) > 0
+  const latestPayment = task.payments?.[0]
+  const hasPayment = !!latestPayment
+  const expectedAmount = task.expectedRevenue
+    ? Number(task.expectedRevenue)
+    : null
+  const actualAmount = latestPayment?.amount
+    ? Number(latestPayment.amount)
+    : null
+
   return (
     <View className={`relative ${className}`}>
-      <TaskStatusBadge
-        className="absolute top-0 right-0 font-gilroy-medium font-medium text-muted-foreground text-sm"
-        status={task.status}
-      />
+      <View className="absolute top-0 right-0 flex-row items-center gap-1.5">
+        {hasExpectedRevenue && (
+          <PaymentStatusBadge
+            actualAmount={actualAmount}
+            expectedAmount={expectedAmount}
+            hasPayment={hasPayment}
+            size="inline"
+          />
+        )}
+        <TaskStatusBadge
+          className="font-gilroy-medium font-medium text-muted-foreground text-sm"
+          status={task.status}
+        />
+      </View>
       <Text className="font-sans-bold text-muted-foreground text-xs">
         {formatTaskId(task.id)}
       </Text>

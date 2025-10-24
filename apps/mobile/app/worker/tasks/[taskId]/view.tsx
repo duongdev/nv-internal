@@ -34,6 +34,9 @@ export default function WorkerTaskView() {
     queryClient.invalidateQueries({
       queryKey: activitiesQueryOptions({ topic: `TASK_${taskId}` }).queryKey,
     })
+    queryClient.invalidateQueries({
+      queryKey: ['task-payments', taskId?.toString() ?? ''],
+    })
   }
 
   if (isLoading) {

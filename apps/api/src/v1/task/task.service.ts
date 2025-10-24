@@ -12,6 +12,10 @@ const DEFAULT_TASK_INCLUDE: Prisma.TaskInclude = {
   attachments: {
     where: { deletedAt: null },
   },
+  payments: {
+    orderBy: { createdAt: 'desc' },
+    take: 1, // Only latest payment for list view
+  },
 }
 
 export async function canUserCreateTask({ user }: { user: User }) {
@@ -154,6 +158,8 @@ export async function createTask({
           description: data.description,
           customerId: customer.id,
           geoLocationId,
+          expectedRevenue: data.expectedRevenue,
+          expectedCurrency: 'VND', // Default currency
         },
         include: DEFAULT_TASK_INCLUDE,
       })
