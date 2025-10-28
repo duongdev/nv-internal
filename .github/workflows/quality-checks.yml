@@ -1,0 +1,153 @@
+name: Code Quality Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 1. TypeScript Compilation
+      - name: TypeScript Check
+        run: |
+          echo "::group::TypeScript Compilation"
+          npx tsc --noEmit --skipLibCheck
+          echo "::endgroup::"
+
+      # 2. Biome Checks
+      - name: Biome Lint and Format
+        run: |
+          echo "::group::Biome Checks"
+          pnpm exec biome check .
+          echo "::endgroup::"
+
+      # 3. Run Tests with Coverage
+      - name: Run Tests
+        run: |
+          echo "::group::API Tests"
+          pnpm --filter @nv-internal/api test --coverage
+          echo "::endgroup::"
+
+      # 4. Coverage Threshold Check
+      - name: Check Coverage Threshold
+        run: |
+          echo "::group::Coverage Threshold"
+          pnpm --filter @nv-internal/api test --coverage --coverageThreshold='{"global":{"lines":60,"branches":60,"functions":60,"statements":60}}'
+          echo "::endgroup::"
+
+      # 5. Code Complexity Analysis (new requirement)
+      - name: Code Complexity
+        run: |
+          echo "::group::Complexity Analysis"
+          npx ts-node scripts/check-complexity.ts
+          echo "::endgroup::"
+        continue-on-error: true  # Warning only for now
+
+      # 6. File Size Check (new requirement)
+      - name: File Size Check
+        run: |
+          echo "::group::File Size Analysis"
+          find apps/api/src -name '*.ts' -type f -exec sh -c '
+            lines=$(wc -l < "$1")
+            if [ "$lines" -gt 250 ]; then
+              echo "::warning file=$1::File has $lines lines (exceeds 250 limit)"
+            fi
+          ' _ {} \;
+          echo "::endgroup::"
+
+      # 7. Bundle Size Analysis (new requirement)
+      - name: Bundle Size Check
+        run: |
+          echo "::group::Bundle Size"
+          pnpm --filter @nv-internal/api build
+          du -sh apps/api/.vercel/output | awk '{print "Bundle size: " $1}'
+          echo "::endgroup::"
+
+      # 8. Performance Benchmarks (new requirement for refactoring)
+      - name: Performance Tests
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "::group::Performance Benchmarks"
+          pnpm --filter @nv-internal/api test --testMatch='**/*.perf.test.ts'
+          echo "::endgroup::"
+        continue-on-error: true  # Optional for now
+
+  # Separate job for contract tests during refactoring
+  contract-tests:
+    name: Contract Compatibility
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Contract Tests
+        run: |
+          echo "::group::API Contract Tests"
+          pnpm --filter @nv-internal/api test --testMatch='**/*.contract.test.ts'
+          echo "::endgroup::"
+        continue-on-error: true  # Only during refactoring
+
+  # Monitor memory usage and cold starts
+  performance-monitoring:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cold Start Benchmark
+        run: |
+          echo "::group::Cold Start Test"
+          node -r esbuild-register scripts/benchmark-cold-start.ts
+          echo "::endgroup::"
+
+      - name: Memory Usage Test
+        run: |
+          echo "::group::Memory Profiling"
+          node --expose-gc -r esbuild-register scripts/benchmark-memory.ts
+          echo "::endgroup::"

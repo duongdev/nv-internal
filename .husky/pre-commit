@@ -1,0 +1,54 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit quality checks..."
+
+# 1. TypeScript compilation check
+echo "\n📘 Checking TypeScript..."
+npx tsc --noEmit --skipLibCheck || {
+  echo "❌ TypeScript compilation failed"
+  exit 1
+}
+
+# 2. Biome format and lint
+echo "\n🎨 Running Biome checks..."
+pnpm exec biome check --write . || {
+  echo "❌ Biome checks failed"
+  exit 1
+}
+
+# 3. Run tests on changed files only
+echo "\n🧪 Running tests on changed files..."
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' | grep -v '.test.ts' | tr '\n' ' ')
+
+if [ -n "$CHANGED_FILES" ]; then
+  # Find related test files
+  pnpm --filter @nv-internal/api test --findRelatedTests $CHANGED_FILES --passWithNoTests || {
+    echo "❌ Tests failed"
+    exit 1
+  }
+else
+  echo "ℹ️  No testable files changed"
+fi
+
+# 4. Check test coverage on changed files (new requirement)
+if [ -n "$CHANGED_FILES" ]; then
+  echo "\n📊 Checking test coverage..."
+  pnpm --filter @nv-internal/api test --findRelatedTests $CHANGED_FILES --coverage --coverageThreshold='{"global":{"lines":60}}' --passWithNoTests || {
+    echo "⚠️  Warning: Coverage below 60% for changed files"
+    # Don't fail, just warn for now
+  }
+fi
+
+# 5. Check file size (new requirement)
+echo "\n📏 Checking file sizes..."
+for file in $CHANGED_FILES; do
+  if [ -f "$file" ]; then
+    LINES=$(wc -l < "$file" | tr -d ' ')
+    if [ "$LINES" -gt 250 ]; then
+      echo "⚠️  Warning: $file has $LINES lines (exceeds 250 line limit)"
+    fi
+  fi
+done
+
+echo "\n✅ All pre-commit checks passed!"
