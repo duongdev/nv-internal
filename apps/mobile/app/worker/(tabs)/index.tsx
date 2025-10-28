@@ -100,10 +100,16 @@ export default function WorkerIndex() {
         }}
         onEndReachedThreshold={0.5}
         refreshControl={
-          <RefreshControl onRefresh={handleRefetch} refreshing={isRefetching} />
+          <RefreshControl
+            accessibilityLabel="Làm mới danh sách công việc"
+            onRefresh={handleRefetch}
+            refreshing={isRefetching}
+          />
         }
         renderItem={({ item: task }) => (
           <Link
+            accessibilityLabel={`Công việc ${task.title}, trạng thái ${task.status}`}
+            accessibilityRole="button"
             asChild
             href={{
               pathname: '/worker/tasks/[taskId]/view',
@@ -112,6 +118,7 @@ export default function WorkerIndex() {
               },
             }}
             key={task.id}
+            testID={`task-list-item-${task.id}`}
           >
             <View className="rounded-lg border border-border bg-card p-3 active:opacity-80">
               <TaskListItem task={task} />
@@ -119,7 +126,11 @@ export default function WorkerIndex() {
           </Link>
         )}
         renderSectionHeader={({ section: { title } }) => (
-          <View className="-mb-2 bg-background pb-1">
+          <View
+            accessibilityRole="header"
+            className="-mb-2 bg-background pb-1"
+            testID={`task-list-section-${title.toLowerCase().replace(/\s+/g, '-')}`}
+          >
             <Text className="font-sans-medium" variant="h4">
               {title}
             </Text>

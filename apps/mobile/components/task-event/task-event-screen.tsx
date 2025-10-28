@@ -200,12 +200,15 @@ export function TaskEventScreen({
           </CardHeader>
           <CardContent>
             <Textarea
+              accessibilityLabel="Ghi chú"
+              accessibilityHint="Nhập thông tin bổ sung cho công việc"
               className="!rounded-md !bg-background dark:!border-white/20"
               editable={!isSubmitting}
               multiline
               numberOfLines={3}
               onChangeText={setNotes}
               placeholder="Nhập ghi chú..."
+              testID={`${eventType}-notes-input`}
               value={notes}
             />
           </CardContent>
@@ -213,10 +216,19 @@ export function TaskEventScreen({
 
         {/* Submit Button */}
         <Button
+          accessibilityLabel={config.buttonLabel}
+          accessibilityHint={
+            !canSubmit
+              ? 'Cần có vị trí GPS để xác nhận'
+              : isSubmitting
+                ? 'Đang xử lý yêu cầu'
+                : `Xác nhận ${eventType === 'check-in' ? 'bắt đầu' : 'hoàn thành'} công việc`
+          }
           className={cn('w-full', isSubmitting && 'opacity-50')}
           disabled={!canSubmit || isSubmitting}
           onPress={handleSubmit}
           size="lg"
+          testID={`${eventType}-submit-button`}
         >
           <Text className="font-semibold">
             {isSubmitting ? 'Đang xử lý...' : config.buttonLabel}

@@ -64,7 +64,13 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
   // If task is completed, show disabled button
   if (task.status === TaskStatus.COMPLETED) {
     return (
-      <Button className="w-full" disabled size="default">
+      <Button
+        accessibilityLabel="Công việc đã hoàn thành"
+        className="w-full"
+        disabled
+        size="default"
+        testID="task-action-completed-button"
+      >
         <Text className="font-sans-medium">Hoàn thành</Text>
       </Button>
     )
@@ -92,6 +98,14 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
   if (action) {
     return (
       <Button
+        accessibilityLabel={action.label}
+        accessibilityHint={
+          action.route === 'check-in'
+            ? 'Mở màn hình check-in với GPS và tải ảnh'
+            : action.route === 'check-out'
+              ? 'Mở màn hình check-out với thu tiền'
+              : 'Cập nhật trạng thái công việc'
+        }
         className="w-full"
         onPress={() => {
           // If action has a route, navigate to it (check-in/check-out)
@@ -126,6 +140,7 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
           }
         }}
         size="default"
+        testID={`task-action-${action.route || 'status-update'}-button`}
       >
         <Text className="font-sans-medium">{action.label}</Text>
       </Button>

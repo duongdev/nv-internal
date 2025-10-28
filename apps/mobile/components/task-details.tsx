@@ -93,6 +93,8 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
 
         {/* Open Map Button */}
         <Button
+          accessibilityLabel="Mở bản đồ"
+          accessibilityHint="Mở Google Maps để xem vị trí công việc"
           disabled={!task.geoLocation}
           onPress={() => {
             if (task.geoLocation) {
@@ -101,6 +103,7 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             }
           }}
           size="icon"
+          testID="task-details-open-map-button"
           variant="outline"
         >
           <Icon as={MapPinnedIcon} />
@@ -108,6 +111,8 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
 
         {/* Call Customer Button */}
         <Button
+          accessibilityLabel="Gọi khách hàng"
+          accessibilityHint={`Gọi số điện thoại ${task.customer?.phone || ''}`}
           disabled={!task.customer?.phone}
           onPress={() => {
             if (task.customer?.phone) {
@@ -115,6 +120,7 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             }
           }}
           size="icon"
+          testID="task-details-call-customer-button"
           variant="outline"
         >
           <Icon as={PhoneCallIcon} />
@@ -123,8 +129,11 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
         {/* Assign Button (Admin Only) */}
         {appRole === 'admin' && (
           <Button
+            accessibilityLabel="Phân công nhân viên"
+            accessibilityHint="Mở modal để chọn nhân viên thực hiện công việc"
             onPress={() => assigneeModalRef.current?.present()}
             size="icon"
+            testID="task-details-assign-button"
             variant="outline"
           >
             <Icon as={UsersIcon} />
@@ -196,8 +205,11 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
           </View>
           {appRole === 'admin' && (
             <Button
+              accessibilityLabel="Phân công nhân viên"
+              accessibilityHint="Mở modal để chọn nhân viên thực hiện công việc"
               className="dark:border-white/20"
               onPress={() => assigneeModalRef.current?.present()}
+              testID="task-details-assign-card-button"
               variant="outline"
             >
               <Icon as={UsersIcon} />
@@ -214,8 +226,15 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             <CardTitle>Thanh toán</CardTitle>
             {appRole === 'admin' && (
               <Button
+                accessibilityLabel={
+                  task.expectedRevenue && Number(task.expectedRevenue) > 0
+                    ? 'Chỉnh sửa giá dịch vụ'
+                    : 'Đặt giá dịch vụ'
+                }
+                accessibilityHint="Mở modal để thiết lập giá dịch vụ cho công việc"
                 onPress={handleOpenExpectedRevenueModal}
                 size="sm"
+                testID="task-details-set-revenue-button"
                 variant="ghost"
               >
                 <Icon as={DollarSign} size={16} />
@@ -294,6 +313,8 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
               {/* Edit Payment Button (Admin Only) */}
               {appRole === 'admin' && (
                 <Button
+                  accessibilityLabel="Chỉnh sửa thanh toán"
+                  accessibilityHint="Mở màn hình để sửa thông tin thanh toán"
                   className="dark:border-white/20"
                   onPress={() => {
                     const payment = paymentData.payments[0]
@@ -310,6 +331,7 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
                       },
                     })
                   }}
+                  testID="task-details-edit-payment-button"
                   variant="outline"
                 >
                   <Text>Chỉnh sửa thanh toán</Text>
@@ -327,8 +349,11 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
                   </Text>
                   {appRole === 'admin' && (
                     <Button
+                      accessibilityLabel="Đặt giá dịch vụ"
+                      accessibilityHint="Mở modal để thiết lập giá dịch vụ cho công việc"
                       className="mt-3"
                       onPress={handleOpenExpectedRevenueModal}
+                      testID="task-details-set-revenue-empty-button"
                       variant="outline"
                     >
                       <Icon as={DollarSign} />

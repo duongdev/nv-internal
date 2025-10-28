@@ -69,9 +69,12 @@ export function AttachmentManager({
       {canAddMore && (
         <View className="flex-row flex-wrap gap-2">
           <Button
+            accessibilityLabel="Chụp ảnh từ camera"
+            accessibilityHint="Mở camera để chụp ảnh mới"
             className="min-w-[100px] flex-1"
             onPress={onAddFromCamera}
             size="sm"
+            testID={`${eventType}-camera-button`}
             variant="outline"
           >
             <Icon as={CameraIcon} className="text-foreground" size={16} />
@@ -79,9 +82,12 @@ export function AttachmentManager({
           </Button>
 
           <Button
+            accessibilityLabel="Chọn từ thư viện ảnh"
+            accessibilityHint="Mở thư viện để chọn ảnh hoặc video"
             className="min-w-[100px] flex-1"
             onPress={onAddFromLibrary}
             size="sm"
+            testID={`${eventType}-library-button`}
             variant="outline"
           >
             <Icon as={ImageIcon} className="text-foreground" size={16} />
@@ -89,9 +95,12 @@ export function AttachmentManager({
           </Button>
 
           <Button
+            accessibilityLabel="Chọn tệp tin"
+            accessibilityHint="Mở trình chọn tệp để chọn tài liệu"
             className="min-w-[100px] flex-1"
             onPress={onAddFromFiles}
             size="sm"
+            testID={`${eventType}-files-button`}
             variant="outline"
           >
             <Icon as={FileIcon} className="text-foreground" size={16} />

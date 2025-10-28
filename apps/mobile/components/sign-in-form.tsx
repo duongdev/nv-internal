@@ -113,6 +113,8 @@ export function SignInForm() {
             <View className="gap-1.5">
               <Label htmlFor="username">Tên đăng nhập</Label>
               <Input
+                accessibilityLabel="Tên đăng nhập"
+                accessibilityHint="Nhập tên đăng nhập của bạn"
                 autoCapitalize="none"
                 id="username"
                 onChangeText={setUsername}
@@ -120,6 +122,7 @@ export function SignInForm() {
                 placeholder="Nhập tên đăng nhập"
                 returnKeyType="next"
                 submitBehavior="submit"
+                testID="sign-in-username-input"
               />
               {error.username ? (
                 <Text className="font-medium text-destructive text-sm">
@@ -130,6 +133,8 @@ export function SignInForm() {
             <View className="gap-1.5">
               <Label htmlFor="password">Mật khẩu</Label>
               <Input
+                accessibilityLabel="Mật khẩu"
+                accessibilityHint="Nhập mật khẩu của bạn"
                 id="password"
                 onChangeText={setPassword}
                 onSubmitEditing={onSubmit}
@@ -137,6 +142,7 @@ export function SignInForm() {
                 ref={passwordInputRef}
                 returnKeyType="send"
                 secureTextEntry
+                testID="sign-in-password-input"
               />
               {error.password ? (
                 <Text className="font-medium text-destructive text-sm">
@@ -144,7 +150,13 @@ export function SignInForm() {
                 </Text>
               ) : null}
             </View>
-            <Button className="w-full" onPress={onSubmit}>
+            <Button
+              accessibilityLabel="Đăng nhập"
+              accessibilityHint="Nhấn để đăng nhập vào hệ thống"
+              className="w-full"
+              onPress={onSubmit}
+              testID="sign-in-submit-button"
+            >
               <Text>Đăng nhập</Text>
             </Button>
           </View>
