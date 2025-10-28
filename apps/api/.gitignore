@@ -30,4 +30,8 @@ lerna-debug.log*
 .DS_Store
 .vercel
 
+# test coverage
+coverage/
+*.lcov
+
 /generated/prisma
