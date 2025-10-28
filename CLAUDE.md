@@ -16,13 +16,27 @@ NV Internal is a task management application for an air conditioning service com
 
 ## Specialized Agent Usage
 
-Claude Code uses specialized agents for different types of work. Understanding when to invoke each agent ensures efficient development:
+**IMPORTANT**: Claude Code should **ALWAYS prefer using specialized agents** for development tasks. Agents are purpose-built experts with deep domain knowledge and should be the default choice for implementation work.
+
+### General Agent Usage Philosophy
+
+**Default Behavior**:
+- ✅ **USE AGENTS**: For all backend, frontend, and quality assurance tasks
+- ✅ **USE AGENTS**: When implementing features, fixing bugs, or making architectural changes
+- ❌ **Don't handle directly**: Complex implementation tasks without agent expertise
+- ❌ **Don't handle directly**: Multi-step development work that requires specialized knowledge
+
+**When to use agents vs. handling directly**:
+- **Use agents**: Implementation, debugging, architecture, testing, documentation
+- **Handle directly**: Simple file reads, answering questions, explaining code, quick fixes
 
 ### Backend Development Agent
 
-**Agent**: `fullstack-backend-expert`
+**Agent**: `backend-expert`
 
-**Use for**:
+**USE THIS AGENT FOR ALL BACKEND WORK**
+
+**Capabilities**:
 - API endpoint implementation and architecture
 - Database schema design and Prisma operations
 - Service layer business logic
@@ -30,18 +44,38 @@ Claude Code uses specialized agents for different types of work. Understanding w
 - Clerk authentication integration
 - Backend testing with Jest
 - System architecture decisions
+- Performance optimization
+- Security reviews
 
-**When to invoke**:
-- Implementing new API features or endpoints
-- Designing database migrations
-- Debugging backend issues or authentication problems
-- Reviewing backend code for best practices
+**When to invoke (ALWAYS for backend work)**:
+- ✅ Implementing new API features or endpoints
+- ✅ Designing database migrations or schema changes
+- ✅ Debugging backend issues or authentication problems
+- ✅ Reviewing backend code for best practices
+- ✅ Writing or updating service layer functions
+- ✅ Creating or modifying Hono routes
+- ✅ Working with Prisma models or queries
+- ✅ Adding or updating validation schemas
 
-### Mobile Development Agent
+**Example invocations**:
+```
+User: "Add a new endpoint for user profile updates"
+→ Launch backend-expert agent
 
-**Agent**: `react-native-expert`
+User: "Fix the authentication error on task endpoints"
+→ Launch backend-expert agent
 
-**Use for**:
+User: "Design the database schema for monthly reports"
+→ Launch backend-expert agent
+```
+
+### Frontend Development Agent
+
+**Agent**: `frontend-expert`
+
+**USE THIS AGENT FOR ALL MOBILE/UI WORK**
+
+**Capabilities**:
 - React Native component implementation
 - Expo features and mobile-specific functionality
 - Mobile UI/UX design and implementation
@@ -49,29 +83,51 @@ Claude Code uses specialized agents for different types of work. Understanding w
 - TanStack Query state management
 - NativeWind styling and responsive design
 - Mobile app optimization
+- API integration from mobile app
+- Form handling and validation
 
-**When to invoke**:
-- Building new mobile screens or components
-- Implementing mobile-specific features
-- Debugging mobile UI or navigation issues
-- Optimizing mobile app performance
+**When to invoke (ALWAYS for frontend work)**:
+- ✅ Building new mobile screens or components
+- ✅ Implementing mobile-specific features
+- ✅ Debugging mobile UI or navigation issues
+- ✅ Optimizing mobile app performance
+- ✅ Integrating with backend APIs
+- ✅ Styling with NativeWind/Tailwind
+- ✅ Managing client-side state with TanStack Query
+- ✅ Working with Expo Router navigation
+
+**Example invocations**:
+```
+User: "Create a payment collection screen"
+→ Launch frontend-expert agent
+
+User: "Fix the layout issues on the task details page"
+→ Launch frontend-expert agent
+
+User: "Add pull-to-refresh to the task list"
+→ Launch frontend-expert agent
+```
 
 ### Code Quality Agent
 
 **Agent**: `code-quality-enforcer`
 
-**Use for**:
+**USE THIS AGENT AFTER IMPLEMENTATION OR BEFORE COMMITS**
+
+**Capabilities**:
 - Validating code changes before commits
 - Running pre-commit checks (format, lint, tests)
-- **TypeScript compilation checking and fixing**
+- TypeScript compilation checking and fixing
 - Ensuring adherence to project standards
-- **IMPORTANT**: Only test changed files/modules unless full codebase testing is explicitly requested
+- Running targeted tests on changed files
+- Building shared packages if modified
 
-**When to invoke**:
-- After completing implementation work
-- Before creating commits or pull requests
-- When preparing code for review
-- **NOT for**: Running entire test suite by default
+**When to invoke (ALWAYS after changes)**:
+- ✅ After completing implementation work
+- ✅ Before creating commits or pull requests
+- ✅ When preparing code for review
+- ✅ After fixing bugs or making changes
+- ✅ When TypeScript errors need resolution
 
 **Quality checks performed**:
 1. TypeScript compilation: `npx tsc --noEmit` (fix all TS errors)
@@ -83,29 +139,87 @@ Claude Code uses specialized agents for different types of work. Understanding w
    - `pnpm --filter @nv-internal/prisma-client build`
    - `pnpm --filter @nv-internal/validation build`
 
+**Important**: Only test changed files/modules unless full codebase testing is explicitly requested
+
+**Example invocations**:
+```
+User: "I've finished implementing the check-in feature"
+→ Launch code-quality-enforcer agent
+
+User: "Ready to commit these changes"
+→ Launch code-quality-enforcer agent (automatically)
+
+User: "There are TypeScript errors"
+→ Launch code-quality-enforcer agent
+```
+
 ### Documentation Tracking Agent
 
 **Agent**: `task-doc-tracker`
 
-**Use for**:
+**USE THIS AGENT FOR ALL DOCUMENTATION WORK**
+
+**Capabilities**:
 - Creating and maintaining task documentation in `.claude/tasks/`
 - Tracking implementation progress and requirements
 - Updating v1 feature plans in `.claude/plans/v1/`
 - Extracting learnings and updating `CLAUDE.md`
 - Ensuring project knowledge is preserved
+- Linking tasks to feature plans
+- Documenting architectural decisions
 
-**When to invoke** (proactively):
-- Starting new feature development
-- Completing implementations
-- After significant code changes
-- Before and after implementing v1 planned features
-- When architectural decisions are made
+**When to invoke (PROACTIVELY)**:
+- ✅ Starting new feature development
+- ✅ Completing implementations
+- ✅ After significant code changes
+- ✅ Before and after implementing v1 planned features
+- ✅ When architectural decisions are made
+- ✅ When patterns should be documented
+- ✅ When updating enhancement ideas
 
 **Documentation flow**:
 1. Plan feature → Create task file
 2. Implement → Update progress in task file
 3. Complete → Mark as ✅, update v1 plan status
 4. Extract learnings → Update CLAUDE.md with patterns
+
+**Example invocations**:
+```
+User: "Let's implement the payment tracking feature"
+→ Launch task-doc-tracker agent first to create docs
+
+User: "I've completed the check-in implementation"
+→ Launch task-doc-tracker agent to document completion
+
+User: "We need to document this new pattern"
+→ Launch task-doc-tracker agent
+```
+
+### Agent Workflow Example
+
+**Typical feature implementation flow**:
+
+1. **Documentation Setup**: Launch `task-doc-tracker` to create task file
+2. **Implementation**: Launch `backend-expert` or `frontend-expert` for implementation
+3. **Quality Assurance**: Launch `code-quality-enforcer` to verify changes
+4. **Documentation Update**: Launch `task-doc-tracker` to mark complete and extract learnings
+
+**Example**:
+```
+User: "Add payment tracking to completed tasks"
+
+Step 1: Launch task-doc-tracker
+→ Creates .claude/tasks/YYYYMMDD-HHMMSS-payment-tracking.md
+
+Step 2: Launch backend-expert
+→ Implements API endpoint, service layer, tests
+
+Step 3: Launch code-quality-enforcer
+→ Runs TypeScript check, linting, tests
+
+Step 4: Launch task-doc-tracker
+→ Updates task file with ✅, documents patterns
+```
 
 ## Common Development Commands
 
