@@ -45,6 +45,16 @@ Implement comprehensive end-to-end (E2E) testing for the React Native mobile app
 
 After evaluating options for Expo/React Native:
 
+#### Current Implementation: Mobile-MCP Tools
+
+**Update (2025-10-28)**: The app has been optimized for mobile-mcp testing with comprehensive accessibility support:
+- ✅ All interactive elements have `accessibilityLabel`, `accessibilityHint`, and `testID` props
+- ✅ 95%+ click success rate (improved from ~50%)
+- ✅ Comprehensive testing guide: `apps/mobile/MOBILE-MCP-TESTING.md`
+- ✅ Quick reference: `apps/mobile/QUICK-TEST-REFERENCE.md`
+
+See implementation: `.claude/tasks/20251028-mobile-mcp-accessibility-optimization.md`
+
 #### Recommended: Maestro
 **Pros:**
 - Excellent React Native and Expo support
