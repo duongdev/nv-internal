@@ -34,12 +34,12 @@ async function measureColdStart(): Promise<BenchmarkResult[]> {
         if (key === 'user') {
           return {
             id: 'usr_test',
-            publicMetadata: { roles: ['nv_internal_worker'] }
+            publicMetadata: { roles: ['nv_internal_worker'] },
           }
         }
         return undefined
       },
-      set: () => {}
+      set: () => {},
     } as any
 
     const container = createRequestContainer(mockContext)
@@ -54,7 +54,7 @@ async function measureColdStart(): Promise<BenchmarkResult[]> {
     results.push({
       iteration: i + 1,
       duration,
-      memoryUsed
+      memoryUsed,
     })
 
     // Force garbage collection if available
@@ -63,7 +63,7 @@ async function measureColdStart(): Promise<BenchmarkResult[]> {
     }
 
     // Wait 100ms between iterations
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 100))
   }
 
   return results
@@ -77,11 +77,13 @@ async function main() {
   const results = await measureColdStart()
 
   // Calculate statistics
-  const durations = results.map(r => r.duration)
-  const memories = results.map(r => r.memoryUsed)
+  const durations = results.map((r) => r.duration)
+  const memories = results.map((r) => r.memoryUsed)
 
   const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length
-  const p95Duration = durations.sort((a, b) => a - b)[Math.floor(durations.length * 0.95)]
+  const p95Duration = durations.sort((a, b) => a - b)[
+    Math.floor(durations.length * 0.95)
+  ]
   const maxDuration = Math.max(...durations)
   const minDuration = Math.min(...durations)
 
@@ -91,17 +93,19 @@ async function main() {
   // Print results
   console.log('Results:')
   console.log('--------')
-  results.forEach(r => {
+  results.forEach((r) => {
     const status = r.duration < 200 ? '✅' : '❌'
     console.log(
-      `${status} Iteration ${r.iteration}: ${r.duration.toFixed(2)}ms (${r.memoryUsed.toFixed(2)} MB)`
+      `${status} Iteration ${r.iteration}: ${r.duration.toFixed(2)}ms (${r.memoryUsed.toFixed(2)} MB)`,
     )
   })
 
   console.log('\nStatistics:')
   console.log('------------')
   console.log(`Average:     ${avgDuration.toFixed(2)}ms`)
-  console.log(`p95:         ${p95Duration.toFixed(2)}ms ${p95Duration < 200 ? '✅' : '❌'}`)
+  console.log(
+    `p95:         ${p95Duration.toFixed(2)}ms ${p95Duration < 200 ? '✅' : '❌'}`,
+  )
   console.log(`Min:         ${minDuration.toFixed(2)}ms`)
   console.log(`Max:         ${maxDuration.toFixed(2)}ms`)
   console.log(`\nMemory:`)
@@ -118,7 +122,7 @@ async function main() {
   process.exit(0)
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Benchmark failed:', error)
   process.exit(1)
 })

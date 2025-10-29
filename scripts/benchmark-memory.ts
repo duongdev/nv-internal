@@ -30,12 +30,12 @@ async function simulateRequests(count: number): Promise<MemorySnapshot[]> {
         if (key === 'user') {
           return {
             id: 'usr_test',
-            publicMetadata: { roles: ['nv_internal_worker'] }
+            publicMetadata: { roles: ['nv_internal_worker'] },
           }
         }
         return undefined
       },
-      set: () => {}
+      set: () => {},
     } as any
 
     // Create container and use services
@@ -50,7 +50,7 @@ async function simulateRequests(count: number): Promise<MemorySnapshot[]> {
         heapUsed: mem.heapUsed / 1024 / 1024, // MB
         heapTotal: mem.heapTotal / 1024 / 1024,
         external: mem.external / 1024 / 1024,
-        rss: mem.rss / 1024 / 1024
+        rss: mem.rss / 1024 / 1024,
       })
     }
 
@@ -84,36 +84,46 @@ async function main() {
 
   const startMem = process.memoryUsage()
   console.log('Initial memory:')
-  console.log(`  Heap Used:  ${(startMem.heapUsed / 1024 / 1024).toFixed(2)} MB`)
-  console.log(`  Heap Total: ${(startMem.heapTotal / 1024 / 1024).toFixed(2)} MB`)
+  console.log(
+    `  Heap Used:  ${(startMem.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+  )
+  console.log(
+    `  Heap Total: ${(startMem.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+  )
   console.log(`  RSS:        ${(startMem.rss / 1024 / 1024).toFixed(2)} MB\n`)
 
   const snapshots = await simulateRequests(1000)
 
   console.log('Memory snapshots (every 50 requests):')
   console.log('---------------------------------------')
-  snapshots.forEach(s => {
+  snapshots.forEach((s) => {
     const status = s.heapUsed < 800 ? '✅' : '⚠️ '
     console.log(
       `${status} Request ${s.requestNumber.toString().padStart(4)}: ` +
-      `Heap ${s.heapUsed.toFixed(2)} MB, ` +
-      `RSS ${s.rss.toFixed(2)} MB`
+        `Heap ${s.heapUsed.toFixed(2)} MB, ` +
+        `RSS ${s.rss.toFixed(2)} MB`,
     )
   })
 
   const finalMem = snapshots[snapshots.length - 1]
-  const peakMem = Math.max(...snapshots.map(s => s.heapUsed))
+  const peakMem = Math.max(...snapshots.map((s) => s.heapUsed))
 
   console.log('\nResults:')
   console.log('--------')
-  console.log(`Peak heap usage: ${peakMem.toFixed(2)} MB ${peakMem < 800 ? '✅' : '❌'}`)
+  console.log(
+    `Peak heap usage: ${peakMem.toFixed(2)} MB ${peakMem < 800 ? '✅' : '❌'}`,
+  )
   console.log(`Final heap usage: ${finalMem.heapUsed.toFixed(2)} MB`)
-  console.log(`Growth: ${(finalMem.heapUsed - snapshots[0].heapUsed).toFixed(2)} MB`)
+  console.log(
+    `Growth: ${(finalMem.heapUsed - snapshots[0].heapUsed).toFixed(2)} MB`,
+  )
 
   // Detect memory leak
   const hasLeak = detectMemoryLeak(snapshots)
   if (hasLeak) {
-    console.error('\n❌ Memory leak detected! Heap grew >200MB over 1000 requests.')
+    console.error(
+      '\n❌ Memory leak detected! Heap grew >200MB over 1000 requests.',
+    )
     console.log('\nMemory growth pattern:')
     snapshots.forEach((s, i) => {
       if (i > 0) {
@@ -133,7 +143,7 @@ async function main() {
   process.exit(0)
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Benchmark failed:', error)
   process.exit(1)
 })

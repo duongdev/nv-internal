@@ -6,8 +6,8 @@
  */
 
 import type { PrismaClient } from '@nv-internal/prisma-client'
+import { type DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended'
 import type { Container } from '@/container/request-container'
-import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended'
 
 /**
  * Create a fully mocked container for unit tests
@@ -58,7 +58,7 @@ export function createMockPrisma(): DeepMockProxy<PrismaClient> {
  * Test Data Builders
  */
 
-import type { Task, Customer, User } from '@nv-internal/prisma-client'
+import type { Customer, Task, User } from '@nv-internal/prisma-client'
 
 export class TaskBuilder {
   private data: Partial<Task> = {
@@ -67,7 +67,7 @@ export class TaskBuilder {
     status: 'READY',
     createdAt: new Date(),
     updatedAt: new Date(),
-    assigneeIds: []
+    assigneeIds: [],
   }
 
   withId(id: number): this {
@@ -105,7 +105,7 @@ export class CustomerBuilder {
     id: 'cust_test',
     name: 'Test Customer',
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   }
 
   withId(id: string): this {
@@ -133,8 +133,8 @@ export class UserBuilder {
     id: 'usr_test',
     publicMetadata: {
       roles: ['nv_internal_worker'],
-      defaultPasswordChanged: true
-    }
+      defaultPasswordChanged: true,
+    },
   }
 
   withId(id: string): this {
@@ -145,7 +145,7 @@ export class UserBuilder {
   withRole(role: string): this {
     this.data.publicMetadata = {
       ...this.data.publicMetadata,
-      roles: [role]
+      roles: [role],
     }
     return this
   }
@@ -183,9 +183,7 @@ export function createInProgressTask(): Task {
 }
 
 export function createCompletedTask(): Task {
-  return new TaskBuilder()
-    .withStatus('COMPLETED')
-    .build()
+  return new TaskBuilder().withStatus('COMPLETED').build()
 }
 
 /**
@@ -194,7 +192,7 @@ export function createCompletedTask(): Task {
 
 export function expectTaskToMatchInput(
   task: Task,
-  input: { title?: string; description?: string }
+  input: { title?: string; description?: string },
 ): void {
   if (input.title) {
     expect(task.title).toBe(input.title)
@@ -208,8 +206,10 @@ export function expectValidTaskResponse(data: unknown): void {
   expect(data).toMatchObject({
     id: expect.any(Number),
     title: expect.any(String),
-    status: expect.stringMatching(/^(PREPARING|READY|IN_PROGRESS|ON_HOLD|COMPLETED)$/),
+    status: expect.stringMatching(
+      /^(PREPARING|READY|IN_PROGRESS|ON_HOLD|COMPLETED)$/,
+    ),
     createdAt: expect.any(String),
-    updatedAt: expect.any(String)
+    updatedAt: expect.any(String),
   })
 }

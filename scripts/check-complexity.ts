@@ -8,7 +8,7 @@
  * - No deeply nested code (max depth 4)
  */
 
-import { readFileSync, readdirSync, statSync } from 'fs'
+import { readdirSync, readFileSync, statSync } from 'fs'
 import { join, relative } from 'path'
 import * as ts from 'typescript'
 
@@ -37,7 +37,7 @@ function analyzeFile(filePath: string): void {
       line: 1,
       function: '<file>',
       complexity: lines,
-      type: 'file-size'
+      type: 'file-size',
     })
   }
 
@@ -46,19 +46,20 @@ function analyzeFile(filePath: string): void {
     filePath,
     content,
     ts.ScriptTarget.Latest,
-    true
+    true,
   )
 
   function visit(node: ts.Node, depth = 0): void {
     // Check nesting depth
     if (depth > MAX_NESTING_DEPTH) {
-      const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
+      const line =
+        sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
       issues.push({
         file: filePath,
         line,
         function: '<nested-block>',
         complexity: depth,
-        type: 'nesting'
+        type: 'nesting',
       })
     }
 
@@ -70,7 +71,8 @@ function analyzeFile(filePath: string): void {
     ) {
       const complexity = calculateComplexity(node)
       const functionName = getFunctionName(node)
-      const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
+      const line =
+        sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1
 
       if (complexity > MAX_COMPLEXITY) {
         issues.push({
@@ -78,7 +80,7 @@ function analyzeFile(filePath: string): void {
           line,
           function: functionName,
           complexity,
-          type: 'complexity'
+          type: 'complexity',
         })
       }
     }
@@ -171,33 +173,39 @@ function main(): void {
   }
 
   // Group issues by type
-  const complexityIssues = issues.filter(i => i.type === 'complexity')
-  const fileSizeIssues = issues.filter(i => i.type === 'file-size')
-  const nestingIssues = issues.filter(i => i.type === 'nesting')
+  const complexityIssues = issues.filter((i) => i.type === 'complexity')
+  const fileSizeIssues = issues.filter((i) => i.type === 'file-size')
+  const nestingIssues = issues.filter((i) => i.type === 'nesting')
 
   if (complexityIssues.length > 0) {
     console.log(`❌ Cyclomatic Complexity Issues (${complexityIssues.length}):`)
-    complexityIssues.forEach(issue => {
+    complexityIssues.forEach((issue) => {
       const relPath = relative(process.cwd(), issue.file)
-      console.log(`  ${relPath}:${issue.line} - ${issue.function}() has complexity ${issue.complexity} (max: ${MAX_COMPLEXITY})`)
+      console.log(
+        `  ${relPath}:${issue.line} - ${issue.function}() has complexity ${issue.complexity} (max: ${MAX_COMPLEXITY})`,
+      )
     })
     console.log()
   }
 
   if (fileSizeIssues.length > 0) {
     console.log(`⚠️  File Size Issues (${fileSizeIssues.length}):`)
-    fileSizeIssues.forEach(issue => {
+    fileSizeIssues.forEach((issue) => {
       const relPath = relative(process.cwd(), issue.file)
-      console.log(`  ${relPath} has ${issue.complexity} lines (max: ${MAX_FILE_LINES})`)
+      console.log(
+        `  ${relPath} has ${issue.complexity} lines (max: ${MAX_FILE_LINES})`,
+      )
     })
     console.log()
   }
 
   if (nestingIssues.length > 0) {
     console.log(`⚠️  Nesting Depth Issues (${nestingIssues.length}):`)
-    nestingIssues.forEach(issue => {
+    nestingIssues.forEach((issue) => {
       const relPath = relative(process.cwd(), issue.file)
-      console.log(`  ${relPath}:${issue.line} has depth ${issue.complexity} (max: ${MAX_NESTING_DEPTH})`)
+      console.log(
+        `  ${relPath}:${issue.line} has depth ${issue.complexity} (max: ${MAX_NESTING_DEPTH})`,
+      )
     })
     console.log()
   }

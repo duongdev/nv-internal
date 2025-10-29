@@ -98,7 +98,6 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
   if (action) {
     return (
       <Button
-        accessibilityLabel={action.label}
         accessibilityHint={
           action.route === 'check-in'
             ? 'Mở màn hình check-in với GPS và tải ảnh'
@@ -106,6 +105,7 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
               ? 'Mở màn hình check-out với thu tiền'
               : 'Cập nhật trạng thái công việc'
         }
+        accessibilityLabel={action.label}
         className="w-full"
         onPress={() => {
           // If action has a route, navigate to it (check-in/check-out)
