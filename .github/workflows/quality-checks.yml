@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
       # 1. TypeScript Compilation
       - name: TypeScript Check
         run: |
@@ -112,6 +115,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
       - name: Run Contract Tests
         run: |
           echo "::group::API Contract Tests"
@@ -139,6 +145,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
 
       - name: Cold Start Benchmark
         run: |
