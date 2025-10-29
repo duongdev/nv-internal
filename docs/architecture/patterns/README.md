@@ -18,6 +18,7 @@ This directory contains detailed implementation patterns and best practices for 
 - **[Activity-Based Events](./activity-event.md)** - Unified event logging with flexible JSON payloads
 - **[Payment Transactions](./payment-transactions.md)** - Serverless-safe transaction pattern with file uploads
 - **[FormData Validation](./formdata-validation.md)** - Zod schemas for multipart/form-data handling
+- **[Timezone Handling](./timezone-handling.md)** - Modern timezone-aware date operations with TZDate
 
 ### Utilities
 
@@ -48,6 +49,9 @@ This directory contains detailed implementation patterns and best practices for 
 
 ### When working with forms:
 - Use [FormData Validation](./formdata-validation.md) for proper Zod schemas
+
+### When working with dates and timezones:
+- Use [Timezone Handling](./timezone-handling.md) for accurate date boundaries
 
 ## Adding New Patterns
 

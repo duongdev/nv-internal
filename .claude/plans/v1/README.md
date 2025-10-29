@@ -1,6 +1,6 @@
 # NV Internal v1 Master Plan
 
-**Last Updated:** 2025-10-23
+**Last Updated:** 2025-10-29
 **Project:** Air Conditioning Service Task Management Application
 **Target Users:** <50 users (Admin & Field Workers)
 
@@ -11,7 +11,7 @@
 📋 **Feature Plans:**
 1. [Payment System](./01-payment-system.md) - Week 1-2 ✅ **COMPLETED**
 2. [Check-in/Check-out](./02-checkin-checkout.md) - Week 3-4 🔄 **Phase 1 Backend ✅**
-3. [Monthly Reports](./03-monthly-reports.md) - Week 5 🔴
+3. [Monthly Reports](./03-monthly-reports.md) - Week 5 ✅ **COMPLETED**
 4. [Task CRUD Enhancements](./04-task-crud.md) - Week 5 🟡
 5. [Employee Management](./05-employee-management.md) - Week 6 🟡
 6. [Admin Dashboard](./06-admin-dashboard.md) - Week 7 🟡
@@ -69,6 +69,17 @@ The plan addresses gaps between current implementation and contract requirements
 - Currency input with VNĐ formatting
 - Amount mismatch detection and confirmation
 
+**Employee Reports (v1 Phase 3 - Completed 2025-10-29):**
+- Dynamic date range employee reports API
+- Days worked calculation from Activity check-ins
+- Tasks completed metrics with revenue breakdown
+- Equal revenue splitting for multi-worker tasks
+- Timezone-aware date handling (SE Asia)
+- Mobile UI with month picker and employee selector
+- Loading states and empty states
+- Vietnamese localization throughout
+- 18 comprehensive tests passing
+
 ### ⏳ In Progress
 
 **Check-in/Check-out System (Phase 1/4):**
@@ -97,10 +108,11 @@ The plan addresses gaps between current implementation and contract requirements
    - ⏳ Admin monitoring features pending (Phase 3)
    - [→ See Check-in/Check-out Plan](./02-checkin-checkout.md)
 
-3. **Monthly Reports** 🔴
-   - No reporting endpoints
-   - Cannot calculate days worked
-   - Cannot calculate revenue per employee
+3. **Monthly Reports** ✅ **COMPLETED (2025-10-29)**
+   - ✅ Reporting endpoints with dynamic date ranges
+   - ✅ Days worked calculation from Activity model
+   - ✅ Revenue per employee with equal splits
+   - ✅ Mobile UI with month picker
    - [→ See Monthly Reports Plan](./03-monthly-reports.md)
 
 4. **Task Editing** 🟡
@@ -122,7 +134,7 @@ The plan addresses gaps between current implementation and contract requirements
 | **Admin: Assign workers** | ✅ 100% | - | - |
 | **Admin: Track check-ins** | 🔄 25% | Phase 2 | 🔴 |
 | **Admin: Track payments** | ✅ 100% | Phase 1 | ✅ |
-| **Admin: Monthly reports** | ❌ 0% | Phase 3 | 🔴 |
+| **Admin: Monthly reports** | ✅ 100% | Phase 3 | ✅ |
 | **Admin: Dashboard view** | ❌ 0% | Phase 5 | 🟡 |
 | **Worker: View tasks** | ✅ 100% | - | - |
 | **Worker: Check-in** | 🔄 25% | Phase 2 | 🔴 |
@@ -130,7 +142,7 @@ The plan addresses gaps between current implementation and contract requirements
 | **Worker: Upload invoices** | ✅ 100% | Phase 1 | ✅ |
 | **Worker: Update task status** | ✅ 100% | - | - |
 
-**Overall Progress:** 60% complete
+**Overall Progress:** 66% complete (8/12 critical requirements)
 
 ---
 
@@ -175,15 +187,24 @@ The plan addresses gaps between current implementation and contract requirements
 
 ---
 
-### Phase 3: Monthly Reports (Week 5) 🔴
+### Phase 3: Monthly Reports (Week 5) ✅ **COMPLETED**
 
 **Goal:** Employee performance reports
 
-**Deliverables:**
-- Reporting API endpoints
-- Days worked calculation (from check-ins)
-- Revenue calculation (split for multi-worker tasks)
-- Admin reports dashboard UI
+**Deliverables Completed:**
+- ✅ Reporting API endpoints with dynamic date ranges
+- ✅ Days worked calculation from Activity model check-ins
+- ✅ Revenue calculation with equal splits for multi-worker tasks
+- ✅ Admin reports dashboard UI with month picker
+- ✅ Timezone-aware date handling (SE Asia)
+- ✅ Comprehensive test coverage (18 tests)
+
+**Implementation Highlights:**
+- Used Activity model pattern for check-ins (flexible event log)
+- TZDate for modern timezone handling (date-fns v4+)
+- Month picker UI for simplicity (backend supports any date range)
+- Vietnamese localization throughout
+- Progressive disclosure pattern for mobile UI
 
 [→ Full Monthly Reports Plan](./03-monthly-reports.md)
 
@@ -306,15 +327,15 @@ Week 8:   Testing, Polish, Documentation
 - [ ] **Admin can edit tasks**
 - [x] Admin can assign workers
 - [x] Admin can view task list/details
-- [ ] **Admin can track payments**
-- [ ] **Admin can view monthly reports**
+- [x] **Admin can track payments**
+- [x] **Admin can view monthly reports**
 - [x] Worker can login and view tasks
 - [ ] **Worker can check-in with GPS + photo**
 - [ ] **Worker can check-out with GPS + photo**
-- [ ] **Worker can upload invoices**
+- [x] **Worker can upload invoices**
 - [x] Worker can update task progress
 
-**Completion:** 7/12 (58%)
+**Completion:** 10/12 (83%)
 
 ### Should Have 🟡
 

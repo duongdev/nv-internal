@@ -2,6 +2,7 @@ import { useAuth, useUser } from '@clerk/clerk-expo'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'expo-router'
 import {
+  ChartBarIcon,
   ChevronRightIcon,
   CrownIcon,
   HardHatIcon,
@@ -69,6 +70,17 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
           />
         </Link>
       </MenuGroup>
+      {isAdminView && (
+        <MenuGroup>
+          <Link asChild href="/admin/reports">
+            <MenuItem
+              label="Báo cáo nhân viên"
+              leftIcon={ChartBarIcon}
+              rightIcon={ChevronRightIcon}
+            />
+          </Link>
+        </MenuGroup>
+      )}
       <MenuGroup>
         {isAdminView ? (
           <Link asChild href="/worker" replace>

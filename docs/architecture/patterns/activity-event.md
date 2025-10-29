@@ -42,7 +42,38 @@ When implementing task events (check-in/out, comments, status changes), leverage
 - ✅ Built-in indexing (topic, userId, createdAt)
 - ✅ Flexible payload evolves without schema changes
 
+## Query Patterns
+
+### Querying Check-ins for Reports
+When calculating days worked for employee reports:
+
+```typescript
+// Query check-ins in date range
+const checkIns = await prisma.activity.findMany({
+  where: {
+    userId,
+    action: 'TASK_CHECKED_IN',
+    timestamp: { gte: startDate, lte: endDate }
+  }
+})
+
+// Extract unique days in timezone
+const uniqueDays = new Set(
+  checkIns.map(activity => {
+    const localDate = TZDate.tz(timezone, activity.timestamp)
+    return format(localDate, 'yyyy-MM-dd')
+  })
+)
+```
+
+This pattern:
+- Uses the Activity model as event log
+- Filters by action type for specific events
+- Handles timezone conversion for accurate day counting
+- Avoids need for dedicated check-in table
+
 ## Reference Implementations
 
 - Check-in/out: `.claude/tasks/20251022-211855-implement-checkin-checkout-system.md`
 - Comments: `.claude/tasks/20251023-050349-implement-task-comments.md`
+- Employee Reports: `.claude/tasks/20251029-105427-employee-reports-api-implementation.md`

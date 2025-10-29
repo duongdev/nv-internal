@@ -176,6 +176,7 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[Payment Transactions](./docs/architecture/patterns/payment-transactions.md)** - Serverless-safe transactions
 - **[File Uploads](./docs/architecture/patterns/file-upload.md)** - Hono RPC limitations
 - **[Cache Invalidation](./docs/architecture/patterns/cache-invalidation.md)** - TanStack Query patterns
+- **[Timezone Handling](./docs/architecture/patterns/timezone-handling.md)** - Modern TZDate for accurate date boundaries
 
 ### API Structure
 
@@ -208,6 +209,57 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **IDs**: Use prefixed IDs for readability (cust*, geo*, act_*, pay_*)
 - **Task Status**: PREPARING → READY → IN_PROGRESS → ON_HOLD → COMPLETED
 - **Client**: Generated to `packages/prisma-client/generated/`
+
+## Library Documentation
+
+**IMPORTANT**: Always use the **context7 MCP** to fetch the latest library documentation instead of relying on knowledge cutoff.
+
+### When to Use Context7 MCP
+
+Use context7 MCP tools for:
+- ✅ Checking latest API changes and features
+- ✅ Verifying correct usage patterns
+- ✅ Finding code examples from official docs
+- ✅ Ensuring compatibility with current versions
+- ✅ Discovering new features or deprecations
+
+### How to Use Context7
+
+1. **Resolve Library ID** (first time for each library):
+   ```
+   mcp__context7__resolve-library-id
+   libraryName: "prisma" (or "next.js", "hono", etc.)
+   ```
+
+2. **Get Documentation**:
+   ```
+   mcp__context7__get-library-docs
+   context7CompatibleLibraryID: "/prisma/docs" (from step 1)
+   topic: "transactions" (optional, to focus on specific topic)
+   tokens: 5000 (optional, default is 5000)
+   ```
+
+### Common Libraries in This Project
+
+When working with these libraries, ALWAYS check context7 first:
+- **Hono**: Web framework for API routes
+- **Prisma**: Database ORM and client
+- **React Native**: Mobile app framework
+- **Expo**: React Native tooling and SDK
+- **TanStack Query**: Data fetching and caching
+- **Clerk**: Authentication
+- **Zod**: Schema validation
+- **date-fns-tz**: Timezone handling
+
+### Example Workflow
+
+```
+User: "How do I use Prisma transactions?"
+Assistant: Let me check the latest Prisma documentation...
+1. Uses mcp__context7__resolve-library-id with "prisma"
+2. Uses mcp__context7__get-library-docs with topic "transactions"
+3. Provides accurate answer based on latest docs
+```
 
 ## Development Guidelines
 
