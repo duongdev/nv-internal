@@ -3,6 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -16,6 +17,7 @@ module.exports = {
     '^@nv-internal/validation$': '<rootDir>/../../packages/validation/dist',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  modulePaths: ['<rootDir>/src'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   testTimeout: 5000,
   // Reduce logging output
@@ -46,4 +48,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   // Allow imports from test files
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
+  // Ensure Jest resolves .ts files without extension
+  resolver: undefined,
+  extensionsToTreatAsEsm: [],
 }
