@@ -43,19 +43,8 @@ jobs:
           pnpm exec biome check .
           echo "::endgroup::"
 
-      # 3. Run Tests with Coverage
-      - name: Run Tests
-        run: |
-          echo "::group::API Tests"
-          pnpm --filter @nv-internal/api test --coverage
-          echo "::endgroup::"
-
-      # 4. Coverage Threshold Check
-      - name: Check Coverage Threshold
-        run: |
-          echo "::group::Coverage Threshold"
-          pnpm --filter @nv-internal/api test --coverage --coverageThreshold='{"global":{"lines":60,"branches":60,"functions":60,"statements":60}}'
-          echo "::endgroup::"
+      # Tests are covered by main CI workflow - skip redundant test runs here
+      # Keeping only unique quality checks below (complexity, bundle size, etc.)
 
       # 5. Code Complexity Analysis (new requirement)
       - name: Code Complexity
