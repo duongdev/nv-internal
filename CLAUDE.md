@@ -187,6 +187,8 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **Testing**: Jest tests in `__tests__/` directories alongside source files
 - **Transactions**: Use transactions for multi-model operations
 - **Activity Logging**: Log all state changes to Activity table
+  - **Unified Event Log**: Activity model serves as single source for all events (check-ins, payments, status changes)
+  - **Flexible Queries**: Query by action type (e.g., `TASK_CHECKED_IN`) for specific events
 - **Pagination**: Use cursor-based pagination for lists
 - **Authentication**: Optimized to use JWT claims (see [Auth Optimization](./docs/architecture/patterns/auth-optimization.md))
 
@@ -196,12 +198,19 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **Authentication**: Clerk SDK with protected routes using auth state
 - **API Calls**: Use `callHonoApi` utility for type-safe API calls
 - **State Management**: TanStack Query with aggressive caching (1 week gcTime)
+  - **Comparison Data**: Fetch multiple periods in parallel for month-over-month comparisons
+  - **Smart Invalidation**: Invalidate queries based on parameter changes
 - **Styling**: NativeWind (Tailwind for React Native) with sorted classes
   - **className Composition**: Use the `cn` utility from `@/lib/utils` for composing classNames with conditional logic
   - The `cn` utility combines `clsx` and `tailwind-merge` to properly merge and deduplicate Tailwind classes
+  - **Change Indicators**: Use color-coded badges (green/red/gray) for metric changes
 - **Forms**: Present forms and inputs as modals
 - **Components**: Follow existing component structure in `components/` directory
 - **Accessibility**: All interactive elements have proper accessibility props (see [Mobile-MCP Testing](./docs/testing/mobile-mcp.md))
+- **UX Patterns**:
+  - **Pull-to-Refresh**: Implement with haptic feedback on key screens
+  - **Bottom Sheets**: Use for selectors (employees, dates) instead of dropdowns
+  - **Progressive Disclosure**: Show key metrics first, details on demand
 
 ### Database Schema
 

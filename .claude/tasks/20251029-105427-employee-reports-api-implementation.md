@@ -116,10 +116,10 @@ Time:        0.528 s
 - `@date-fns/tz@^1.4.1` - Timezone-aware date handling
 - `date-fns@^4.1.0` - Date formatting utilities
 
-### 7. Mobile Frontend Implementation (COMPLETED)
-Implemented complete mobile UI for employee reports in `/apps/mobile/app/admin/reports/index.tsx`:
+### 7. Mobile Frontend Implementation (COMPLETED + ENHANCED)
+Implemented complete mobile UI for employee reports in `/apps/mobile/app/admin/reports/index.tsx` with significant enhancements beyond the original v1 plan:
 
-**Features Implemented**:
+**Core Features (Per v1 Plan)**:
 - **Month Picker**: Previous/next navigation with current month display
 - **Employee Selector**: Bottom sheet modal with user list
 - **Metrics Cards**:
@@ -131,21 +131,54 @@ Implemented complete mobile UI for employee reports in `/apps/mobile/app/admin/r
 - **Empty States**: Different messages for various scenarios
 - **Vietnamese Localization**: All UI text in Vietnamese
 
-**Supporting Files Created**:
-- `/apps/mobile/api/reports/use-employee-report.ts` - TanStack Query hook
-- `/apps/mobile/lib/date-utils.ts` - Month navigation and formatting utilities
+**Enhanced Features (Beyond v1 Plan)**:
+- **Month-over-Month Comparison** (NEW):
+  - Automatically fetches previous month data for comparison
+  - Color-coded change indicators:
+    - Green badge with ↑ for increases
+    - Red badge with ↓ for decreases
+    - Gray badge with − for no change
+  - Works across all 3 metrics (days worked, tasks, revenue)
+  - Percentage change calculation with proper formatting
+  - Smart caching with TanStack Query for both months
 
-**UI Components**:
-- Used existing design system (Card, Button, Text, Skeleton)
-- NativeWind styling with consistent spacing and colors
-- Proper accessibility with ScrollView and TouchableOpacity
-- Responsive layout with proper mobile viewport handling
+- **Pull-to-Refresh** (NEW):
+  - Native pull-to-refresh on entire screen
+  - Refreshes both user list and report data
+  - Haptic feedback on pull
+  - Loading indicator during refresh
+  - Smooth animation transitions
+
+- **Navigation to Task Details** (NEW):
+  - Each task in report is now clickable
+  - Navigates to `/admin/tasks/{taskId}/view` for details
+  - Fixed routing issue that was causing "screen doesn't exist" errors
+  - Uses TouchableOpacity for proper interaction feedback
+
+- **Settings Menu Integration** (NEW):
+  - Added "Báo cáo nhân viên" menu item in admin settings
+  - Uses ChartBarIcon for clear visual identification
+  - Positioned logically below "Danh sách nhân viên"
+  - Consistent with existing navigation patterns
+
+**UI Improvements**:
+- Compact metrics cards with optimized `py-2.5` padding
+- Aligned headers with proper icon placement
+- Bottom sheet employee selector for better UX
+- Optimized card spacing for mobile viewports
+- Consistent Vietnamese translations throughout
+
+**Supporting Files Created**:
+- `/apps/mobile/api/reports/use-employee-report.ts` - TanStack Query hook with multi-month support
+- `/apps/mobile/lib/date-utils.ts` - Month navigation and formatting utilities
+- Updated `/apps/mobile/components/sign-in-form.tsx` - Added settings menu link
 
 **State Management**:
-- TanStack Query for API data fetching
+- TanStack Query for API data fetching (current and previous month)
 - Local state for selected month and employee
 - Query key invalidation on parameter changes
 - 1-week cache time for report data
+- Parallel fetching for comparison data
 
 ---
 
@@ -373,6 +406,13 @@ const checkIns = await prisma.activity.findMany({
 **Implementation Date**: 2025-10-29
 **Backend Implementation**: ~2 hours (research, implementation, testing)
 **Activity Model Fix**: ~30 minutes (debugging, fixing, testing)
-**Frontend Implementation**: ~1.5 hours (UI, state management, integration)
+**Frontend Implementation**: ~2.5 hours (UI, state management, integration, enhancements)
 **Documentation**: ~30 minutes
-**Total Time**: ~4.5 hours (complete Phase 3 implementation)
+**Total Time**: ~5.5 hours (complete Phase 3 implementation with enhancements)
+
+**Final Commit**:
+- Hash: `5a02850`
+- Message: "feat(reports): implement employee reports with month-over-month comparison"
+- Files: 17 files changed, 2676 insertions
+- Tests: 18/18 passing
+- Quality checks: All passed
