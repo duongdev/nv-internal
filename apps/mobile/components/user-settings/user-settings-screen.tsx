@@ -107,8 +107,11 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
 
       // 6. Reset navigation state and navigate to sign-in screen
       // Note: We use replace to prevent back navigation to authenticated screens
-      if (router.canDismiss()) {
+      // Don't use router.canDismiss() after signOut as it may error when user is signed out
+      try {
         router.dismissAll()
+      } catch {
+        // Ignore errors - user might already be signed out
       }
       router.replace('/(auth)/sign-in')
 
@@ -126,8 +129,10 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
         console.error('SignOut error:', signOutError)
       }
       // Always navigate to sign-in, even if sign out fails
-      if (router.canDismiss()) {
+      try {
         router.dismissAll()
+      } catch {
+        // Ignore errors - user might already be signed out
       }
       router.replace('/(auth)/sign-in')
 
