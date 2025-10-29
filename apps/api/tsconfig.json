@@ -20,7 +20,8 @@
       "@nv-internal/validation": [
         "../../packages/validation/dist/index.d.ts",
         "../../packages/validation/dist"
-      ]
+      ],
+      "@/*": ["src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

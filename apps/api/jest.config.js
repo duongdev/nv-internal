@@ -14,6 +14,7 @@ module.exports = {
     '^@nv-internal/prisma-client$':
       '<rootDir>/../../packages/prisma-client/dist',
     '^@nv-internal/validation$': '<rootDir>/../../packages/validation/dist',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   testTimeout: 5000,
