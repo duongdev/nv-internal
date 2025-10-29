@@ -72,7 +72,7 @@ export function useEmployeeReport(
           query: {
             startDate,
             endDate,
-            timezone,
+            timezone: timezone as 'Asia/Ho_Chi_Minh',
           },
         }),
       )

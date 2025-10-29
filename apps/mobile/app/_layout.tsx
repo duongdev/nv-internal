@@ -106,24 +106,15 @@ function Routes() {
 
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="admin/(tabs)" options={ADMIN_SCREEN_OPTIONS} />
-        {/* Users */}
         <Stack.Screen
-          name="admin/users/create"
-          options={{
-            presentation: 'modal',
-            gestureEnabled: false,
-          }}
+          dangerouslySingular={() => 'admin'}
+          name="admin"
+          options={{ headerShown: false }}
         />
-        {/* Tasks */}
-        <Stack.Screen name="admin/tasks/create" />
-        {/* Payments */}
         <Stack.Screen
-          name="admin/payments/[paymentId]/edit"
-          options={{
-            presentation: 'modal',
-            gestureEnabled: true,
-          }}
+          dangerouslySingular={() => 'worker'}
+          name="worker"
+          options={{ headerShown: false }}
         />
         {/* User settings */}
         <Stack.Screen
@@ -140,8 +131,6 @@ function Routes() {
             presentation: 'modal',
           }}
         />
-
-        <Stack.Screen name="worker/(tabs)" options={ADMIN_SCREEN_OPTIONS} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
@@ -170,8 +159,4 @@ const DEFAULT_AUTH_SCREEN_OPTIONS = {
   title: '',
   headerShadowVisible: false,
   headerTransparent: true,
-}
-
-const ADMIN_SCREEN_OPTIONS = {
-  headerShown: false,
 }

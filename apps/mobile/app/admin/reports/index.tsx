@@ -116,13 +116,10 @@ export default function ReportsSummaryScreen() {
 
   const handleEmployeePress = useCallback(
     (userId: string) => {
-      router.push({
-        pathname: `/admin/reports/${userId}`,
-        params: {
-          year: selectedYear.toString(),
-          month: selectedMonth.toString(),
-        },
-      })
+      // Use template string with type assertion for dynamic routes
+      router.push(
+        `/admin/reports/${userId}?year=${selectedYear}&month=${selectedMonth}`,
+      )
     },
     [selectedYear, selectedMonth],
   )
@@ -277,7 +274,9 @@ export default function ReportsSummaryScreen() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: 'Báo cáo nhân viên',
+          headerBackButtonDisplayMode: 'minimal',
         }}
       />
       <View className="flex-1 bg-background">

@@ -32,6 +32,7 @@ export async function fetchAttachmentsByIds(ids: string[]) {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || ''
 
   // Convert relative URLs to absolute URLs using the API base URL
+  // Also convert date strings to Date objects
   const attachments = (data?.attachments ?? []).map((attachment) => {
     const url = attachment.url.startsWith('/')
       ? `${apiBaseUrl}${attachment.url}`
@@ -44,6 +45,7 @@ export async function fetchAttachmentsByIds(ids: string[]) {
       ...attachment,
       url,
       thumbnailUrl,
+      createdAt: new Date(attachment.createdAt),
     }
   })
 

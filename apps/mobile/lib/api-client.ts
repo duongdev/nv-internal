@@ -15,6 +15,25 @@ let cachedToken: string | null = null
 let tokenCacheTime = 0
 const TOKEN_CACHE_DURATION = 30000 // 30 seconds
 
+// Logout flag to suppress error toasts during logout
+let isLoggingOut = false
+
+/**
+ * Clear the in-memory token cache
+ * This should be called during logout to ensure no token persists in memory
+ */
+export const clearTokenCache = () => {
+  cachedToken = null
+  tokenCacheTime = 0
+}
+
+/**
+ * Set the logout flag to suppress error toasts during logout process
+ */
+export const setLoggingOut = (value: boolean) => {
+  isLoggingOut = value
+}
+
 export const getHonoClient = async () => {
   const now = Date.now()
 
@@ -70,7 +89,8 @@ export async function callHonoApi<T, Throw extends boolean = true>(
 
   if (!response.ok) {
     const error = await response.text()
-    if (toastOnError) {
+    // Only show toast if not logging out and toastOnError is enabled
+    if (toastOnError && !isLoggingOut) {
       const message =
         typeof toastOnError === 'function' ? toastOnError(error) : error
       toast.error(message, {

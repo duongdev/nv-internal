@@ -155,14 +155,62 @@ Detailed documentation is organized in the `docs/` directory:
 3. Complete → Mark as ✅, update v1 plan status
 4. Extract learnings → Update documentation with patterns
 
+### Mobile QA Testing Agent
+
+**Agent**: `qa-ui`
+
+**USE THIS AGENT FOR MOBILE UI TESTING**
+
+**Capabilities**:
+- Creating comprehensive test scenarios for mobile features
+- Executing tests using Mobile-MCP tools
+- Documenting test results and bugs found
+- Identifying UI/UX issues and edge cases
+- Verifying accessibility compliance
+- Performance testing for mobile interactions
+- Cross-device compatibility testing
+
+**When to invoke (ALWAYS for mobile testing)**:
+- ✅ Testing new mobile features before release
+- ✅ Verifying bug fixes in the mobile app
+- ✅ Running regression tests after changes
+- ✅ Checking accessibility of UI components
+- ✅ Validating user workflows end-to-end
+- ✅ Testing edge cases and error scenarios
+- ✅ Performing performance testing on lists/animations
+
+**QA testing workflow**:
+1. Review test plan in `.claude/qa/test-plans/`
+2. Create detailed scenarios in `.claude/qa/test-scenarios/`
+3. Execute tests using Mobile-MCP tools
+4. Document results in `.claude/qa/test-results/`
+5. Report bugs with reproduction steps
+6. Verify fixes and update test status
+
+**Test documentation structure**:
+- **Test Plans**: `.claude/qa/test-plans/` - Feature-level test specifications
+- **Test Scenarios**: `.claude/qa/test-scenarios/` - Step-by-step test cases
+- **Test Results**: `.claude/qa/test-results/` - Execution results and bug reports
+- **Mobile Testing Guide**: `.claude/qa/mobile-testing-guide.md` - Mobile-MCP usage
+
 ### Agent Workflow Example
 
 **Typical feature implementation flow**:
 
 1. **Documentation Setup**: Launch `task-doc-tracker` to create task file
 2. **Implementation**: Launch `backend-expert` or `frontend-expert` for implementation
-3. **Quality Assurance**: Launch `code-quality-enforcer` to verify changes
-4. **Documentation Update**: Launch `task-doc-tracker` to mark complete and extract learnings
+3. **Code Quality**: Launch `code-quality-enforcer` to verify changes
+4. **Mobile Testing**: Launch `qa-ui` to test mobile features (if applicable)
+5. **Documentation Update**: Launch `task-doc-tracker` to mark complete and extract learnings
+
+**Testing workflow for existing features**:
+
+1. **Test Planning**: Review or create test plan in `.claude/qa/test-plans/`
+2. **Test Execution**: Launch `qa-ui` to execute test scenarios
+3. **Bug Reporting**: Document bugs in test results with reproduction steps
+4. **Fix Implementation**: Launch appropriate expert agent to fix issues
+5. **Verification**: Launch `qa-ui` to verify fixes
+6. **Documentation**: Update test results and close bugs
 
 ## Key Architecture Patterns
 
@@ -177,10 +225,21 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[File Uploads](./docs/architecture/patterns/file-upload.md)** - Hono RPC limitations
 - **[Cache Invalidation](./docs/architecture/patterns/cache-invalidation.md)** - TanStack Query patterns
 - **[Timezone Handling](./docs/architecture/patterns/timezone-handling.md)** - Modern TZDate for accurate date boundaries
+- **[NativeTabs Navigation](./docs/architecture/patterns/nativetabs-navigation.md)** - **CRITICAL**: Avoiding unresponsive UI with NativeTabs
 
-### Recently Established Patterns (Employee Summary Implementation)
+### Recently Established Patterns
 
-These patterns were established during the Employee Summary feature implementation (2025-10-30):
+#### NativeTabs Navigation Fix (2025-10-30)
+
+**Critical Discovery**: Using `screenOptions` at Stack level creates invisible overlays that block NativeTabs touch events.
+- **Problem**: Both admin and worker tabs became completely unresponsive
+- **Solution**: Use individual `options` on each Stack.Screen instead
+- **Task**: `.claude/tasks/20251030-025700-fix-worker-unresponsive-ui.md`
+- **Pattern**: [NativeTabs Navigation](./docs/architecture/patterns/nativetabs-navigation.md)
+
+#### Employee Summary Implementation (2025-10-30)
+
+These patterns were established during the Employee Summary feature implementation:
 
 - **Batch Query Pattern**: Replace N+1 queries with batch queries for aggregate reports
   - Query all data once, process in-memory for multiple users
@@ -225,6 +284,10 @@ These patterns were established during the Employee Summary feature implementati
 ### Mobile App Structure
 
 - **Routing**: Expo Router file-based routing in `apps/mobile/app/`
+  - **⚠️ CRITICAL WARNING**: Never use `screenOptions` with NativeTabs - it creates invisible overlays that block touch events
+  - **✅ CORRECT**: Use individual `options` on each Stack.Screen
+  - **❌ WRONG**: `<Stack screenOptions={{ headerShown: false }}>`
+  - See [NativeTabs Navigation Pattern](./docs/architecture/patterns/nativetabs-navigation.md) for details
 - **Authentication**: Clerk SDK with protected routes using auth state
 - **API Calls**: Use `callHonoApi` utility for type-safe API calls
 - **State Management**: TanStack Query with aggressive caching (1 week gcTime)
@@ -453,6 +516,10 @@ A comprehensive backend refactoring plan has been created to improve code qualit
 - **Architecture Patterns**: `docs/architecture/patterns/` (detailed implementation patterns)
 - **Development Guides**: `docs/development/` (setup, commands, workflows)
 - **Testing Guides**: `docs/testing/` (testing strategies)
+- **QA Documentation**: `.claude/qa/` (test plans, scenarios, and results)
+  - Test Plans: `.claude/qa/test-plans/` (feature test specifications)
+  - Test Scenarios: `.claude/qa/test-scenarios/` (detailed test cases)
+  - Test Results: `.claude/qa/test-results/` (execution results and bugs)
 - **Task Documentation**: `.claude/tasks/` (implementation tracking)
 - **V1 Feature Plans**: `.claude/plans/v1/` (detailed feature specifications & roadmap)
 - **Enhancement Ideas**: `.claude/enhancements/` (future features & optimizations)

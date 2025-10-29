@@ -119,9 +119,11 @@ export default function EmployeeReportDetailScreen() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: selectedUser
             ? getUserFullName(selectedUser)
             : 'Báo cáo nhân viên',
+          headerBackButtonDisplayMode: 'minimal',
         }}
       />
       <ScrollView

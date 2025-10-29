@@ -91,7 +91,7 @@ export default function WorkerTaskView() {
               <CardContent className="gap-4">
                 <TaskCommentBox
                   onCommentSent={handleRefetch}
-                  taskId={task.id}
+                  taskId={task?.id ?? 0}
                 />
                 <ActivityFeed topic={`TASK_${taskId}`} />
               </CardContent>

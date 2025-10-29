@@ -64,6 +64,7 @@ export default function CreateUserScreen() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: 'Thêm nhân viên mới',
 
           headerLeft: () => (

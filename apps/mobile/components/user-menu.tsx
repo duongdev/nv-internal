@@ -1,5 +1,9 @@
 import { useAuth, useUser } from '@clerk/clerk-expo'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { TriggerRef } from '@rn-primitives/popover'
+import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'expo-router'
+import * as SecureStore from 'expo-secure-store'
 import { LogOutIcon, PlusIcon, SettingsIcon } from 'lucide-react-native'
 import * as React from 'react'
 import { View } from 'react-native'
@@ -16,11 +20,82 @@ import { Text } from '@/components/ui/text'
 export function UserMenu() {
   const { user } = useUser()
   const { signOut } = useAuth()
+  const queryClient = useQueryClient()
+  const router = useRouter()
   const popoverTriggerRef = React.useRef<TriggerRef>(null)
 
   async function onSignOut() {
     popoverTriggerRef.current?.close()
-    await signOut()
+
+    try {
+      // 0. Set logging out flag to suppress error toasts
+      const { setLoggingOut } = await import('@/lib/api-client')
+      setLoggingOut(true)
+
+      // 1. Clear TanStack Query cache
+      queryClient.clear()
+
+      // 2. Clear cached token from api-client
+      const { clearTokenCache } = await import('@/lib/api-client')
+      clearTokenCache()
+
+      // 3. Clear AsyncStorage (except preferences)
+      const allKeys = await AsyncStorage.getAllKeys()
+      const keysToKeep = ['modulePreference', 'theme']
+      const keysToRemove = allKeys.filter((key) => !keysToKeep.includes(key))
+      if (keysToRemove.length > 0) {
+        await AsyncStorage.multiRemove(keysToRemove)
+      }
+
+      // 4. Clear SecureStore Clerk tokens
+      try {
+        const clerkKeys = [
+          '__clerk_client_jwt',
+          '__clerk_refresh_token',
+          '__clerk_session_id',
+        ]
+        for (const key of clerkKeys) {
+          await SecureStore.deleteItemAsync(key).catch(() => {
+            // Ignore errors if key doesn't exist
+          })
+        }
+      } catch (error) {
+        console.warn('Error clearing SecureStore:', error)
+      }
+
+      // 5. Sign out from Clerk
+      await signOut()
+
+      // 6. Reset navigation state and navigate to sign-in screen
+      if (router.canDismiss()) {
+        router.dismissAll()
+      }
+      router.replace('/(auth)/sign-in')
+
+      // 7. Reset the logging out flag after a short delay
+      setTimeout(async () => {
+        const { setLoggingOut } = await import('@/lib/api-client')
+        setLoggingOut(false)
+      }, 1000)
+    } catch (error) {
+      console.error('Logout error:', error)
+      try {
+        await signOut()
+      } catch (signOutError) {
+        console.error('SignOut error:', signOutError)
+      }
+      // Always navigate to sign-in, even if sign out fails
+      if (router.canDismiss()) {
+        router.dismissAll()
+      }
+      router.replace('/(auth)/sign-in')
+
+      // Reset the logging out flag
+      setTimeout(async () => {
+        const { setLoggingOut } = await import('@/lib/api-client')
+        setLoggingOut(false)
+      }, 1000)
+    }
   }
 
   return (

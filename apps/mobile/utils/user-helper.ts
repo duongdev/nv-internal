@@ -50,3 +50,7 @@ export function isUserBanned(user: User): boolean {
 export function isUserAdmin(user: User): boolean {
   return getUserRoles(user).includes(UserRole.nvInternalAdmin)
 }
+
+export function isUserWorker(user: User): boolean {
+  return getUserRoles(user).includes(UserRole.nvInternalWorker)
+}

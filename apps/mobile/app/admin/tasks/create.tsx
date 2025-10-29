@@ -71,7 +71,9 @@ export default function AdminTaskCreateScreen() {
       <Form {...form}>
         <Stack.Screen
           options={{
+            headerShown: true,
             title: 'Thêm công việc mới',
+            headerBackButtonDisplayMode: 'minimal',
 
             // headerLeft: () => (
             //   <Button

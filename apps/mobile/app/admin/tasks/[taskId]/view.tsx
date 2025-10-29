@@ -45,6 +45,7 @@ export default function TaskViewScreen() {
       <>
         <Stack.Screen
           options={{
+            headerShown: true,
             headerBackButtonDisplayMode: 'generic',
             title: '',
           }}
@@ -67,6 +68,7 @@ export default function TaskViewScreen() {
         <>
           <Stack.Screen
             options={{
+              headerShown: true,
               headerBackButtonDisplayMode: 'generic',
               title: `Chi tiết công việc ${formatTaskId(taskId ?? 0)}`,
               headerTransparent: true,
@@ -112,6 +114,7 @@ const emptyState = (
   <>
     <Stack.Screen
       options={{
+        headerShown: true,
         headerBackButtonDisplayMode: 'generic',
         title: '',
       }}

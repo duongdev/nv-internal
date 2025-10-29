@@ -12,6 +12,7 @@ export default function AdminTasksScreen() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: `Công việc`,
           headerRight: () => (
             <Button

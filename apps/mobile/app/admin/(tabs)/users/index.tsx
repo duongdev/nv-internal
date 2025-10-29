@@ -14,6 +14,7 @@ export default function AdminUsersScreen() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: `Nhân viên`,
           headerSearchBarOptions: {
             placeholder: 'Tìm nhân viên...',

@@ -197,6 +197,7 @@ export default function PaymentEditModal() {
     <>
       <Stack.Screen
         options={{
+          headerShown: true,
           title: 'Chỉnh sửa thanh toán',
           headerLeft: () => (
             <Button
