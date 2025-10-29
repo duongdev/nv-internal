@@ -8,7 +8,6 @@
     "test:api": "pnpm -w --filter @nv-internal/api test",
     "test:api:verbose": "pnpm -w --filter @nv-internal/api run test:verbose",
     "test:coverage": "pnpm -w -r test -- --coverage",
-
     "biome:lint": "biome lint",
     "biome:check": "biome check --write",
     "biome:format": "biome format --write"
@@ -22,6 +21,8 @@
   "license": "ISC",
   "packageManager": "pnpm@10.15.0",
   "dependencies": {
+    "@date-fns/tz": "^1.4.1",
+    "date-fns": "^4.1.0",
     "zod": "4.1.5"
   },
   "devDependencies": {
