@@ -20,14 +20,12 @@ export const TaskCommentBox: FC<TaskCommentBoxProps> = ({
   const handleSendComment = async () => {
     // TODO: Implement comment sending logic
     // This will create a new activity for the task
-    console.log('Sending comment:', commentText, 'for task:', taskId)
     setCommentText('')
     onCommentSent?.()
   }
 
   const handleAddPhoto = () => {
     // TODO: Implement photo attachment for comments
-    console.log('Add photo to comment')
   }
 
   return (

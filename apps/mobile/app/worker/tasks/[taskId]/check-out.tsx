@@ -27,7 +27,6 @@ import { RadioCard, RadioGroup } from '@/components/ui/radio-card'
 import { Text } from '@/components/ui/text'
 import { Textarea } from '@/components/ui/textarea'
 import { useCheckoutWithPayment } from '@/hooks/use-checkout-with-payment'
-import { cn } from '@/lib/utils'
 
 /**
  * Check-out screen with payment collection

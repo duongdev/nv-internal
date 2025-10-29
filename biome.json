@@ -26,7 +26,10 @@
       "!**/apps/**/dist/**",
       "!**/packages/**/dist/**",
       "!**/apps/**/generated/**",
-      "!**/packages/**/generated/**"
+      "!**/packages/**/generated/**",
+      "!test-*.js",
+      "!scripts/benchmark-*.ts",
+      "!scripts/check-*.ts"
     ]
   },
   "formatter": {
@@ -242,6 +245,26 @@
         "rules": {
           "suspicious": {
             "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "**/__tests__/**/*.ts",
+        "**/__tests__/**/*.tsx",
+        "**/*.test.ts",
+        "**/*.test.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+            "noExplicitAny": "off",
+            "noEmptyBlockStatements": "off"
+          },
+          "correctness": {
+            "noUndeclaredVariables": "off"
           }
         }
       }

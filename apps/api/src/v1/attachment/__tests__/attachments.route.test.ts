@@ -26,8 +26,7 @@ jest.mock('../attachment.service', () => {
 import * as attachmentService from '../attachment.service'
 
 const mockStreamLocalFile =
-  // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing for test setup
-  attachmentService.streamLocalFile as any as jest.Mock
+  attachmentService.streamLocalFile as unknown as jest.Mock
 
 describe('GET /v1/attachments', () => {
   it('requires authentication', async () => {

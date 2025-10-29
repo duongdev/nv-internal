@@ -45,7 +45,7 @@ export function getFeatureFlags(): FeatureFlags {
     useNewAttachmentService: process.env.FF_NEW_ATTACHMENT_SERVICE === 'true',
 
     // Master switch - overrides all others
-    useNewArchitecture: process.env.FF_USE_NEW_ARCHITECTURE === 'true'
+    useNewArchitecture: process.env.FF_USE_NEW_ARCHITECTURE === 'true',
   }
 }
 
@@ -54,7 +54,7 @@ export function getFeatureFlags(): FeatureFlags {
  * Master switch overrides individual flags
  */
 export function isFeatureEnabled(
-  feature: keyof Omit<FeatureFlags, 'useNewArchitecture'>
+  feature: keyof Omit<FeatureFlags, 'useNewArchitecture'>,
 ): boolean {
   const flags = getFeatureFlags()
 
@@ -92,10 +92,11 @@ export const featureFlagsMiddleware = createMiddleware(async (c, next) => {
  * ```
  */
 export function createService<T>(
+  // biome-ignore lint/suspicious/noExplicitAny: Hono context type is complex and not worth typing here
   c: any,
   featureFlag: keyof Omit<FeatureFlags, 'useNewArchitecture'>,
   newService: () => T,
-  legacyService: () => T
+  legacyService: () => T,
 ): T {
   if (isFeatureEnabled(featureFlag)) {
     return newService()
@@ -114,7 +115,7 @@ export function createService<T>(
  */
 export function shouldRollout(
   feature: keyof Omit<FeatureFlags, 'useNewArchitecture'>,
-  percentage: number
+  percentage: number,
 ): boolean {
   // Always respect explicit flag
   const flags = getFeatureFlags()
