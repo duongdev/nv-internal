@@ -20,7 +20,7 @@ Enhancement files follow the naming pattern:
 - `20251024-120200-e2e-testing-strategy.md` - End-to-end testing with Maestro/Detox for mobile app
 
 ### Feature Extensions
-- (Future enhancements will be added here)
+- `20251029-173000-employee-summary-report.md` - Monthly summary view for all employees (enhancement to V1 Phase 3)
 
 ## Enhancement Status
 
@@ -66,3 +66,4 @@ Enhancements should be reviewed periodically (monthly) to:
 - V1 Feature Plans: `.claude/plans/v1/`
 - Active Tasks: `.claude/tasks/`
 - Project Guidelines: `CLAUDE.md`
+- Documentation Standards: `.claude/memory/documentation-structure.md`

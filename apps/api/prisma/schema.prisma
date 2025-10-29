@@ -43,6 +43,11 @@ model Task {
 
   // Attachments linked to this task
   attachments   Attachment[]
+
+  // Performance indexes for report queries
+  // Note: Actual migration uses CONCURRENTLY and partial WHERE clauses
+  @@index([status, completedAt])  // Optimizes completed task date range queries
+  @@index([assigneeIds])           // GIN index for array overlap queries (assignee filtering)
 }
 
 model GeoLocation {
@@ -81,6 +86,9 @@ model Activity {
   @@index([userId])
   @@index([createdAt])
   @@index([topic])
+  // Composite index for report queries (check-ins by user and date)
+  // Note: Actual migration uses partial WHERE clause for TASK_CHECKED_IN only
+  @@index([action, userId, createdAt])
 }
 
 model Attachment {

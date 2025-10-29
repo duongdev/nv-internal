@@ -1,144 +1,164 @@
-import { type BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
-import { Link, Stack } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  MinusIcon,
-  UsersIcon,
 } from 'lucide-react-native'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
-  FlatList,
-  Pressable,
+  type ListRenderItem,
+  Platform,
   RefreshControl,
-  ScrollView,
   View,
 } from 'react-native'
-import { useEmployeeReport } from '@/api/reports/use-employee-report'
-import { type User, useUserList } from '@/api/user/use-user-list'
-import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { FlatList } from 'react-native-gesture-handler'
+import type { EmployeeSummary } from '@/api/reports/use-employees-summary'
+import { useEmployeesSummary } from '@/api/reports/use-employees-summary'
+import { EmployeeListItem } from '@/components/reports/employee-list-item'
+import { SummaryStatsCard } from '@/components/reports/summary-stats-card'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { formatCurrencyDisplay } from '@/components/ui/currency-input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Icon } from '@/components/ui/icon'
-import { Separator } from '@/components/ui/separator'
+import { SearchBox } from '@/components/ui/search-box'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Text } from '@/components/ui/text'
-import { UserAvatar } from '@/components/user-avatar'
 import {
-  formatDateTimeVN,
   formatMonthDisplay,
   getCurrentMonth,
   getMonthDateRange,
   getNextMonth,
   getPreviousMonth,
 } from '@/lib/date-utils'
-import { cn } from '@/lib/utils'
-import { getUserFullName, isUserBanned } from '@/utils/user-helper'
+import { getUserFullName } from '@/utils/user-helper'
 
-export default function AdminReportsScreen() {
+// Constant for FlatList optimization
+const EMPLOYEE_ITEM_HEIGHT = 88
+
+export default function ReportsSummaryScreen() {
   const currentMonth = getCurrentMonth()
   const [selectedYear, setSelectedYear] = useState(currentMonth.year)
   const [selectedMonth, setSelectedMonth] = useState(currentMonth.month)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-
-  const employeeSheetRef = useRef<BottomSheetModal>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Get date range for selected month
   const dateRange = getMonthDateRange(selectedYear, selectedMonth)
 
-  // Get previous month date range for comparison
-  const prevMonth = getPreviousMonth(selectedYear, selectedMonth)
-  const prevDateRange = getMonthDateRange(prevMonth.year, prevMonth.month)
-
-  // Fetch employee report for selected month
-  const {
-    data: reportData,
-    isLoading,
-    isError,
-    refetch: refetchReport,
-    isRefetching,
-  } = useEmployeeReport(
-    {
-      userId: selectedUserId || '',
+  // Fetch employees summary
+  const { data, isLoading, isError, refetch, isRefetching } =
+    useEmployeesSummary({
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
       timezone: 'Asia/Ho_Chi_Minh',
-    },
-    {
-      enabled: !!selectedUserId,
-    },
-  )
+      sort: 'revenue',
+      sortOrder: 'desc',
+    })
 
-  // Fetch employee report for previous month (for comparison)
-  const { data: prevReportData } = useEmployeeReport(
-    {
-      userId: selectedUserId || '',
-      startDate: prevDateRange.startDate,
-      endDate: prevDateRange.endDate,
-      timezone: 'Asia/Ho_Chi_Minh',
-    },
-    {
-      enabled: !!selectedUserId,
-    },
-  )
+  // Calculate employees with tied ranking
+  const employeesWithRanks = useMemo(() => {
+    if (!data?.employees) {
+      return []
+    }
 
-  // Fetch user list for selector
-  const { data: users, refetch: refetchUsers } = useUserList()
-  const selectedUser = users?.find((u) => u.id === selectedUserId)
+    const employees = [...data.employees]
+    let currentRank = 1
+    let previousRevenue: number | null = null
+    let sameRankCount = 0
 
-  const handlePreviousMonth = () => {
-    impactAsync(ImpactFeedbackStyle.Light)
+    return employees.map((employee) => {
+      const revenue = employee.metrics.totalRevenue
+
+      // If revenue is different from previous, update rank
+      if (previousRevenue !== null && revenue !== previousRevenue) {
+        currentRank += sameRankCount
+        sameRankCount = 1
+      } else {
+        sameRankCount++
+      }
+
+      previousRevenue = revenue
+
+      return {
+        ...employee,
+        rank: currentRank,
+      }
+    })
+  }, [data?.employees])
+
+  // Filter employees by search query
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return employeesWithRanks
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    return employeesWithRanks.filter((emp) => {
+      const fullName = getUserFullName(emp).toLowerCase()
+      const email = emp.email?.toLowerCase() || ''
+      return fullName.includes(query) || email.includes(query)
+    })
+  }, [employeesWithRanks, searchQuery])
+
+  const handlePreviousMonth = useCallback(async () => {
+    await impactAsync(ImpactFeedbackStyle.Light)
     const prev = getPreviousMonth(selectedYear, selectedMonth)
     setSelectedYear(prev.year)
     setSelectedMonth(prev.month)
-  }
+  }, [selectedYear, selectedMonth])
 
-  const handleNextMonth = () => {
-    impactAsync(ImpactFeedbackStyle.Light)
+  const handleNextMonth = useCallback(async () => {
+    await impactAsync(ImpactFeedbackStyle.Light)
     const next = getNextMonth(selectedYear, selectedMonth)
     setSelectedYear(next.year)
     setSelectedMonth(next.month)
-  }
+  }, [selectedYear, selectedMonth])
 
-  const handleOpenEmployeeSelector = () => {
-    impactAsync(ImpactFeedbackStyle.Light)
-    employeeSheetRef.current?.present()
-  }
+  const handleEmployeePress = useCallback(
+    (userId: string) => {
+      router.push({
+        pathname: `/admin/reports/${userId}`,
+        params: {
+          year: selectedYear.toString(),
+          month: selectedMonth.toString(),
+        },
+      })
+    },
+    [selectedYear, selectedMonth],
+  )
 
   const handleRefresh = useCallback(async () => {
-    impactAsync(ImpactFeedbackStyle.Light)
-    await Promise.all([
-      refetchUsers(),
-      selectedUserId ? refetchReport() : Promise.resolve(),
-    ])
-  }, [refetchUsers, refetchReport, selectedUserId])
+    await impactAsync(ImpactFeedbackStyle.Light)
+    await refetch()
+  }, [refetch])
 
-  return (
-    <>
-      <Stack.Screen
-        options={{
-          title: 'Báo cáo nhân viên',
-        }}
-      />
-      <ScrollView
-        className="flex-1 bg-background"
-        contentContainerClassName="gap-4 p-4 pb-28"
-        refreshControl={
-          <RefreshControl onRefresh={handleRefresh} refreshing={isRefetching} />
-        }
-      >
+  // FlatList optimizations
+  const renderItem: ListRenderItem<EmployeeSummary & { rank: number }> =
+    useCallback(
+      ({ item }) => (
+        <EmployeeListItem
+          employee={item}
+          onPress={handleEmployeePress}
+          rank={item.rank}
+        />
+      ),
+      [handleEmployeePress],
+    )
+
+  const keyExtractor = useCallback((item: EmployeeSummary) => item.id, [])
+
+  const getItemLayout = useCallback(
+    (_data: ArrayLike<EmployeeSummary> | null | undefined, index: number) => ({
+      length: EMPLOYEE_ITEM_HEIGHT,
+      offset: EMPLOYEE_ITEM_HEIGHT * index,
+      index,
+    }),
+    [],
+  )
+
+  const ListHeaderComponent = useMemo(
+    () => (
+      <View className="gap-4 pb-2">
         {/* Month Picker */}
         <Card>
           <CardHeader className="pb-3">
@@ -178,393 +198,233 @@ export default function AdminReportsScreen() {
           </CardContent>
         </Card>
 
-        {/* Employee Selector */}
-        <Card>
-          <CardHeader className="pb-3">
-            <View className="flex-row items-center gap-2">
-              <Icon as={UsersIcon} className="size-5 text-foreground" />
-              <CardTitle>Chọn nhân viên</CardTitle>
-            </View>
-          </CardHeader>
-          <CardContent>
-            <Pressable
-              accessibilityLabel="Chọn nhân viên"
-              accessibilityRole="button"
-              className="flex-row items-center justify-between rounded-lg border border-border bg-muted p-3 active:bg-muted/80"
-              onPress={handleOpenEmployeeSelector}
-            >
-              {selectedUser ? (
-                <View className="flex-row items-center gap-3">
-                  <UserAvatar className="size-10" user={selectedUser} />
-                  <Text className="font-medium">
-                    {getUserFullName(selectedUser)}
-                  </Text>
-                </View>
-              ) : (
-                <Text className="text-muted-foreground">
-                  Chọn nhân viên để xem báo cáo
-                </Text>
-              )}
-            </Pressable>
-          </CardContent>
-        </Card>
+        {/* Summary Statistics */}
+        <SummaryStatsCard summary={data?.summary} />
 
-        {/* Report Content */}
-        {!selectedUserId ? (
-          <EmptyState
-            className="py-12"
-            image="laziness"
-            messageDescription="Chọn nhân viên và tháng để xem báo cáo"
-            messageTitle="Chưa chọn nhân viên"
+        {/* Search Box */}
+        {data?.employees && data.employees.length > 0 && (
+          <SearchBox
+            accessibilityHint="Nhập tên hoặc email để tìm kiếm"
+            accessibilityLabel="Tìm kiếm nhân viên"
+            onChangeTextDebounced={setSearchQuery}
+            placeholder="Tìm kiếm nhân viên..."
+            value={searchQuery}
           />
-        ) : isLoading ? (
-          <ReportSkeleton />
-        ) : isError || !reportData ? (
-          <EmptyState
-            className="py-12"
-            image="curiosity"
-            messageDescription="Không thể tải báo cáo. Vui lòng thử lại."
-            messageTitle="Lỗi tải báo cáo"
-          />
-        ) : (
-          <>
-            {/* Metrics Cards */}
-            <View className="flex-row gap-4">
-              <MetricCard
-                change={
-                  prevReportData
-                    ? reportData.metrics.daysWorked -
-                      prevReportData.metrics.daysWorked
-                    : undefined
-                }
-                className="flex-1"
-                label="Ngày làm việc"
-                value={reportData.metrics.daysWorked.toString()}
-              />
-              <MetricCard
-                change={
-                  prevReportData
-                    ? reportData.metrics.tasksCompleted -
-                      prevReportData.metrics.tasksCompleted
-                    : undefined
-                }
-                className="flex-1"
-                label="Công việc"
-                value={reportData.metrics.tasksCompleted.toString()}
-              />
-            </View>
-
-            <MetricCard
-              change={
-                prevReportData
-                  ? reportData.metrics.totalRevenue -
-                    prevReportData.metrics.totalRevenue
-                  : undefined
-              }
-              isRevenue
-              label="Tổng doanh thu"
-              value={formatCurrencyDisplay(reportData.metrics.totalRevenue)}
-              valueClassName="text-2xl"
-            />
-
-            {/* Task List */}
-            {reportData.tasks.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Chi tiết công việc</CardTitle>
-                  <CardDescription>
-                    {reportData.tasks.length} công việc đã hoàn thành
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="gap-3">
-                  {reportData.tasks.map((task, index) => (
-                    <View key={task.id}>
-                      {index > 0 && <Separator className="mb-3" />}
-                      <TaskListItem task={task} />
-                    </View>
-                  ))}
-                </CardContent>
-              </Card>
-            ) : (
-              <EmptyState
-                className="py-8"
-                image="laziness"
-                messageDescription="Nhân viên chưa hoàn thành công việc nào trong tháng này"
-                messageTitle="Chưa có công việc"
-              />
-            )}
-          </>
         )}
-      </ScrollView>
 
-      {/* Employee Selector Bottom Sheet */}
-      <BottomSheet enableDynamicSizing ref={employeeSheetRef}>
-        <BottomSheetView className="px-4 pb-safe">
-          <Text className="mb-3 font-semibold text-lg">Chọn nhân viên</Text>
-          <FlatList
-            data={users?.filter((u) => !isUserBanned(u)) || []}
-            ItemSeparatorComponent={() => <View className="h-1" />}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <EmployeeListItem
-                isSelected={selectedUserId === item.id}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light)
-                  setSelectedUserId(item.id)
-                  employeeSheetRef.current?.dismiss()
+        {/* Results Header */}
+        {filteredEmployees.length > 0 && (
+          <View className="flex-row items-center justify-between">
+            <Text className="font-semibold text-lg">Danh sách nhân viên</Text>
+            <Text className="text-muted-foreground text-sm">
+              {filteredEmployees.length} nhân viên
+            </Text>
+          </View>
+        )}
+      </View>
+    ),
+    [
+      data?.summary,
+      data?.employees,
+      searchQuery,
+      selectedYear,
+      selectedMonth,
+      currentMonth,
+      filteredEmployees.length,
+      handleNextMonth,
+      handlePreviousMonth,
+    ],
+  )
+
+  const ListEmptyComponent = useMemo(() => {
+    if (isLoading) {
+      return null
+    }
+
+    if (isError) {
+      return (
+        <EmptyState
+          className="py-12"
+          image="curiosity"
+          messageDescription="Không thể tải báo cáo. Vui lòng thử lại."
+          messageTitle="Lỗi tải báo cáo"
+        />
+      )
+    }
+
+    if (searchQuery.trim() && filteredEmployees.length === 0) {
+      return (
+        <EmptyState
+          className="py-12"
+          image="curiosity"
+          messageDescription="Thử tìm kiếm với từ khóa khác"
+          messageTitle="Không tìm thấy nhân viên"
+        />
+      )
+    }
+
+    return (
+      <EmptyState
+        className="py-12"
+        image="laziness"
+        messageDescription="Chưa có dữ liệu cho tháng này"
+        messageTitle="Chưa có hoạt động"
+      />
+    )
+  }, [isLoading, isError, searchQuery, filteredEmployees.length])
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Báo cáo nhân viên',
+        }}
+      />
+      <View className="flex-1 bg-background">
+        <FlatList
+          contentContainerStyle={{ padding: 16, paddingBottom: 112 }}
+          data={isLoading && !data ? [] : filteredEmployees}
+          getItemLayout={getItemLayout}
+          initialNumToRender={10}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={ListEmptyComponent}
+          ListHeaderComponent={
+            isLoading && !data ? (
+              <LoadingHeaderComponent
+                onMonthChange={(year, month) => {
+                  setSelectedYear(year)
+                  setSelectedMonth(month)
                 }}
-                user={item}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
               />
-            )}
-            scrollEnabled={false}
-          />
-        </BottomSheetView>
-      </BottomSheet>
+            ) : (
+              ListHeaderComponent
+            )
+          }
+          maxToRenderPerBatch={10}
+          refreshControl={
+            <RefreshControl
+              onRefresh={handleRefresh}
+              refreshing={isRefetching}
+            />
+          }
+          removeClippedSubviews={Platform.OS === 'android'}
+          renderItem={renderItem}
+          windowSize={5}
+        />
+      </View>
     </>
   )
 }
 
 // ============================================================================
-// Metric Card Component
+// Loading Header Component (keeps month picker interactive)
 // ============================================================================
 
-interface MetricCardProps {
-  label: string
-  value: string
-  className?: string
-  valueClassName?: string
-  change?: number
-  isRevenue?: boolean
+interface LoadingHeaderComponentProps {
+  selectedYear: number
+  selectedMonth: number
+  onMonthChange: (year: number, month: number) => void
 }
 
-function MetricCard({
-  label,
-  value,
-  className,
-  valueClassName,
-  change,
-  isRevenue = false,
-}: MetricCardProps) {
-  return (
-    <Card className={className}>
-      <CardContent className="gap-1 py-2.5">
-        <Text className="text-muted-foreground text-sm">{label}</Text>
-        <View className="flex-row items-center justify-between">
-          <Text className={cn('font-bold text-xl', valueClassName)}>
-            {value}
-          </Text>
-          {change !== undefined && (
-            <MetricChange change={change} isRevenue={isRevenue} />
-          )}
-        </View>
-      </CardContent>
-    </Card>
-  )
-}
+function LoadingHeaderComponent({
+  selectedYear,
+  selectedMonth,
+  onMonthChange,
+}: LoadingHeaderComponentProps) {
+  // Get current month for comparison (to disable "next month" button)
+  const currentMonth = getCurrentMonth()
 
-// ============================================================================
-// Metric Change Component
-// ============================================================================
+  const handlePreviousMonth = useCallback(async () => {
+    await impactAsync(ImpactFeedbackStyle.Light)
+    const prev = getPreviousMonth(selectedYear, selectedMonth)
+    onMonthChange(prev.year, prev.month)
+  }, [selectedYear, selectedMonth, onMonthChange])
 
-interface MetricChangeProps {
-  change: number
-  isRevenue?: boolean
-}
-
-function MetricChange({ change, isRevenue = false }: MetricChangeProps) {
-  const isPositive = change > 0
-  const isNegative = change < 0
-  const isZero = change === 0
-
-  const displayValue = isRevenue
-    ? formatCurrencyDisplay(Math.abs(change))
-    : Math.abs(change).toString()
-
-  if (isZero) {
-    return (
-      <View className="flex-row items-center gap-1 rounded-md bg-muted px-2 py-1">
-        <Icon as={MinusIcon} className="size-3 text-muted-foreground" />
-        <Text className="font-medium text-muted-foreground text-xs">
-          {displayValue}
-        </Text>
-      </View>
-    )
-  }
+  const handleNextMonth = useCallback(async () => {
+    await impactAsync(ImpactFeedbackStyle.Light)
+    const next = getNextMonth(selectedYear, selectedMonth)
+    onMonthChange(next.year, next.month)
+  }, [selectedYear, selectedMonth, onMonthChange])
 
   return (
-    <View
-      className={cn(
-        'flex-row items-center gap-1 rounded-md px-2 py-1',
-        isPositive && 'bg-green-500/10',
-        isNegative && 'bg-red-500/10',
-      )}
-    >
-      <Icon
-        as={isPositive ? ArrowUpIcon : ArrowDownIcon}
-        className={cn(
-          'size-3',
-          isPositive && 'text-green-600',
-          isNegative && 'text-red-600',
-        )}
-      />
-      <Text
-        className={cn(
-          'font-medium text-xs',
-          isPositive && 'text-green-600',
-          isNegative && 'text-red-600',
-        )}
-      >
-        {displayValue}
-      </Text>
-    </View>
-  )
-}
-
-// ============================================================================
-// Task List Item Component
-// ============================================================================
-
-interface TaskListItemProps {
-  task: {
-    id: number
-    title: string
-    completedAt: string
-    revenue: number
-    revenueShare: number
-    workerCount: number
-  }
-}
-
-function TaskListItem({ task }: TaskListItemProps) {
-  return (
-    <Link asChild href={`/admin/tasks/${task.id}/view`}>
-      <Pressable
-        accessibilityLabel={`Xem chi tiết công việc ${task.title}`}
-        accessibilityRole="button"
-        className="gap-2 active:opacity-70"
-      >
-        <Text className="font-semibold">{task.title}</Text>
-        <Text className="text-muted-foreground text-sm">
-          Hoàn thành: {formatDateTimeVN(task.completedAt)}
-        </Text>
-        <View className="gap-1.5 rounded-lg bg-muted p-3">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-muted-foreground text-sm">
-              Tổng doanh thu:
-            </Text>
-            <Text className="text-sm">
-              {formatCurrencyDisplay(task.revenue)}
-            </Text>
-          </View>
-          {task.workerCount > 1 && (
-            <>
-              <View className="flex-row items-center justify-between">
-                <Text className="text-muted-foreground text-sm">
-                  Số người làm:
-                </Text>
-                <Text className="text-sm">{task.workerCount} người</Text>
-              </View>
-              <View className="flex-row items-center justify-between">
-                <Text className="text-muted-foreground text-sm">
-                  Phần của nhân viên:
-                </Text>
-                <Text className="font-semibold text-sm">
-                  {formatCurrencyDisplay(task.revenueShare)}
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
-      </Pressable>
-    </Link>
-  )
-}
-
-// ============================================================================
-// Employee List Item Component
-// ============================================================================
-
-interface EmployeeListItemProps {
-  user: User
-  isSelected: boolean
-  onPress: () => void
-}
-
-function EmployeeListItem({
-  user,
-  isSelected,
-  onPress,
-}: EmployeeListItemProps) {
-  return (
-    <Pressable
-      accessibilityLabel={getUserFullName(user)}
-      accessibilityRole="button"
-      className={cn(
-        'flex-row items-center gap-3 rounded-lg border border-border p-3 active:bg-muted',
-        {
-          'border-primary bg-primary/10': isSelected,
-        },
-      )}
-      onPress={onPress}
-    >
-      <UserAvatar className="size-12" user={user} />
-      <View className="flex-1">
-        <Text className="font-semibold">{getUserFullName(user)}</Text>
-        <Text className="text-muted-foreground text-sm">{user.username}</Text>
-      </View>
-    </Pressable>
-  )
-}
-
-// ============================================================================
-// Report Skeleton Component
-// ============================================================================
-
-function ReportSkeleton() {
-  return (
-    <View className="gap-4">
-      {/* Metrics Skeleton */}
-      <View className="flex-row gap-4">
-        <Card className="flex-1">
-          <CardContent className="gap-1 py-2.5">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-6 w-12" />
-          </CardContent>
-        </Card>
-        <Card className="flex-1">
-          <CardContent className="gap-1 py-2.5">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-6 w-12" />
-          </CardContent>
-        </Card>
-      </View>
-
+    <View className="gap-4 pb-2">
+      {/* Month Picker - INTERACTIVE during loading */}
       <Card>
-        <CardContent className="gap-1 py-2.5">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-32" />
+        <CardHeader className="pb-3">
+          <View className="flex-row items-center gap-2">
+            <Icon as={CalendarIcon} className="size-5 text-foreground" />
+            <CardTitle>Chọn tháng</CardTitle>
+          </View>
+        </CardHeader>
+        <CardContent>
+          <View className="flex-row items-center justify-between">
+            <Button
+              accessibilityLabel="Tháng trước"
+              accessibilityRole="button"
+              onPress={handlePreviousMonth}
+              size="icon"
+              variant="outline"
+            >
+              <Icon as={ChevronLeftIcon} />
+            </Button>
+            <Text className="font-semibold text-lg">
+              {formatMonthDisplay(selectedYear, selectedMonth)}
+            </Text>
+            <Button
+              accessibilityLabel="Tháng sau"
+              accessibilityRole="button"
+              disabled={
+                selectedYear === currentMonth.year &&
+                selectedMonth === currentMonth.month
+              }
+              onPress={handleNextMonth}
+              size="icon"
+              variant="outline"
+            >
+              <Icon as={ChevronRightIcon} />
+            </Button>
+          </View>
         </CardContent>
       </Card>
 
-      {/* Task List Skeleton */}
+      {/* Loading Stats Skeleton */}
       <Card>
         <CardHeader>
-          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-24" />
           <Skeleton className="h-4 w-48" />
         </CardHeader>
-        <CardContent className="gap-4">
-          {[1, 2, 3].map((i) => (
-            <View className="gap-2" key={i}>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <View className="gap-1.5 rounded-lg bg-muted p-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
+        <CardContent className="gap-3">
+          {Array.from({ length: 4 }, (_, i) => ({ id: `stat-${i}` })).map(
+            (item) => (
+              <View
+                className="flex-row items-center justify-between"
+                key={item.id}
+              >
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-6 w-16" />
               </View>
-            </View>
-          ))}
+            ),
+          )}
         </CardContent>
       </Card>
+
+      {/* Loading Employee List Skeleton */}
+      {Array.from({ length: 5 }, (_, i) => ({
+        id: `employee-skeleton-${i}`,
+      })).map((item) => (
+        <Card key={item.id}>
+          <CardContent className="flex-row items-center gap-3 py-3">
+            <Skeleton className="size-12 rounded-full" />
+            <View className="flex-1 gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </View>
+            <Skeleton className="h-6 w-20" />
+          </CardContent>
+        </Card>
+      ))}
     </View>
   )
 }

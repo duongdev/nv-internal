@@ -178,6 +178,36 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[Cache Invalidation](./docs/architecture/patterns/cache-invalidation.md)** - TanStack Query patterns
 - **[Timezone Handling](./docs/architecture/patterns/timezone-handling.md)** - Modern TZDate for accurate date boundaries
 
+### Recently Established Patterns (Employee Summary Implementation)
+
+These patterns were established during the Employee Summary feature implementation (2025-10-30):
+
+- **Batch Query Pattern**: Replace N+1 queries with batch queries for aggregate reports
+  - Query all data once, process in-memory for multiple users
+  - Use PostgreSQL array operators (`hasSome`) for efficient filtering
+  - Example: Employee summary reduced 100+ queries to 2-3 (see `.claude/tasks/20251029-145000-employee-report-monthly-summary-enhancement.md`)
+
+- **FlatList Optimization**: High-performance mobile lists
+  - Always use `FlatList` over `ScrollView` for large datasets
+  - Implement `getItemLayout` for known item heights
+  - Use virtualization props: `removeClippedSubviews`, `windowSize`, etc.
+  - Target 60fps scrolling performance
+
+- **Defensive API Responses**: Always provide fallbacks
+  - Never assume data exists - use optional chaining and nullish coalescing
+  - Provide default values for missing user data (names, emails, etc.)
+  - Example: `user.firstName || ""` instead of assuming firstName exists
+
+- **Tied Ranking Algorithm**: Equal values get equal ranks
+  - When ranking by metrics (revenue, tasks), equal values should have the same rank
+  - Sequence: 1, 1, 3 (not 1, 2, 3) for tied first place
+  - Important for fair employee performance comparisons
+
+- **Client-Side Search**: Instant filtering without API calls
+  - Filter results in-memory for immediate response
+  - Use `useMemo` to optimize filtering performance
+  - Provide search highlighting for better UX
+
 ### API Structure
 
 - **Routes**: All routes in `apps/api/src/v1/` with authentication middleware from `@hono/clerk-auth`
@@ -218,6 +248,24 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **IDs**: Use prefixed IDs for readability (cust*, geo*, act_*, pay_*)
 - **Task Status**: PREPARING → READY → IN_PROGRESS → ON_HOLD → COMPLETED
 - **Client**: Generated to `packages/prisma-client/generated/`
+
+### Database Optimization Patterns
+
+**Index Strategies** (from Employee Summary implementation):
+- **GIN Indexes**: Use for PostgreSQL array columns (e.g., `assigneeIds`)
+  ```sql
+  CREATE INDEX "Task_assigneeIds_idx" USING GIN ("assigneeIds");
+  ```
+- **Composite Indexes**: Combine frequently queried columns
+  ```sql
+  CREATE INDEX "Task_status_completedAt_idx" ON "Task" (status, "completedAt");
+  ```
+- **Partial Indexes**: Filter at index level for better performance
+  ```sql
+  CREATE INDEX "Activity_checkins_idx" ON "Activity" ("userId", "createdAt")
+  WHERE "action" = 'TASK_CHECKED_IN';
+  ```
+- **Use CONCURRENTLY**: Avoid locking tables during index creation in production
 
 ## Library Documentation
 
@@ -316,6 +364,8 @@ pnpm android              # Run on Android
 
 ## Task Documentation
 
+**Documentation Structure**: See `.claude/memory/documentation-structure.md` for complete documentation organization standards.
+
 **IMPORTANT**: When implementing features or fixes, always document your work in `.claude/tasks/`:
 
 1. **Create Task Files**: Use format `YYYYMMDD-HHMMSS-description.md` for descending sort by creation time
@@ -406,6 +456,7 @@ A comprehensive backend refactoring plan has been created to improve code qualit
 - **Task Documentation**: `.claude/tasks/` (implementation tracking)
 - **V1 Feature Plans**: `.claude/plans/v1/` (detailed feature specifications & roadmap)
 - **Enhancement Ideas**: `.claude/enhancements/` (future features & optimizations)
+- **Documentation Standards**: `.claude/memory/` (project-wide conventions and patterns)
 - **Refactoring Plans**: `.claude/tasks/REFACTORING-*.md` (architecture refactoring documentation)
 
 ## Project Scale Context

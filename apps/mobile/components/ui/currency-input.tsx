@@ -146,14 +146,19 @@ export function CurrencyInput({
 }
 
 /**
- * Format currency for display with VNĐ suffix
- * Example: formatCurrencyDisplay(1000000) → "1,000,000 VNĐ"
+ * Format currency for display with ₫ symbol
+ * Uses Vietnamese number format (dots as thousand separators)
+ * Example: formatCurrencyDisplay(1000000) → "1.000.000 ₫"
  */
 export function formatCurrencyDisplay(
   value: number | null | undefined,
 ): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return '0 VNĐ'
+    return '0 ₫'
   }
-  return `${formatCurrency(value)} VNĐ`
+  return `${new Intl.NumberFormat('vi-VN', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)} ₫`
 }
