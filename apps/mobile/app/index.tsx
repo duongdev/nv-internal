@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo'
-import { Redirect } from 'expo-router'
+import { Redirect, Stack } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 
 /**
@@ -21,9 +21,12 @@ export default function Index() {
   // Show loading while auth state is being determined
   if (!isLoaded) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" />
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View className="flex-1 items-center justify-center bg-background">
+          <ActivityIndicator size="large" />
+        </View>
+      </>
     )
   }
 

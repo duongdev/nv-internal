@@ -112,7 +112,7 @@ export default function ModuleTransitScreen() {
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-background">
       <ActivityIndicator size="large" />
-      <Text className="text-muted-foreground">Đang chuyển module...</Text>
+      <Text className="text-muted-foreground">Vui lòng chờ...</Text>
     </View>
   )
 }

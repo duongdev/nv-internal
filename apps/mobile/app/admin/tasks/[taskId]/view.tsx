@@ -71,15 +71,13 @@ export default function TaskViewScreen() {
               headerShown: true,
               headerBackButtonDisplayMode: 'generic',
               title: `Chi tiết công việc ${formatTaskId(taskId ?? 0)}`,
-              headerTransparent: true,
-              headerBlurEffect: 'regular',
             }}
           />
 
           {task && (
             <KeyboardAwareScrollView
               bottomOffset={40}
-              contentContainerClassName="gap-3 p-4 pt-40 pb-safe"
+              contentContainerClassName="gap-3 p-4 pb-safe"
               refreshControl={
                 <RefreshControl
                   onRefresh={handleRefetch}
