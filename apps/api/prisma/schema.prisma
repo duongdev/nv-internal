@@ -45,6 +45,10 @@ model Task {
   // Attachments linked to this task
   attachments   Attachment[]
 
+  // Vietnamese accent-insensitive search optimization
+  // Stores normalized concatenation of: id, title, description, customer name/phone, location name/address
+  searchableText String?      @db.Text
+
   // Standard indexes (managed by Prisma)
   // These indexes can be expressed in Prisma schema and don't require special PostgreSQL features
   @@index([status])                  // Status filtering (common in list queries)
@@ -67,6 +71,10 @@ model GeoLocation {
   updatedAt DateTime @updatedAt
   tasks     Task[]
 
+  // Vietnamese accent-insensitive search optimization
+  // Stores normalized concatenation of: name, address
+  searchableText String? @db.Text
+
   // Standard indexes (managed by Prisma)
   @@index([lat, lng])  // Geospatial queries (existing)
   @@index([address])   // Address search
@@ -82,6 +90,10 @@ model Customer {
   tasks     Task[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Vietnamese accent-insensitive search optimization
+  // Stores normalized concatenation of: name, phone
+  searchableText String? @db.Text
 
   // Standard indexes (managed by Prisma)
   @@index([phone])  // Phone lookup (existing)

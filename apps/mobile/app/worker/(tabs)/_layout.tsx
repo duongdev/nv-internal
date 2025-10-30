@@ -24,13 +24,13 @@ export default function WorkerTabLayout() {
         tabBarStyle: {
           backgroundColor: isDark ? '#000000' : '#ffffff',
         },
-        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Công việc',
+          headerShown: false, // Header configured in index screen with Stack.Screen
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               color={color}
@@ -45,6 +45,7 @@ export default function WorkerTabLayout() {
         name="settings"
         options={{
           title: 'Cài đặt',
+          headerShown: false, // Settings handles its own header
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons color={color} name="cog" size={size} />
           ),

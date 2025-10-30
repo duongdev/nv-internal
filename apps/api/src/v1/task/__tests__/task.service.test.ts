@@ -237,6 +237,7 @@ describe('Task Service Unit Tests', () => {
         id: 'cust_123',
         name: 'Test Customer',
         phone: '0123456789',
+        searchableText: 'test customer 0123456789',
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -247,6 +248,7 @@ describe('Task Service Unit Tests', () => {
         address: '123 Test Street',
         lat: 10.762622,
         lng: 106.660172,
+        searchableText: 'test location 123 test street',
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -261,10 +263,17 @@ describe('Task Service Unit Tests', () => {
         assigneeIds: [],
         startedAt: null,
         completedAt: null,
+        scheduledAt: null,
+        expectedRevenue: null,
+        expectedCurrency: 'VND',
+        searchableText:
+          '1 test task test description test customer 0123456789 test location 123 test street',
         createdAt: new Date(),
         updatedAt: new Date(),
         customer: mockCustomer,
         geoLocation: mockGeoLocation,
+        attachments: [],
+        payments: [],
       }
 
       // Setup mocks
@@ -272,6 +281,7 @@ describe('Task Service Unit Tests', () => {
       mockPrisma.customer.create.mockResolvedValue(mockCustomer)
       mockPrisma.geoLocation.create.mockResolvedValue(mockGeoLocation)
       mockPrisma.task.create.mockResolvedValue(mockTask)
+      mockPrisma.task.update.mockResolvedValue(mockTask) // For searchableText update
       mockPrisma.activity.create.mockResolvedValue({})
 
       const taskData = {

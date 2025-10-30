@@ -22,6 +22,71 @@ const DEFAULT_TASK_INCLUDE: Prisma.TaskInclude = {
   },
 }
 
+/**
+ * Build searchable text for a task
+ *
+ * Concatenates all searchable fields (id, title, description, customer, location)
+ * and normalizes for Vietnamese accent-insensitive search.
+ *
+ * @param data - Task data with optional customer and geoLocation
+ * @returns Normalized searchable text
+ */
+function buildSearchableText(data: {
+  id?: number
+  title?: string
+  description?: string | null
+  customer?: { name?: string | null; phone?: string | null } | null
+  geoLocation?: { address?: string | null; name?: string | null } | null
+}): string {
+  const parts = [
+    data.id?.toString(),
+    data.title,
+    data.description,
+    data.customer?.name,
+    data.customer?.phone,
+    data.geoLocation?.address,
+    data.geoLocation?.name,
+  ].filter(Boolean) as string[]
+
+  // Normalize for Vietnamese accent-insensitive search
+  // and collapse multiple spaces into single space
+  return normalizeForSearch(parts.join(' ')).replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Refresh searchableText for a specific task
+ *
+ * Fetches the task with all related data and updates its searchableText field.
+ * Useful when customer or location data changes.
+ *
+ * @param taskId - ID of the task to refresh
+ * @param tx - Prisma transaction client
+ */
+async function refreshTaskSearchableText(
+  taskId: number,
+  tx: Prisma.TransactionClient,
+): Promise<void> {
+  const task = await tx.task.findUnique({
+    where: { id: taskId },
+    include: { customer: true, geoLocation: true },
+  })
+
+  if (!task) return
+
+  await tx.task.update({
+    where: { id: taskId },
+    data: {
+      searchableText: buildSearchableText({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        customer: task.customer,
+        geoLocation: task.geoLocation,
+      }),
+    },
+  })
+}
+
 export async function canUserCreateTask({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
@@ -30,7 +95,7 @@ export async function canUserListTasks({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
-export async function isUserAssignedToTask({
+export function isUserAssignedToTask({
   user,
   task,
 }: {
@@ -40,7 +105,7 @@ export async function isUserAssignedToTask({
   return task.assigneeIds.includes(user.id)
 }
 
-export async function canUserViewTask({
+export function canUserViewTask({
   user,
   task,
 }: {
@@ -54,7 +119,7 @@ export async function canUserUpdateTaskAssignees({ user }: { user: User }) {
   return isUserAdmin({ user })
 }
 
-export async function canUserUpdateTaskStatus({
+export function canUserUpdateTaskStatus({
   user,
   task,
   targetStatus,
@@ -62,9 +127,9 @@ export async function canUserUpdateTaskStatus({
   user: User
   task: Task
   targetStatus: TaskStatus
-}): Promise<boolean> {
-  const isAdmin = await isUserAdmin({ user })
-  const isAssigned = await isUserAssignedToTask({ user, task })
+}): boolean {
+  const isAdmin = isUserAdmin({ user })
+  const isAssigned = isUserAssignedToTask({ user, task })
 
   // Admin permissions
   if (isAdmin) {
@@ -156,16 +221,35 @@ export async function createTask({
         geoLocationId = geoLocation.id
       }
 
+      // Build searchableText before creating the task
+      // Note: We can't include task.id in searchableText yet because it's auto-generated
+      // We'll update it after creation
+      const taskData = {
+        title: data.title,
+        description: data.description,
+        customerId: customer.id,
+        geoLocationId,
+        expectedRevenue: data.expectedRevenue,
+        expectedCurrency: 'VND' as const, // Default currency
+      }
+
       const createdTask = await tx.task.create({
-        data: {
-          title: data.title,
-          description: data.description,
-          customerId: customer.id,
-          geoLocationId,
-          expectedRevenue: data.expectedRevenue,
-          expectedCurrency: 'VND', // Default currency
-        },
+        data: taskData,
         include: DEFAULT_TASK_INCLUDE,
+      })
+
+      // Now update searchableText with the generated task ID
+      await tx.task.update({
+        where: { id: createdTask.id },
+        data: {
+          searchableText: buildSearchableText({
+            id: createdTask.id,
+            title: createdTask.title,
+            description: createdTask.description,
+            customer: createdTask.customer,
+            geoLocation: createdTask.geoLocation,
+          }),
+        },
       })
 
       // Create activity log
@@ -273,7 +357,7 @@ export async function searchAndFilterTasks(
     sortOrder = 'desc',
   } = filters
 
-  const isAdmin = await isUserAdmin({ user })
+  const isAdmin = isUserAdmin({ user })
 
   // Build WHERE clause
   const whereConditions: Prisma.TaskWhereInput[] = []
@@ -343,51 +427,20 @@ export async function searchAndFilterTasks(
     whereConditions.push({ completedAt: completedAtFilter })
   }
 
-  // Search implementation
-  // For Vietnamese accent-insensitive search, we search using case-insensitive mode
-  // and will do accent normalization in post-processing if needed
+  // Search implementation using searchableText field
+  // This provides Vietnamese accent-insensitive search across all relevant fields
   if (search && search.length > 0) {
-    const searchConditions: Prisma.TaskWhereInput[] = [
-      // Search by task ID (convert to string for partial match)
-      {
-        id: {
-          equals: Number.isNaN(Number.parseInt(search))
-            ? undefined
-            : Number.parseInt(search),
-        },
-      },
-      // Search in title
-      { title: { contains: search, mode: 'insensitive' } },
-      // Search in description
-      { description: { contains: search, mode: 'insensitive' } },
-      // Search in customer name
-      {
-        customer: {
-          name: { contains: search, mode: 'insensitive' },
-        },
-      },
-      // Search in customer phone
-      {
-        customer: {
-          phone: { contains: search, mode: 'insensitive' },
-        },
-      },
-      // Search in address
-      {
-        geoLocation: {
-          address: { contains: search, mode: 'insensitive' },
-        },
-      },
-      // Search in location name
-      {
-        geoLocation: {
-          name: { contains: search, mode: 'insensitive' },
-        },
-      },
-    ]
+    // Normalize search query: lowercase, remove accents, collapse whitespace
+    const normalizedSearch = normalizeForSearch(
+      search.trim().replace(/\s+/g, ' '),
+    )
 
-    // biome-ignore lint/style/useNamingConvention: Prisma uses uppercase for logical operators
-    whereConditions.push({ OR: searchConditions })
+    whereConditions.push({
+      searchableText: {
+        contains: normalizedSearch,
+        mode: 'insensitive',
+      },
+    })
   }
 
   const where: Prisma.TaskWhereInput =
@@ -410,78 +463,18 @@ export async function searchAndFilterTasks(
     ? tasksToReturn[tasksToReturn.length - 1].id.toString()
     : null
 
-  // For Vietnamese accent-insensitive search, filter results post-query
-  // This is necessary because PostgreSQL's case-insensitive search doesn't handle accents
-  let filteredTasks = tasksToReturn
-  if (search && search.length > 0) {
-    const normalizedSearch = normalizeForSearch(search)
-
-    filteredTasks = tasksToReturn.filter((task) => {
-      // Check task ID
-      if (task.id.toString().includes(search)) {
-        return true
-      }
-
-      // Check title
-      if (normalizeForSearch(task.title || '').includes(normalizedSearch)) {
-        return true
-      }
-
-      // Check description
-      if (
-        normalizeForSearch(task.description || '').includes(normalizedSearch)
-      ) {
-        return true
-      }
-
-      // Check customer name
-      if (
-        task.customer?.name &&
-        normalizeForSearch(task.customer.name).includes(normalizedSearch)
-      ) {
-        return true
-      }
-
-      // Check customer phone
-      if (
-        task.customer?.phone &&
-        normalizeForSearch(task.customer.phone).includes(normalizedSearch)
-      ) {
-        return true
-      }
-
-      // Check address
-      if (
-        task.geoLocation?.address &&
-        normalizeForSearch(task.geoLocation.address).includes(normalizedSearch)
-      ) {
-        return true
-      }
-
-      // Check location name
-      if (
-        task.geoLocation?.name &&
-        normalizeForSearch(task.geoLocation.name).includes(normalizedSearch)
-      ) {
-        return true
-      }
-
-      return false
-    })
-  }
-
   logger.debug(
     {
       userId: user.id,
       filters,
-      totalResults: filteredTasks.length,
+      totalResults: tasksToReturn.length,
       hasNextPage,
     },
     'Search and filter completed',
   )
 
   return {
-    tasks: filteredTasks,
+    tasks: tasksToReturn,
     nextCursor,
     hasNextPage,
   }

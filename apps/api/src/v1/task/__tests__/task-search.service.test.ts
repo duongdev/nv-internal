@@ -46,6 +46,7 @@ describe('searchAndFilterTasks', () => {
     id: 'cust_123',
     name: 'Nguyễn Văn A',
     phone: '0987654321',
+    searchableText: 'nguyen van a 0987654321',
     createdAt: new Date(),
     updatedAt: new Date(),
   }
@@ -56,6 +57,7 @@ describe('searchAndFilterTasks', () => {
     address: 'Số 123, Đường Láng, Quận Đống Đa, Hà Nội',
     lat: 21.0285,
     lng: 105.8542,
+    searchableText: 'ha noi so 123 duong lang quan dong da ha noi',
     createdAt: new Date(),
     updatedAt: new Date(),
   }
@@ -75,6 +77,8 @@ describe('searchAndFilterTasks', () => {
     completedAt: null,
     expectedRevenue: null,
     expectedCurrency: 'VND',
+    searchableText:
+      '1 sua dieu hoa khach hang can sua dieu hoa gap nguyen van a 0987654321 ha noi so 123 duong lang quan dong da ha noi',
     customer: mockCustomer,
     geoLocation: mockGeoLocation,
     attachments: [],

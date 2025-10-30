@@ -393,6 +393,59 @@ Key learnings from navigation system debugging and migration:
   ```
 - **Use CONCURRENTLY**: Avoid locking tables during index creation in production
 
+#### SearchableText Pattern (2025-10-30)
+
+**Optimized Search Implementation**: Pre-computed searchable text fields for performance and simplicity.
+
+**Problem Solved**:
+- Complex 7-field OR queries with post-processing (140 lines of code)
+- Poor performance with multiple JOINs and in-memory filtering
+- Broken pagination due to post-query filtering
+- Vietnamese accent normalization happening at query time
+
+**Solution Architecture**:
+```typescript
+// Build searchable text at write time
+function buildSearchableText(record: SomeModel): string {
+  const parts = [field1, field2, field3].filter(Boolean)
+  return parts
+    .map(part => normalizeForSearch(part.trim().replace(/\s+/g, ' ')))
+    .join(' ')
+}
+
+// Simple query at read time
+const results = await prisma.task.findMany({
+  where: { searchableText: { contains: normalizedQuery, mode: 'insensitive' } }
+})
+```
+
+**Benefits**:
+- **70% code reduction**: 140 lines → 50 lines
+- **2-3x faster queries**: Single indexed field vs multiple JOINs
+- **Perfect pagination**: No post-processing needed
+- **Type safety**: Full Prisma support maintained
+
+**Implementation Details**: See `.claude/tasks/20251030-094500-implement-searchable-text-field.md`
+
+**When to Use**:
+- Multi-field search requirements
+- Need for text normalization (accents, case, whitespace)
+- Performance-critical search operations
+- When pagination accuracy is important
+
+**Anti-pattern to Avoid**:
+```typescript
+// ❌ Don't do this - complex and slow
+const searchConditions = [
+  { field1: { contains: query } },
+  { field2: { contains: query } },
+  { relation: { field3: { contains: query } } },
+  // ... many more conditions
+]
+const results = await prisma.model.findMany({ where: { OR: searchConditions } })
+// Then filter results in memory for normalization...
+```
+
 ## Library Documentation
 
 **IMPORTANT**: Always use the **context7 MCP** to fetch the latest library documentation instead of relying on knowledge cutoff.

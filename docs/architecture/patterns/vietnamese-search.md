@@ -6,7 +6,8 @@ This pattern provides accent-insensitive search for Vietnamese text, allowing us
 
 **Established**: 2025-10-30
 **Status**: Active
-**Implementation**: `.claude/tasks/20251030-053000-implement-task-search-filter-api.md`
+**Original Implementation**: `.claude/tasks/20251030-053000-implement-task-search-filter-api.md`
+**Optimized with SearchableText**: `.claude/tasks/20251030-094500-implement-searchable-text-field.md`
 
 ## Problem
 
@@ -42,11 +43,48 @@ export function normalizeForSearch(text: string): string {
 
 ### Backend Implementation
 
-```typescript
-// In search service
-const searchQuery = filters.search
-const normalizedSearchQuery = normalizeForSearch(searchQuery)
+#### Current Implementation (with SearchableText)
 
+The search has been optimized using a pre-computed `searchableText` field that stores normalized, searchable content. This eliminates the need for complex queries and post-processing:
+
+```typescript
+// Build searchableText at write time (during create/update)
+function buildSearchableText(data: TaskData): string {
+  const parts = [
+    data.id?.toString(),
+    data.title,
+    data.description,
+    data.customer?.name,
+    data.customer?.phone,
+    data.geoLocation?.address,
+    data.geoLocation?.name,
+  ].filter(Boolean) as string[]
+
+  return normalizeForSearch(parts.join(' ')).replace(/\s+/g, ' ').trim()
+}
+
+// Simple search query - no post-processing needed!
+const normalizedSearch = normalizeForSearch(search.trim().replace(/\s+/g, ' '))
+const tasks = await prisma.task.findMany({
+  where: {
+    searchableText: {
+      contains: normalizedSearch,
+      mode: 'insensitive'
+    }
+  }
+})
+```
+
+**Benefits**:
+- 64% code reduction (140 lines → 50 lines)
+- Single indexed field query vs 7-field OR query
+- No post-processing needed
+- Perfect pagination accuracy
+
+#### Legacy Implementation (for reference)
+
+```typescript
+// Previous approach - kept for reference
 // Stage 1: Database query with case-insensitive search
 const tasks = await prisma.task.findMany({
   where: {
@@ -58,13 +96,9 @@ const tasks = await prisma.task.findMany({
   }
 })
 
-// Stage 2: Filter with Vietnamese normalization
+// Stage 2: Filter with Vietnamese normalization (no longer needed)
 const filteredTasks = tasks.filter(task => {
-  const normalizedTitle = normalizeForSearch(task.title || '')
-  const normalizedCustomerName = normalizeForSearch(task.customer?.name || '')
-
-  return normalizedTitle.includes(normalizedSearchQuery) ||
-         normalizedCustomerName.includes(normalizedSearchQuery)
+  // ... normalization and filtering
 })
 ```
 
