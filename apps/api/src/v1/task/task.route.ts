@@ -5,6 +5,7 @@ import {
   zNumericIdParam,
   zTaskExpectedRevenue,
   zTaskListQuery,
+  zTaskSearchFilterQuery,
 } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
@@ -27,12 +28,13 @@ import {
   createTask,
   getTaskById,
   getTaskList,
+  searchAndFilterTasks,
   updateTaskAssignees,
   updateTaskStatus,
 } from './task.service'
 
 const router = new Hono()
-  // Get infinite task list
+  // Get infinite task list (legacy endpoint - kept for backward compatibility)
   .get('/', zValidator('query', zTaskListQuery), async (c) => {
     const {
       cursor,
@@ -65,6 +67,68 @@ const router = new Hono()
       nextCursor,
       hasNextPage,
     })
+  })
+  /**
+   * GET /v1/task/search
+   *
+   * Enhanced search and filter endpoint for tasks
+   *
+   * Features:
+   * - Vietnamese accent-insensitive search across multiple fields
+   * - Multi-criteria filtering (status, assignee, customer, date ranges)
+   * - Flexible sorting options
+   * - Cursor-based pagination
+   * - Role-based access control
+   *
+   * Query Parameters:
+   * - search: Search query (searches across ID, title, description, customer, address)
+   * - status: Filter by status (can be array for multiple statuses)
+   * - assigneeIds: Filter by assignee user IDs (array)
+   * - assignedOnly: 'true' to filter to only user's assigned tasks (required for workers)
+   * - customerId: Filter by customer ID
+   * - scheduledFrom/scheduledTo: Filter by scheduled date range
+   * - createdFrom/createdTo: Filter by creation date range
+   * - completedFrom/completedTo: Filter by completion date range
+   * - sortBy: Sort field (createdAt, updatedAt, scheduledAt, completedAt, id)
+   * - sortOrder: Sort direction (asc, desc)
+   * - cursor: Pagination cursor
+   * - take: Number of results (1-100, default 20)
+   *
+   * Authorization & Module Usage:
+   * - Workers: Can ONLY see their assigned tasks (assignedOnly is automatically forced)
+   * - Admins in Admin Module: Can see ALL tasks (don't pass assignedOnly or pass assignedOnly=false)
+   * - Admins in Worker Module: Pass assignedOnly=true to see ONLY their assigned tasks
+   *
+   * This dual behavior allows admins to use both:
+   * 1. Admin module - managing all company tasks
+   * 2. Worker module - viewing only their personal assigned tasks (just like regular workers)
+   *
+   * Response:
+   * - tasks: Array of task records with relations
+   * - nextCursor: Cursor for next page (null if no more pages)
+   * - hasNextPage: Boolean indicating if more results exist
+   */
+  .get('/search', zValidator('query', zTaskSearchFilterQuery), async (c) => {
+    const logger = getLogger('task.route:search')
+    const filters = c.req.valid('query')
+    const user = getAuthUserStrict(c)
+
+    try {
+      const result = await searchAndFilterTasks(user, filters)
+
+      logger.debug(
+        { userId: user.id, filters, resultCount: result.tasks.length },
+        'Task search completed',
+      )
+
+      return c.json(result, 200)
+    } catch (error) {
+      logger.error({ error, userId: user.id, filters }, 'Task search failed')
+      throw new HTTPException(500, {
+        message: 'Không thể tìm kiếm công việc. Vui lòng thử lại.',
+        cause: error,
+      })
+    }
   })
   // Create new task
   .post('/', zValidator('json', zCreateTask), async (c) => {

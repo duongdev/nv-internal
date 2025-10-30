@@ -19,6 +19,7 @@ This directory contains detailed implementation patterns and best practices for 
 - **[Payment Transactions](./payment-transactions.md)** - Serverless-safe transaction pattern with file uploads
 - **[FormData Validation](./formdata-validation.md)** - Zod schemas for multipart/form-data handling
 - **[Timezone Handling](./timezone-handling.md)** - Modern timezone-aware date operations with TZDate
+- **[Vietnamese Search](./vietnamese-search.md)** - Accent-insensitive search for Vietnamese text
 
 ### Utilities
 
@@ -52,6 +53,9 @@ This directory contains detailed implementation patterns and best practices for 
 
 ### When working with dates and timezones:
 - Use [Timezone Handling](./timezone-handling.md) for accurate date boundaries
+
+### When implementing search:
+- Use [Vietnamese Search](./vietnamese-search.md) for accent-insensitive text search
 
 ## Adding New Patterns
 

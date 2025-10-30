@@ -1,8 +1,12 @@
 import type { User } from '@clerk/backend'
 import type { Prisma, Task, TaskStatus } from '@nv-internal/prisma-client'
-import type { CreateTaskValues } from '@nv-internal/validation'
+import type {
+  CreateTaskValues,
+  TaskSearchFilterQuery,
+} from '@nv-internal/validation'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
+import { normalizeForSearch } from '../../lib/text-utils'
 import { createActivity } from '../activity/activity.service'
 import { isUserAdmin } from '../user/user.service'
 
@@ -220,6 +224,264 @@ export async function getTaskList({
 
   return {
     tasks,
+    nextCursor,
+    hasNextPage,
+  }
+}
+
+/**
+ * Search and filter tasks with enhanced capabilities
+ *
+ * This function provides comprehensive search and filter functionality for tasks:
+ * - Vietnamese accent-insensitive search across multiple fields
+ * - Multiple filter criteria (status, assignee, customer, date ranges)
+ * - Flexible sorting options
+ * - Cursor-based pagination
+ * - Role-based access control
+ *
+ * Access Control:
+ * - Non-admins: Can ONLY see their assigned tasks (assignedOnly is forced to true)
+ * - Admins: Can see all tasks by default, OR filter to their assigned tasks with assignedOnly=true
+ *           This allows admins to use both admin module (all tasks) and worker module (assigned only)
+ *
+ * @param user - The authenticated user making the request
+ * @param filters - Search and filter parameters
+ * @returns Object with tasks array, pagination info, and metadata
+ */
+export async function searchAndFilterTasks(
+  user: User,
+  filters: TaskSearchFilterQuery,
+) {
+  const logger = getLogger('task.service:searchAndFilterTasks')
+  const prisma = getPrisma()
+
+  const {
+    search,
+    status,
+    assigneeIds,
+    assignedOnly,
+    customerId,
+    scheduledFrom,
+    scheduledTo,
+    createdFrom,
+    createdTo,
+    completedFrom,
+    completedTo,
+    cursor,
+    take = 20,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = filters
+
+  const isAdmin = await isUserAdmin({ user })
+
+  // Build WHERE clause
+  const whereConditions: Prisma.TaskWhereInput[] = []
+
+  // Access control: Non-admins can ONLY see their assigned tasks
+  // Admins can see all tasks UNLESS assignedOnly is explicitly set to 'true'
+  // This enables admins to use both admin module (all tasks) and worker module (assigned only)
+  const shouldFilterByAssignment = !isAdmin || assignedOnly === 'true'
+
+  if (shouldFilterByAssignment) {
+    whereConditions.push({ assigneeIds: { has: user.id } })
+  }
+
+  // Status filter
+  if (status && status.length > 0) {
+    whereConditions.push({ status: { in: status } })
+  }
+
+  // Assignee filter (admin only, or user filtering their own tasks)
+  if (assigneeIds && assigneeIds.length > 0) {
+    if (isAdmin || assigneeIds.includes(user.id)) {
+      whereConditions.push({ assigneeIds: { hasSome: assigneeIds } })
+    } else {
+      logger.warn(
+        { userId: user.id, requestedIds: assigneeIds },
+        'Non-admin user attempted to filter by other users',
+      )
+    }
+  }
+
+  // Customer filter
+  if (customerId) {
+    whereConditions.push({ customerId })
+  }
+
+  // Date range filters
+  if (scheduledFrom || scheduledTo) {
+    const scheduledAtFilter: Prisma.DateTimeNullableFilter = {}
+    if (scheduledFrom) {
+      scheduledAtFilter.gte = new Date(scheduledFrom)
+    }
+    if (scheduledTo) {
+      scheduledAtFilter.lte = new Date(scheduledTo)
+    }
+    whereConditions.push({ scheduledAt: scheduledAtFilter })
+  }
+
+  if (createdFrom || createdTo) {
+    const createdAtFilter: Prisma.DateTimeFilter = {}
+    if (createdFrom) {
+      createdAtFilter.gte = new Date(createdFrom)
+    }
+    if (createdTo) {
+      createdAtFilter.lte = new Date(createdTo)
+    }
+    whereConditions.push({ createdAt: createdAtFilter })
+  }
+
+  if (completedFrom || completedTo) {
+    const completedAtFilter: Prisma.DateTimeNullableFilter = {}
+    if (completedFrom) {
+      completedAtFilter.gte = new Date(completedFrom)
+    }
+    if (completedTo) {
+      completedAtFilter.lte = new Date(completedTo)
+    }
+    whereConditions.push({ completedAt: completedAtFilter })
+  }
+
+  // Search implementation
+  // For Vietnamese accent-insensitive search, we search using case-insensitive mode
+  // and will do accent normalization in post-processing if needed
+  if (search && search.length > 0) {
+    const searchConditions: Prisma.TaskWhereInput[] = [
+      // Search by task ID (convert to string for partial match)
+      {
+        id: {
+          equals: Number.isNaN(Number.parseInt(search))
+            ? undefined
+            : Number.parseInt(search),
+        },
+      },
+      // Search in title
+      { title: { contains: search, mode: 'insensitive' } },
+      // Search in description
+      { description: { contains: search, mode: 'insensitive' } },
+      // Search in customer name
+      {
+        customer: {
+          name: { contains: search, mode: 'insensitive' },
+        },
+      },
+      // Search in customer phone
+      {
+        customer: {
+          phone: { contains: search, mode: 'insensitive' },
+        },
+      },
+      // Search in address
+      {
+        geoLocation: {
+          address: { contains: search, mode: 'insensitive' },
+        },
+      },
+      // Search in location name
+      {
+        geoLocation: {
+          name: { contains: search, mode: 'insensitive' },
+        },
+      },
+    ]
+
+    // biome-ignore lint/style/useNamingConvention: Prisma uses uppercase for logical operators
+    whereConditions.push({ OR: searchConditions })
+  }
+
+  const where: Prisma.TaskWhereInput =
+    // biome-ignore lint/style/useNamingConvention: Prisma uses uppercase for logical operators
+    whereConditions.length > 0 ? { AND: whereConditions } : {}
+
+  // Fetch tasks with pagination
+  const tasks = await prisma.task.findMany({
+    where,
+    include: DEFAULT_TASK_INCLUDE,
+    orderBy: { [sortBy]: sortOrder },
+    take: take + 1, // Fetch one extra to determine if there's a next page
+    ...(cursor ? { cursor: { id: Number.parseInt(cursor, 10) }, skip: 1 } : {}),
+  })
+
+  // Determine pagination info
+  const hasNextPage = tasks.length > take
+  const tasksToReturn = hasNextPage ? tasks.slice(0, -1) : tasks
+  const nextCursor = hasNextPage
+    ? tasksToReturn[tasksToReturn.length - 1].id.toString()
+    : null
+
+  // For Vietnamese accent-insensitive search, filter results post-query
+  // This is necessary because PostgreSQL's case-insensitive search doesn't handle accents
+  let filteredTasks = tasksToReturn
+  if (search && search.length > 0) {
+    const normalizedSearch = normalizeForSearch(search)
+
+    filteredTasks = tasksToReturn.filter((task) => {
+      // Check task ID
+      if (task.id.toString().includes(search)) {
+        return true
+      }
+
+      // Check title
+      if (normalizeForSearch(task.title || '').includes(normalizedSearch)) {
+        return true
+      }
+
+      // Check description
+      if (
+        normalizeForSearch(task.description || '').includes(normalizedSearch)
+      ) {
+        return true
+      }
+
+      // Check customer name
+      if (
+        task.customer?.name &&
+        normalizeForSearch(task.customer.name).includes(normalizedSearch)
+      ) {
+        return true
+      }
+
+      // Check customer phone
+      if (
+        task.customer?.phone &&
+        normalizeForSearch(task.customer.phone).includes(normalizedSearch)
+      ) {
+        return true
+      }
+
+      // Check address
+      if (
+        task.geoLocation?.address &&
+        normalizeForSearch(task.geoLocation.address).includes(normalizedSearch)
+      ) {
+        return true
+      }
+
+      // Check location name
+      if (
+        task.geoLocation?.name &&
+        normalizeForSearch(task.geoLocation.name).includes(normalizedSearch)
+      ) {
+        return true
+      }
+
+      return false
+    })
+  }
+
+  logger.debug(
+    {
+      userId: user.id,
+      filters,
+      totalResults: filteredTasks.length,
+      hasNextPage,
+    },
+    'Search and filter completed',
+  )
+
+  return {
+    tasks: filteredTasks,
     nextCursor,
     hasNextPage,
   }

@@ -27,12 +27,17 @@ export default function AdminTabLayout() {
         headerShown: false,
       }}
     >
+      {/* Phase 1: Reordered tabs - Tasks first, removed Dashboard */}
       <Tabs.Screen
-        name="index"
+        name="tasks"
         options={{
-          title: 'Trang chủ',
+          title: 'Công việc',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons color={color} name="home" size={size} />
+            <MaterialCommunityIcons
+              color={color}
+              name="format-list-checks"
+              size={size}
+            />
           ),
         }}
       />
@@ -52,26 +57,21 @@ export default function AdminTabLayout() {
       />
 
       <Tabs.Screen
-        name="tasks"
-        options={{
-          title: 'Công việc',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              color={color}
-              name="format-list-checks"
-              size={size}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="settings"
         options={{
           title: 'Cài đặt',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons color={color} name="cog" size={size} />
           ),
+        }}
+      />
+
+      {/* Dashboard tab hidden - not implemented yet */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null, // Hide from tab bar
+          title: 'Trang chủ',
         }}
       />
     </Tabs>

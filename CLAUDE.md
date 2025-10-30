@@ -226,6 +226,7 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[Cache Invalidation](./docs/architecture/patterns/cache-invalidation.md)** - TanStack Query patterns
 - **[Timezone Handling](./docs/architecture/patterns/timezone-handling.md)** - Modern TZDate for accurate date boundaries
 - **[Tabs Navigation](./docs/architecture/patterns/tabs-navigation.md)** - **CRITICAL**: Stable tabs implementation with haptic feedback
+- **[Vietnamese Search](./docs/architecture/patterns/vietnamese-search.md)** - Accent-insensitive search for Vietnamese text
 
 ### Recently Established Patterns
 

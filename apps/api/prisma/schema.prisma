@@ -33,6 +33,7 @@ model Task {
   assigneeIds   String[]
   startedAt     DateTime?
   completedAt   DateTime?
+  scheduledAt   DateTime?    // Planned/scheduled date for the task
   geoLocation   GeoLocation? @relation(fields: [geoLocationId], references: [id])
   geoLocationId String?
 
@@ -44,10 +45,16 @@ model Task {
   // Attachments linked to this task
   attachments   Attachment[]
 
-  // Performance indexes for report queries
-  // Note: Actual migration uses CONCURRENTLY and partial WHERE clauses
-  @@index([status, completedAt])  // Optimizes completed task date range queries
-  @@index([assigneeIds])           // GIN index for array overlap queries (assignee filtering)
+  // Standard indexes (managed by Prisma)
+  // These indexes can be expressed in Prisma schema and don't require special PostgreSQL features
+  @@index([status])                  // Status filtering (common in list queries)
+  @@index([customerId])              // Customer task history
+  @@index([status, completedAt])     // Completed task date range queries (existing)
+  @@index([status, createdAt])       // Status + creation date sorting (common pattern)
+  @@index([assigneeIds])             // Array overlap queries (existing - becomes GIN in migration)
+
+  // Note: Advanced indexes with CONCURRENTLY, GIN operators, and partial WHERE clauses
+  // are defined in manual migrations (see migrations/20251030053152_add_task_search_indexes)
 }
 
 model GeoLocation {
@@ -60,7 +67,12 @@ model GeoLocation {
   updatedAt DateTime @updatedAt
   tasks     Task[]
 
-  @@index([lat, lng])
+  // Standard indexes (managed by Prisma)
+  @@index([lat, lng])  // Geospatial queries (existing)
+  @@index([address])   // Address search
+
+  // Note: GIN indexes for text search with pg_trgm are in manual migration
+  // (see migrations/20251030053152_add_task_search_indexes)
 }
 
 model Customer {
@@ -71,7 +83,12 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([phone])
+  // Standard indexes (managed by Prisma)
+  @@index([phone])  // Phone lookup (existing)
+  @@index([name])   // Name search
+
+  // Note: GIN indexes for text search with pg_trgm are in manual migration
+  // (see migrations/20251030053152_add_task_search_indexes)
 }
 
 model Activity {

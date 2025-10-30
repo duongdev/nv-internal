@@ -39,6 +39,23 @@ export function getUserFullName(
   return [user.lastName, user.firstName].filter(Boolean).join(' ') || 'Unknown'
 }
 
+/**
+ * Get user initials from first and last name
+ * Returns up to 2 characters (first letter of each name)
+ *
+ * @example
+ * getUserInitials({ firstName: 'John', lastName: 'Doe' }) // 'JD'
+ * getUserInitials({ firstName: 'Nguyen', lastName: null }) // 'N'
+ * getUserInitials({ firstName: null, lastName: 'Doe' }) // 'D'
+ */
+export function getUserInitials(
+  user: Pick<User, 'firstName' | 'lastName'>,
+): string {
+  const firstInitial = user.firstName?.charAt(0)?.toUpperCase() || ''
+  const lastInitial = user.lastName?.charAt(0)?.toUpperCase() || ''
+  return `${lastInitial}${firstInitial}` || '?'
+}
+
 export function getUserPrimaryEmail(user: User): string | null {
   return user.emailAddresses[0]?.emailAddress ?? null
 }

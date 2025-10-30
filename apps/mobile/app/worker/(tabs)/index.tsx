@@ -1,13 +1,32 @@
 import { TaskStatus } from '@nv-internal/validation'
-import { Link } from 'expo-router'
-import { useMemo } from 'react'
-import { RefreshControl, SectionList, View } from 'react-native'
+import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
+import { useRouter } from 'expo-router'
+import { useMemo, useState } from 'react'
+import { FlatList, Pressable, RefreshControl, View } from 'react-native'
 import { useAssignedTaskInfiniteList } from '@/api/task/use-assigned-task-infinite-list'
-import { TaskListItem } from '@/components/task-list-item'
+import { EnhancedTaskCard } from '@/components/task/enhanced-task-card'
 import { TaskListItemSkeleton } from '@/components/task-list-item-skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Text } from '@/components/ui/text'
+import { cn } from '@/lib/utils'
 
+type TaskFilter = 'active' | 'completed'
+
+/**
+ * WorkerTasksScreen - Tab-based task filtering for workers
+ *
+ * Features:
+ * - Tab-based filtering (Active / Completed)
+ * - Badge counts on tabs
+ * - Pull-to-refresh with haptic feedback
+ * - Excellent loading and empty states
+ * - High-performance FlatList with virtualization
+ * - Smooth animations and haptic feedback
+ */
 export default function WorkerIndex() {
+  const router = useRouter()
+  const [activeFilter, setActiveFilter] = useState<TaskFilter>('active')
+
   const {
     data: activeTasks,
     refetch: refetchActiveTasks,
@@ -24,77 +43,214 @@ export default function WorkerIndex() {
     isRefetching: isRefetchingCompletedTasks,
     fetchNextPage: fetchNextPageCompletedTasks,
     hasNextPage: hasNextPageCompletedTasks,
+    isFetchingNextPage: isFetchingNextPageCompletedTasks,
     isLoading: isLoadingCompletedTasks,
   } = useAssignedTaskInfiniteList({
     status: [TaskStatus.COMPLETED],
     limit: 50,
   })
 
-  const { completed, next, onGoing } = useMemo(() => {
+  // Group tasks for display
+  const { activeTasksList, completedTasksList } = useMemo(() => {
     const active = activeTasks?.pages.flatMap((page) => page.tasks) || []
-    const onGoing = active.filter((t) => t.status === TaskStatus.IN_PROGRESS)
-    const next = active.filter((t) => t.status === TaskStatus.READY)
+    // Sort active tasks: In Progress first, then Ready
+    const sortedActive = [...active].sort((a, b) => {
+      if (
+        a.status === TaskStatus.IN_PROGRESS &&
+        b.status !== TaskStatus.IN_PROGRESS
+      ) {
+        return -1
+      }
+      if (
+        a.status !== TaskStatus.IN_PROGRESS &&
+        b.status === TaskStatus.IN_PROGRESS
+      ) {
+        return 1
+      }
+      return 0
+    })
+
     const completed = completedTasks?.pages.flatMap((page) => page.tasks) || []
+
     return {
-      onGoing,
-      next,
-      completed,
+      activeTasksList: sortedActive,
+      completedTasksList: completed,
     }
   }, [activeTasks, completedTasks])
 
-  const sections = useMemo(() => {
-    const secs = []
-    if (onGoing.length > 0) {
-      secs.push({ title: 'Việc đang làm', data: onGoing })
-    }
-    if (next.length > 0) {
-      secs.push({ title: 'Việc tiếp theo', data: next })
-    }
-    if (completed.length > 0) {
-      secs.push({ title: 'Việc đã hoàn thành', data: completed })
-    }
-    return secs
-  }, [onGoing, next, completed])
-
   const handleRefetch = () => {
+    impactAsync(ImpactFeedbackStyle.Light)
     refetchActiveTasks()
     refetchCompletedTasks()
   }
+
+  const handleFilterChange = (filter: TaskFilter) => {
+    if (filter !== activeFilter) {
+      impactAsync(ImpactFeedbackStyle.Light)
+      setActiveFilter(filter)
+    }
+  }
+
   const isRefetching = isRefetchingActiveTasks || isRefetchingCompletedTasks
   const isLoading = isLoadingActiveTasks || isLoadingCompletedTasks
 
+  // Determine which data to display based on active filter
+  const displayTasks =
+    activeFilter === 'active' ? activeTasksList : completedTasksList
+
+  // Loading state
   if (isLoading) {
     return (
-      <View className="flex-1 gap-2 bg-background px-4 pt-safe">
-        <View className="-mb-2 bg-background pb-1">
-          <Text className="font-sans-medium" variant="h4">
-            Việc đang làm
-          </Text>
+      <View className="flex-1 bg-background pt-safe">
+        {/* Tab buttons skeleton */}
+        <View className="flex-row gap-2 border-border border-b bg-background px-4 pb-3">
+          <View className="h-9 w-32 rounded-full bg-muted" />
+          <View className="h-9 w-32 rounded-full bg-muted/50" />
         </View>
-        <TaskListItemSkeleton />
-        <TaskListItemSkeleton />
 
-        <View className="-mb-2 bg-background pt-2 pb-1">
-          <Text className="font-sans-medium" variant="h4">
-            Việc tiếp theo
-          </Text>
+        {/* Task list skeleton */}
+        <View className="gap-2 p-4">
+          <TaskListItemSkeleton />
+          <TaskListItemSkeleton />
+          <TaskListItemSkeleton />
         </View>
-        <TaskListItemSkeleton />
-        <TaskListItemSkeleton />
       </View>
     )
   }
 
   return (
     <View className="flex-1 bg-background pt-safe">
-      <SectionList
-        contentContainerClassName="gap-2 px-4 pb-24"
+      {/* Tab Filter Buttons */}
+      <View className="flex-row gap-2 border-border border-b bg-background px-4 pb-3">
+        <Pressable
+          accessibilityHint="Xem danh sách công việc đang làm và sắp tới"
+          accessibilityLabel={`Công việc đang làm, ${activeTasksList.length} việc`}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeFilter === 'active' }}
+          onPress={() => handleFilterChange('active')}
+        >
+          <View
+            className={cn(
+              'flex-row items-center gap-2 rounded-full px-4 py-2 transition-colors',
+              activeFilter === 'active' ? 'bg-primary' : 'bg-muted',
+            )}
+          >
+            <Text
+              className={cn(
+                'font-sans-semibold text-sm',
+                activeFilter === 'active'
+                  ? 'text-primary-foreground'
+                  : 'text-muted-foreground',
+              )}
+            >
+              Đang làm
+            </Text>
+            {activeTasksList.length > 0 && (
+              <View
+                className={cn(
+                  'flex-row items-center justify-center rounded-full px-2 py-0.5',
+                  activeFilter === 'active'
+                    ? 'bg-primary-foreground/20'
+                    : 'bg-foreground/10',
+                )}
+              >
+                <Text
+                  className={cn(
+                    'font-sans-bold text-xs',
+                    activeFilter === 'active'
+                      ? 'text-primary-foreground'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {activeTasksList.length}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Pressable>
+
+        <Pressable
+          accessibilityHint="Xem danh sách công việc đã hoàn thành"
+          accessibilityLabel={`Công việc hoàn thành, ${completedTasksList.length} việc`}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeFilter === 'completed' }}
+          onPress={() => handleFilterChange('completed')}
+        >
+          <View
+            className={cn(
+              'flex-row items-center gap-2 rounded-full px-4 py-2 transition-colors',
+              activeFilter === 'completed' ? 'bg-primary' : 'bg-muted',
+            )}
+          >
+            <Text
+              className={cn(
+                'font-sans-semibold text-sm',
+                activeFilter === 'completed'
+                  ? 'text-primary-foreground'
+                  : 'text-muted-foreground',
+              )}
+            >
+              Hoàn thành
+            </Text>
+            {completedTasksList.length > 0 && (
+              <View
+                className={cn(
+                  'flex-row items-center justify-center rounded-full px-2 py-0.5',
+                  activeFilter === 'completed'
+                    ? 'bg-primary-foreground/20'
+                    : 'bg-foreground/10',
+                )}
+              >
+                <Text
+                  className={cn(
+                    'font-sans-bold text-xs',
+                    activeFilter === 'completed'
+                      ? 'text-primary-foreground'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {completedTasksList.length}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Pressable>
+      </View>
+
+      {/* Task List */}
+      <FlatList
+        contentContainerClassName="gap-2 p-4 pb-24"
+        data={displayTasks}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
-          <Text className="text-muted-foreground">Chưa có công việc nào.</Text>
+          <EmptyState
+            className="flex-1 py-20"
+            image="laziness"
+            messageDescription={
+              activeFilter === 'active'
+                ? 'Bạn chưa có công việc nào. Liên hệ quản lý để được phân công nhiệm vụ.'
+                : 'Bạn chưa hoàn thành công việc nào.'
+            }
+            messageTitle={
+              activeFilter === 'active'
+                ? 'Chưa có công việc'
+                : 'Chưa có việc hoàn thành'
+            }
+          />
+        }
+        ListFooterComponent={
+          activeFilter === 'completed' && isFetchingNextPageCompletedTasks ? (
+            <View className="py-4">
+              <TaskListItemSkeleton />
+            </View>
+          ) : null
         }
         onEndReached={() => {
-          if (hasNextPageCompletedTasks) {
+          if (
+            activeFilter === 'completed' &&
+            hasNextPageCompletedTasks &&
+            !isFetchingNextPageCompletedTasks
+          ) {
             fetchNextPageCompletedTasks()
           }
         }}
@@ -106,38 +262,24 @@ export default function WorkerIndex() {
             refreshing={isRefetching}
           />
         }
+        removeClippedSubviews
+        // Performance optimizations
         renderItem={({ item: task }) => (
-          <Link
-            accessibilityLabel={`Công việc ${task.title}, trạng thái ${task.status}`}
-            accessibilityRole="button"
-            asChild
-            href={{
-              pathname: '/worker/tasks/[taskId]/view',
-              params: {
-                taskId: task.id.toString(),
-              },
-            }}
+          <EnhancedTaskCard
             key={task.id}
-            testID={`task-list-item-${task.id}`}
-          >
-            <View className="rounded-lg border border-border bg-card p-3 active:opacity-80">
-              <TaskListItem task={task} />
-            </View>
-          </Link>
+            onPress={() => {
+              router.push({
+                pathname: '/worker/tasks/[taskId]/view',
+                params: {
+                  taskId: task.id.toString(),
+                },
+              })
+            }}
+            task={task}
+            workerMode
+          />
         )}
-        renderSectionHeader={({ section: { title } }) => (
-          <View
-            accessibilityRole="header"
-            className="-mb-2 bg-background pb-1"
-            testID={`task-list-section-${title.toLowerCase().replace(/\s+/g, '-')}`}
-          >
-            <Text className="font-sans-medium" variant="h4">
-              {title}
-            </Text>
-          </View>
-        )}
-        sections={sections}
-        stickySectionHeadersEnabled
+        windowSize={10}
       />
     </View>
   )

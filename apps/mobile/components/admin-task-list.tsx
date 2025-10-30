@@ -1,8 +1,7 @@
-import { Link } from 'expo-router'
-// ...existing code...
+import { useRouter } from 'expo-router'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { useTaskInfiniteList } from '@/api/task/use-task-infinite-list'
-import { TaskListItem } from './task-list-item'
+import { EnhancedTaskCard } from './task/enhanced-task-card'
 import { TaskListItemSkeleton } from './task-list-item-skeleton'
 import { EmptyState } from './ui/empty-state'
 
@@ -13,10 +12,11 @@ export type AdminTaskListProps = {
 export function AdminTaskList({
   contentContainerClassName,
 }: AdminTaskListProps) {
+  const router = useRouter()
   const {
     data,
     hasNextPage,
-    isFetching,
+    isFetchingNextPage,
     isRefetching,
     isLoading,
     fetchNextPage,
@@ -26,7 +26,7 @@ export function AdminTaskList({
   const tasks = data?.pages.flatMap((page) => page.tasks) ?? []
 
   const handleLoadMore = () => {
-    if (hasNextPage && !isFetching) {
+    if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage()
     }
   }
@@ -51,6 +51,7 @@ export function AdminTaskList({
     <FlatList
       contentContainerClassName={contentContainerClassName}
       data={tasks}
+      keyExtractor={(item) => item.id.toString()}
       ListEmptyComponent={
         (!isLoading && (
           <EmptyState
@@ -62,23 +63,28 @@ export function AdminTaskList({
         )) ||
         null
       }
+      ListFooterComponent={
+        isFetchingNextPage ? (
+          <View className="py-4">
+            <TaskListItemSkeleton />
+          </View>
+        ) : null
+      }
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.5}
       refreshControl={
         <RefreshControl onRefresh={handleRefetch} refreshing={isRefetching} />
       }
       renderItem={({ item }) => (
-        <Link
-          className="active:bg-muted"
-          href={{
-            pathname: '/admin/tasks/[taskId]/view',
-            params: { taskId: item.id },
+        <EnhancedTaskCard
+          onPress={() => {
+            router.push({
+              pathname: '/admin/tasks/[taskId]/view',
+              params: { taskId: item.id },
+            })
           }}
-        >
-          <View className="w-full rounded-lg border border-border bg-card p-3">
-            <TaskListItem task={item} />
-          </View>
-        </Link>
+          task={item}
+        />
       )}
     />
   )
