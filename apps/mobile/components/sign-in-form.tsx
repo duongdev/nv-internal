@@ -17,6 +17,7 @@ export function SignInForm() {
   const { signIn, setActive, isLoaded } = useSignIn()
   const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
+  const [isLoading, setIsLoading] = React.useState(false)
   const passwordInputRef = React.useRef<TextInput>(null)
   const [error, setError] = React.useState<{
     username?: string
@@ -24,9 +25,11 @@ export function SignInForm() {
   }>({})
 
   async function onSubmit() {
-    if (!isLoaded) {
+    if (!isLoaded || isLoading) {
       return
     }
+
+    setIsLoading(true)
 
     // Start the sign-in process using the username and password provided
     try {
@@ -40,11 +43,14 @@ export function SignInForm() {
       if (signInAttempt.status === 'complete') {
         setError({ username: '', password: '' })
         await setActive({ session: signInAttempt.createdSessionId })
+        // Keep loading state true - navigation will unmount this component
         return
       }
       // TODO: Handle other statuses
       console.error(JSON.stringify(signInAttempt, null, 2))
+      setIsLoading(false)
     } catch (err) {
+      setIsLoading(false)
       // See https://go.clerk.com/mRUDrIe for more info on error handling
       if (err instanceof Error) {
         const errorMessage = err.message.toLowerCase()
@@ -101,10 +107,10 @@ export function SignInForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-black/5 sm:shadow-sm">
         <CardHeader>
-          <CardTitle className="text-center text-xl sm:text-left">
+          <CardTitle className="text-center text-2xl text-primary sm:text-left">
             Điện lạnh Nam Việt
           </CardTitle>
-          <CardDescription className="text-center sm:text-left">
+          <CardDescription className="text-center text-base sm:text-left">
             Chào mừng! Vui lòng đăng nhập để tiếp tục
           </CardDescription>
         </CardHeader>
@@ -116,6 +122,7 @@ export function SignInForm() {
                 accessibilityHint="Nhập tên đăng nhập của bạn"
                 accessibilityLabel="Tên đăng nhập"
                 autoCapitalize="none"
+                editable={!isLoading}
                 id="username"
                 onChangeText={setUsername}
                 onSubmitEditing={onUsernameSubmitEditing}
@@ -135,6 +142,7 @@ export function SignInForm() {
               <Input
                 accessibilityHint="Nhập mật khẩu của bạn"
                 accessibilityLabel="Mật khẩu"
+                editable={!isLoading}
                 id="password"
                 onChangeText={setPassword}
                 onSubmitEditing={onSubmit}
@@ -154,10 +162,11 @@ export function SignInForm() {
               accessibilityHint="Nhấn để đăng nhập vào hệ thống"
               accessibilityLabel="Đăng nhập"
               className="w-full"
+              disabled={isLoading || !isLoaded}
               onPress={onSubmit}
               testID="sign-in-submit-button"
             >
-              <Text>Đăng nhập</Text>
+              <Text>{isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}</Text>
             </Button>
           </View>
         </CardContent>
