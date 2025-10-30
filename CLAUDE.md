@@ -466,6 +466,12 @@ Assistant: Let me check the latest Prisma documentation...
 - **Coverage**: Target critical paths
 - **Test Environment**: Node environment with ts-jest preset
 - **Test Files**: Named `*.test.ts` alongside source files
+- **Mock-Based Testing**: All backend tests use mocks exclusively (NEVER real database)
+  - **Safety**: Zero database access prevents data corruption
+  - **Speed**: 211 tests complete in ~1.36 seconds
+  - **Pattern**: Mock `getPrisma()` to intercept all DB calls
+  - **Utilities**: Use `createMockPrismaClient()` and `resetPrismaMock()`
+  - **Documentation**: See `apps/api/README.md#testing` for patterns
 
 ## Development Commands
 

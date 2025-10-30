@@ -8,121 +8,89 @@
  * - Role-based access control
  * - Pagination
  * - Sorting
+ *
+ * IMPORTANT: These tests use mocks and do NOT touch the real database.
  */
 
 import type { User } from '@clerk/backend'
-import { afterAll, beforeEach, describe, expect, it } from '@jest/globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { TaskStatus } from '@nv-internal/prisma-client'
 import type { TaskSearchFilterQuery } from '@nv-internal/validation'
-import { getPrisma } from '../../../lib/prisma'
+import {
+  createMockAdminUser,
+  createMockWorkerUser,
+  type MockUser,
+} from '../../../test/mock-auth'
+import {
+  createMockPrismaClient,
+  resetPrismaMock,
+} from '../../../test/prisma-mock'
 import { searchAndFilterTasks } from '../task.service'
 
-const prisma = getPrisma()
-
-// Mock users
-const adminUser: User = {
-  id: 'admin_123',
-  publicMetadata: { role: 'admin' },
-} as User
-
-const workerUser: User = {
-  id: 'worker_456',
-  publicMetadata: { role: 'worker' },
-} as User
-
-const otherWorkerUser: User = {
-  id: 'worker_789',
-  publicMetadata: { role: 'worker' },
-} as User
+// Mock Prisma client
+const mockPrisma = createMockPrismaClient()
+jest.mock('../../../lib/prisma', () => ({
+  getPrisma: () => mockPrisma,
+}))
 
 describe('searchAndFilterTasks', () => {
-  // Test data setup
-  let testCustomer: { id: string }
-  let testGeoLocation: { id: string }
-  let _testTasks: Array<{ id: number }>
+  const toUser = (u: MockUser) => u as unknown as User
 
-  beforeEach(async () => {
-    // Clean up previous test data
-    await prisma.task.deleteMany()
-    await prisma.customer.deleteMany()
-    await prisma.geoLocation.deleteMany()
+  // Mock users
+  const adminUser = createMockAdminUser({ id: 'admin_123' })
+  const workerUser = createMockWorkerUser({ id: 'worker_456' })
+  const otherWorkerUser = createMockWorkerUser({ id: 'worker_789' })
 
-    // Create test customer with Vietnamese name
-    testCustomer = await prisma.customer.create({
-      data: {
-        name: 'Nguyễn Văn A',
-        phone: '0987654321',
-      },
-    })
+  // Mock data
+  const mockCustomer = {
+    id: 'cust_123',
+    name: 'Nguyễn Văn A',
+    phone: '0987654321',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
 
-    // Create test geo location with Vietnamese address
-    testGeoLocation = await prisma.geoLocation.create({
-      data: {
-        name: 'Hà Nội',
-        address: 'Số 123, Đường Láng, Quận Đống Đa, Hà Nội',
-        lat: 21.0285,
-        lng: 105.8542,
-      },
-    })
+  const mockGeoLocation = {
+    id: 'geo_123',
+    name: 'Hà Nội',
+    address: 'Số 123, Đường Láng, Quận Đống Đa, Hà Nội',
+    lat: 21.0285,
+    lng: 105.8542,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
 
-    // Create test tasks with various statuses and assignees
-    _testTasks = await Promise.all([
-      // Task 1: Admin task, preparing
-      prisma.task.create({
-        data: {
-          title: 'Sửa điều hòa',
-          description: 'Khách hàng cần sửa điều hòa gấp',
-          customerId: testCustomer.id,
-          geoLocationId: testGeoLocation.id,
-          status: TaskStatus.PREPARING,
-          assigneeIds: [adminUser.id],
-          createdAt: new Date('2025-01-01'),
-        },
-      }),
-      // Task 2: Worker task, in progress
-      prisma.task.create({
-        data: {
-          title: 'Lắp đặt máy lạnh mới',
-          description: 'Lắp đặt máy lạnh Daikin 2HP',
-          customerId: testCustomer.id,
-          geoLocationId: testGeoLocation.id,
-          status: TaskStatus.IN_PROGRESS,
-          assigneeIds: [workerUser.id],
-          startedAt: new Date('2025-01-02'),
-          createdAt: new Date('2025-01-02'),
-        },
-      }),
-      // Task 3: Other worker task, completed
-      prisma.task.create({
-        data: {
-          title: 'Vệ sinh máy lạnh',
-          description: 'Vệ sinh và bảo dưỡng định kỳ',
-          customerId: testCustomer.id,
-          geoLocationId: testGeoLocation.id,
-          status: TaskStatus.COMPLETED,
-          assigneeIds: [otherWorkerUser.id],
-          startedAt: new Date('2025-01-03'),
-          completedAt: new Date('2025-01-04'),
-          createdAt: new Date('2025-01-03'),
-        },
-      }),
-      // Task 4: Multi-assignee task
-      prisma.task.create({
-        data: {
-          title: 'Kiểm tra hệ thống',
-          description: 'Kiểm tra toàn bộ hệ thống điều hòa',
-          customerId: testCustomer.id,
-          geoLocationId: testGeoLocation.id,
-          status: TaskStatus.READY,
-          assigneeIds: [workerUser.id, otherWorkerUser.id],
-          createdAt: new Date('2025-01-05'),
-        },
-      }),
-    ])
+  const createMockTask = (overrides: Partial<any> = {}) => ({
+    id: 1,
+    title: 'Sửa điều hòa',
+    description: 'Khách hàng cần sửa điều hòa gấp',
+    customerId: mockCustomer.id,
+    geoLocationId: mockGeoLocation.id,
+    status: TaskStatus.PREPARING,
+    assigneeIds: [adminUser.id],
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+    scheduledAt: null,
+    startedAt: null,
+    completedAt: null,
+    expectedRevenue: null,
+    expectedCurrency: 'VND',
+    customer: mockCustomer,
+    geoLocation: mockGeoLocation,
+    attachments: [],
+    payments: [],
+    ...overrides,
+  })
+
+  beforeEach(() => {
+    resetPrismaMock(mockPrisma)
   })
 
   describe('Vietnamese accent-insensitive search', () => {
     it('should find tasks by customer name without accents', async () => {
+      const mockTasks = [createMockTask({ id: 1, customerId: mockCustomer.id })]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         search: 'nguyen van a', // No accents
         take: 20,
@@ -130,7 +98,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -139,6 +107,11 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should find tasks by address without accents', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, geoLocationId: mockGeoLocation.id }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         search: 'ha noi', // No accents for "Hà Nội"
         take: 20,
@@ -146,7 +119,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -155,6 +128,9 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should find tasks by title without accents', async () => {
+      const mockTasks = [createMockTask({ id: 1, title: 'Sửa điều hòa' })]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         search: 'sua dieu hoa', // No accents for "Sửa điều hòa"
         take: 20,
@@ -162,7 +138,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(result.tasks.some((t) => t.title.includes('Sửa điều hòa'))).toBe(
@@ -171,6 +147,9 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should find tasks by partial phone number', async () => {
+      const mockTasks = [createMockTask({ id: 1, customerId: mockCustomer.id })]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         search: '0987', // Partial phone
         take: 20,
@@ -178,7 +157,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -189,6 +168,11 @@ describe('searchAndFilterTasks', () => {
 
   describe('Status filtering', () => {
     it('should filter tasks by single status', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, status: TaskStatus.IN_PROGRESS }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         status: [TaskStatus.IN_PROGRESS],
         take: 20,
@@ -196,7 +180,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -205,6 +189,12 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should filter tasks by multiple statuses', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, status: TaskStatus.PREPARING }),
+        createMockTask({ id: 2, status: TaskStatus.READY }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         status: [TaskStatus.PREPARING, TaskStatus.READY],
         take: 20,
@@ -212,7 +202,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -226,6 +216,12 @@ describe('searchAndFilterTasks', () => {
 
   describe('Assignee filtering', () => {
     it('should filter tasks by single assignee', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [workerUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [workerUser.id, adminUser.id] }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         assigneeIds: [workerUser.id],
         take: 20,
@@ -233,7 +229,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -242,6 +238,16 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should filter tasks by multiple assignees', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [workerUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [otherWorkerUser.id] }),
+        createMockTask({
+          id: 3,
+          assigneeIds: [workerUser.id, otherWorkerUser.id],
+        }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         assigneeIds: [workerUser.id, otherWorkerUser.id],
         take: 20,
@@ -249,7 +255,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -264,6 +270,12 @@ describe('searchAndFilterTasks', () => {
 
   describe('Date range filtering', () => {
     it('should filter tasks by creation date range', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, createdAt: new Date('2025-01-02') }),
+        createMockTask({ id: 2, createdAt: new Date('2025-01-03') }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         createdFrom: new Date('2025-01-02').toISOString(),
         createdTo: new Date('2025-01-04').toISOString(),
@@ -272,7 +284,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -287,6 +299,15 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should filter tasks by completion date range', async () => {
+      const mockTasks = [
+        createMockTask({
+          id: 1,
+          status: TaskStatus.COMPLETED,
+          completedAt: new Date('2025-01-04'),
+        }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         completedFrom: new Date('2025-01-04').toISOString(),
         completedTo: new Date('2025-01-05').toISOString(),
@@ -295,7 +316,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(
         result.tasks.every((t) => {
@@ -314,6 +335,20 @@ describe('searchAndFilterTasks', () => {
 
   describe('Combined filters', () => {
     it('should apply search and status filter together', async () => {
+      const mockTasks = [
+        createMockTask({
+          id: 1,
+          title: 'Lắp đặt máy lạnh',
+          status: TaskStatus.IN_PROGRESS,
+        }),
+        createMockTask({
+          id: 2,
+          title: 'Sửa máy lạnh',
+          status: TaskStatus.COMPLETED,
+        }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         search: 'may lanh',
         status: [TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED],
@@ -322,7 +357,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -337,6 +372,16 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should apply search, status, and assignee filters together', async () => {
+      const mockTasks = [
+        createMockTask({
+          id: 1,
+          title: 'Task for Nguyen',
+          status: TaskStatus.IN_PROGRESS,
+          assigneeIds: [workerUser.id],
+        }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         search: 'nguyen',
         status: [TaskStatus.IN_PROGRESS],
@@ -346,7 +391,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       if (result.tasks.length > 0) {
         expect(
@@ -362,25 +407,39 @@ describe('searchAndFilterTasks', () => {
 
   describe('Role-based access control', () => {
     it('should allow admin to see all tasks by default', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [adminUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [workerUser.id] }),
+        createMockTask({ id: 3, assigneeIds: [otherWorkerUser.id] }),
+        createMockTask({ id: 4, assigneeIds: [] }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 20,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThanOrEqual(4) // All test tasks
     })
 
     it('should restrict worker to only assigned tasks', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [workerUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [workerUser.id, adminUser.id] }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 20,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(workerUser, filters)
+      const result = await searchAndFilterTasks(toUser(workerUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -389,6 +448,15 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should allow worker to use assignedOnly filter', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [workerUser.id] }),
+        createMockTask({
+          id: 2,
+          assigneeIds: [workerUser.id, otherWorkerUser.id],
+        }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         assignedOnly: 'true',
         take: 20,
@@ -396,7 +464,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(workerUser, filters)
+      const result = await searchAndFilterTasks(toUser(workerUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
       expect(
@@ -414,6 +482,12 @@ describe('searchAndFilterTasks', () => {
      * separate from the admin module where they manage all company tasks.
      */
     it('should allow admin to filter to only their assigned tasks with assignedOnly=true', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [adminUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [adminUser.id, workerUser.id] }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         assignedOnly: 'true',
         take: 20,
@@ -421,7 +495,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       // Admin should only see tasks assigned to them
       expect(result.tasks.length).toBeGreaterThan(0)
@@ -440,13 +514,21 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should allow admin to see all tasks when assignedOnly is not set', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [adminUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [workerUser.id] }),
+        createMockTask({ id: 3, assigneeIds: [otherWorkerUser.id] }),
+        createMockTask({ id: 4, assigneeIds: [] }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 20,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       // Admin should see all tasks (not just their assigned ones)
       expect(result.tasks.length).toBeGreaterThanOrEqual(4) // All test tasks
@@ -459,6 +541,14 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should allow admin to see all tasks even with assignedOnly=false', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, assigneeIds: [adminUser.id] }),
+        createMockTask({ id: 2, assigneeIds: [workerUser.id] }),
+        createMockTask({ id: 3, assigneeIds: [otherWorkerUser.id] }),
+        createMockTask({ id: 4, assigneeIds: [] }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         assignedOnly: 'false',
         take: 20,
@@ -466,7 +556,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       // Admin should see all tasks when explicitly setting assignedOnly to false
       expect(result.tasks.length).toBeGreaterThanOrEqual(4) // All test tasks
@@ -475,26 +565,37 @@ describe('searchAndFilterTasks', () => {
 
   describe('Pagination', () => {
     it('should paginate results correctly', async () => {
+      // First page: return 3 tasks (take=2, so we return 2 + hasNextPage=true)
+      const firstPageTasks = [
+        createMockTask({ id: 1 }),
+        createMockTask({ id: 2 }),
+        createMockTask({ id: 3 }), // Extra to indicate hasNextPage
+      ]
+      mockPrisma.task.findMany.mockResolvedValueOnce(firstPageTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 2,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const firstPage = await searchAndFilterTasks(adminUser, filters)
+      const firstPage = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(firstPage.tasks.length).toBeLessThanOrEqual(2)
       expect(firstPage.hasNextPage).toBe(true)
       expect(firstPage.nextCursor).toBeTruthy()
 
-      // Fetch second page
+      // Second page
+      const secondPageTasks = [createMockTask({ id: 4 })]
+      mockPrisma.task.findMany.mockResolvedValueOnce(secondPageTasks)
+
       const secondPageFilters: TaskSearchFilterQuery = {
         ...filters,
         cursor: firstPage.nextCursor || undefined,
       }
 
       const secondPage = await searchAndFilterTasks(
-        adminUser,
+        toUser(adminUser),
         secondPageFilters,
       )
 
@@ -509,13 +610,16 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should return hasNextPage false on last page', async () => {
+      const mockTasks = [createMockTask({ id: 1 }), createMockTask({ id: 2 })]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 100, // More than total tasks
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.hasNextPage).toBe(false)
       expect(result.nextCursor).toBeNull()
@@ -524,13 +628,20 @@ describe('searchAndFilterTasks', () => {
 
   describe('Sorting', () => {
     it('should sort by creation date descending', async () => {
+      const mockTasks = [
+        createMockTask({ id: 3, createdAt: new Date('2025-01-05') }),
+        createMockTask({ id: 2, createdAt: new Date('2025-01-03') }),
+        createMockTask({ id: 1, createdAt: new Date('2025-01-01') }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 20,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(1)
       for (let i = 0; i < result.tasks.length - 1; i++) {
@@ -543,13 +654,20 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should sort by creation date ascending', async () => {
+      const mockTasks = [
+        createMockTask({ id: 1, createdAt: new Date('2025-01-01') }),
+        createMockTask({ id: 2, createdAt: new Date('2025-01-03') }),
+        createMockTask({ id: 3, createdAt: new Date('2025-01-05') }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 20,
         sortBy: 'createdAt',
         sortOrder: 'asc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(1)
       for (let i = 0; i < result.tasks.length - 1; i++) {
@@ -560,13 +678,20 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should sort by task ID', async () => {
+      const mockTasks = [
+        createMockTask({ id: 3 }),
+        createMockTask({ id: 2 }),
+        createMockTask({ id: 1 }),
+      ]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         take: 20,
         sortBy: 'id',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(1)
       for (let i = 0; i < result.tasks.length - 1; i++) {
@@ -579,6 +704,8 @@ describe('searchAndFilterTasks', () => {
 
   describe('Edge cases', () => {
     it('should handle empty search results gracefully', async () => {
+      mockPrisma.task.findMany.mockResolvedValue([])
+
       const filters: TaskSearchFilterQuery = {
         search: 'nonexistentcustomer12345',
         take: 20,
@@ -586,7 +713,7 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks).toEqual([])
       expect(result.hasNextPage).toBe(false)
@@ -594,6 +721,9 @@ describe('searchAndFilterTasks', () => {
     })
 
     it('should handle empty status filter array', async () => {
+      const mockTasks = [createMockTask({ id: 1 }), createMockTask({ id: 2 })]
+      mockPrisma.task.findMany.mockResolvedValue(mockTasks)
+
       const filters: TaskSearchFilterQuery = {
         status: [],
         take: 20,
@@ -601,36 +731,24 @@ describe('searchAndFilterTasks', () => {
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks.length).toBeGreaterThan(0)
     })
 
     it('should handle customer filter with no tasks', async () => {
-      const otherCustomer = await prisma.customer.create({
-        data: {
-          name: 'Trần Thị B',
-          phone: '0123456789',
-        },
-      })
+      mockPrisma.task.findMany.mockResolvedValue([])
 
       const filters: TaskSearchFilterQuery = {
-        customerId: otherCustomer.id,
+        customerId: 'cust_nonexistent',
         take: 20,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }
 
-      const result = await searchAndFilterTasks(adminUser, filters)
+      const result = await searchAndFilterTasks(toUser(adminUser), filters)
 
       expect(result.tasks).toEqual([])
     })
-  })
-
-  // Clean up after all tests to prevent data leakage
-  afterAll(async () => {
-    await prisma.task.deleteMany()
-    await prisma.customer.deleteMany()
-    await prisma.geoLocation.deleteMany()
   })
 })
