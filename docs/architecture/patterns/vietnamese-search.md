@@ -263,6 +263,7 @@ it('finds Vietnamese text with accent-insensitive search', async () => {
 
 ## Related Patterns
 
+- [SearchableText](./searchable-text.md) - Pre-computed search optimization
 - [Authentication](./auth-middleware.md) - Role-based filtering
 - [Route Organization](./route-organization.md) - Search endpoint structure
 - [Error Handling](./error-handling.md) - Search error responses

@@ -18,7 +18,7 @@ export type FetchTaskListResponse = Awaited<ReturnType<typeof fetchTaskList>>
 
 export const TASK_LIST_QUERY_KEY = ['tasks']
 
-export function useTaskInfiniteList() {
+export function useTaskInfiniteList(options?: { enabled?: boolean }) {
   const infiniteQuery = useInfiniteQuery({
     queryKey: TASK_LIST_QUERY_KEY,
     queryFn: async ({ pageParam = '' }) => {
@@ -26,6 +26,7 @@ export function useTaskInfiniteList() {
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: '',
+    enabled: options?.enabled ?? true,
   })
 
   return infiniteQuery

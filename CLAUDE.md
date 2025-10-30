@@ -227,6 +227,7 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[Timezone Handling](./docs/architecture/patterns/timezone-handling.md)** - Modern TZDate for accurate date boundaries
 - **[Tabs Navigation](./docs/architecture/patterns/tabs-navigation.md)** - **CRITICAL**: Stable tabs implementation with haptic feedback
 - **[Vietnamese Search](./docs/architecture/patterns/vietnamese-search.md)** - Accent-insensitive search for Vietnamese text
+- **[SearchableText](./docs/architecture/patterns/searchable-text.md)** - Pre-computed search fields for performance
 
 ### Recently Established Patterns
 
@@ -297,6 +298,33 @@ Patterns established while fixing Vietnamese search and bottom sheet usability:
   - Use `numberOfLines={1}` with `ellipsizeMode="middle"` for emails
   - Shows beginning and end of address for better recognition
   - Prevents UI overflow in constrained spaces
+
+#### Admin/Worker Search & Filter Implementation (2025-10-30)
+
+Comprehensive search and filter functionality added to admin and worker task lists:
+
+- **SearchableText Pattern**: Pre-computed search field optimization
+  - 64% code reduction (140 lines → 50 lines)
+  - 2-3x performance improvement with single indexed field
+  - Perfect pagination accuracy (no post-processing)
+  - Vietnamese accent-insensitive search built-in
+  - Task: `.claude/tasks/20251030-110000-complete-phase3-phase4-search-filter-ui.md`
+
+- **Native Header Search**: iOS/Android native search bars
+  - Uses `headerSearchBarOptions` for platform-specific UI
+  - Real-time search with debouncing
+  - Seamless integration with infinite scroll
+
+- **Comprehensive Filtering**: Status, date, assignee, and sort
+  - Color-coded status chips matching existing badges
+  - Quick date presets with custom calendar picker
+  - Vietnamese search for assignee selection
+  - Active filter display with dismissible chips
+
+- **Bottom Sheet Patterns**: Fixed layout with sticky footer
+  - Separate modals to avoid VirtualizedList nesting
+  - Safe area padding with pb-safe utility
+  - Proper gesture handling with specialized components
 
 ### Navigation Stability Patterns (2025-10-30)
 

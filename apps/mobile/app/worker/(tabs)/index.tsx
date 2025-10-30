@@ -1,13 +1,23 @@
+import type { TaskSearchFilterQuery } from '@nv-internal/validation'
 import { TaskStatus } from '@nv-internal/validation'
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { Stack, useRouter } from 'expo-router'
-import { useMemo, useState } from 'react'
+import { FilterIcon } from 'lucide-react-native'
+import { useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, RefreshControl, View } from 'react-native'
 import { useAssignedTaskInfiniteList } from '@/api/task/use-assigned-task-infinite-list'
 import { useTaskSearch } from '@/api/task/use-task-search'
+import { ActiveFilterChips } from '@/components/task/active-filter-chips'
 import { EnhancedTaskCard } from '@/components/task/enhanced-task-card'
+import {
+  TaskFilterBottomSheet,
+  type TaskFilterBottomSheetMethods,
+  type TaskFilterState,
+} from '@/components/task/task-filter-bottom-sheet'
 import { TaskListItemSkeleton } from '@/components/task-list-item-skeleton'
+import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { cn } from '@/lib/utils'
 
@@ -30,9 +40,20 @@ export default function WorkerIndex() {
   const router = useRouter()
   const [activeFilter, setActiveFilter] = useState<TaskFilter>('active')
   const [searchText, setSearchText] = useState('')
+  const [filterState, setFilterState] = useState<TaskFilterState>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
 
-  // Determine if we're searching
-  const isSearching = searchText.trim().length > 0
+  const filterSheetRef = useRef<TaskFilterBottomSheetMethods>(null)
+
+  // Determine if we're searching or filtering
+  const hasAdditionalFilters =
+    (filterState.createdFrom ||
+      filterState.createdTo ||
+      filterState.completedFrom ||
+      filterState.completedTo) !== undefined
+  const isSearching = searchText.trim().length > 0 || hasAdditionalFilters
 
   // Regular task lists (no search)
   const {
@@ -58,7 +79,25 @@ export default function WorkerIndex() {
     limit: 50,
   })
 
-  // Search results (filtered by status)
+  // Convert filter state to API query format
+  const apiFilters: Omit<TaskSearchFilterQuery, 'search' | 'cursor' | 'take'> =
+    useMemo(() => {
+      return {
+        status:
+          activeFilter === 'active'
+            ? [TaskStatus.READY, TaskStatus.IN_PROGRESS]
+            : [TaskStatus.COMPLETED],
+        assignedOnly: 'true', // Worker should only see their tasks
+        createdFrom: filterState.createdFrom?.toISOString(),
+        createdTo: filterState.createdTo?.toISOString(),
+        completedFrom: filterState.completedFrom?.toISOString(),
+        completedTo: filterState.completedTo?.toISOString(),
+        sortBy: filterState.sortBy,
+        sortOrder: filterState.sortOrder,
+      }
+    }, [filterState, activeFilter])
+
+  // Search results (filtered by status and additional filters)
   const {
     data: searchResults,
     refetch: refetchSearch,
@@ -70,11 +109,7 @@ export default function WorkerIndex() {
   } = useTaskSearch(
     {
       search: searchText,
-      status:
-        activeFilter === 'active'
-          ? [TaskStatus.READY, TaskStatus.IN_PROGRESS]
-          : [TaskStatus.COMPLETED],
-      assignedOnly: 'true', // Worker should only see their tasks
+      ...apiFilters,
     },
     { enabled: isSearching },
   )
@@ -130,6 +165,37 @@ export default function WorkerIndex() {
       setActiveFilter(filter)
     }
   }
+
+  const handleApplyFilters = (newFilters: TaskFilterState) => {
+    setFilterState(newFilters)
+  }
+
+  const handleRemoveDateFilter = (filterType: 'created' | 'completed') => {
+    setFilterState((prev) => {
+      if (filterType === 'created') {
+        return { ...prev, createdFrom: undefined, createdTo: undefined }
+      }
+      if (filterType === 'completed') {
+        return { ...prev, completedFrom: undefined, completedTo: undefined }
+      }
+      return prev
+    })
+  }
+
+  const handleClearAllFilters = () => {
+    setFilterState({
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    })
+  }
+
+  // Count active filters (excluding sort and status which are always present)
+  const activeFilterCount = useMemo(() => {
+    return (
+      (filterState.createdFrom || filterState.createdTo ? 1 : 0) +
+      (filterState.completedFrom || filterState.completedTo ? 1 : 0)
+    )
+  }, [filterState])
 
   const isRefetching = isSearching
     ? isRefetchingSearch
@@ -209,9 +275,38 @@ export default function WorkerIndex() {
             placeholder: 'Tìm công việc...',
             onChangeText: ({ nativeEvent }) => setSearchText(nativeEvent.text),
           },
+          headerRight: () => (
+            <Button
+              className="relative w-10"
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light)
+                filterSheetRef.current?.present()
+              }}
+              size={null}
+              variant={null}
+            >
+              <Icon as={FilterIcon} className="size-6" />
+              {activeFilterCount > 0 && (
+                <View className="absolute top-0 right-0 size-5 items-center justify-center rounded-full bg-primary">
+                  <Text className="font-sans-bold text-[10px] text-primary-foreground">
+                    {activeFilterCount}
+                  </Text>
+                </View>
+              )}
+            </Button>
+          ),
         }}
       />
       <View className="flex-1 bg-background">
+        {/* Active Filter Chips */}
+        {activeFilterCount > 0 && (
+          <ActiveFilterChips
+            filters={filterState}
+            onClearAll={handleClearAllFilters}
+            onRemoveDateFilter={handleRemoveDateFilter}
+          />
+        )}
+
         {/* Tab Filter Buttons */}
         <View className="flex-row gap-2 border-border border-b bg-background px-4 pt-2 pb-3">
           <Pressable
@@ -375,6 +470,14 @@ export default function WorkerIndex() {
           windowSize={10}
         />
       </View>
+
+      {/* Filter Bottom Sheet - Workers cannot filter by assignees */}
+      <TaskFilterBottomSheet
+        initialFilters={filterState}
+        onApplyFilters={handleApplyFilters}
+        ref={filterSheetRef}
+        showAssigneeFilter={false} // Workers cannot filter by assignees
+      />
     </>
   )
 }

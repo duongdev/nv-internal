@@ -1,3 +1,4 @@
+import type { TaskSearchFilterQuery } from '@nv-internal/validation'
 import { useRouter } from 'expo-router'
 import { FlatList, RefreshControl, ScrollView, View } from 'react-native'
 import { useTaskInfiniteList } from '@/api/task/use-task-infinite-list'
@@ -9,16 +10,19 @@ import { EmptyState } from './ui/empty-state'
 export type AdminTaskListProps = {
   contentContainerClassName?: string
   searchText?: string
+  filters?: Omit<TaskSearchFilterQuery, 'search' | 'cursor' | 'take'>
 }
 
 export function AdminTaskList({
   contentContainerClassName,
   searchText = '',
+  filters = {},
 }: AdminTaskListProps) {
   const router = useRouter()
 
-  // Use search API when query exists, otherwise use regular list
-  const isSearching = searchText.trim().length > 0
+  // Determine if we should use search API (when search text or filters are present)
+  const hasFilters = Object.keys(filters).length > 0
+  const isSearching = searchText.trim().length > 0 || hasFilters
 
   const {
     data: listData,
@@ -28,7 +32,7 @@ export function AdminTaskList({
     isLoading: listIsLoading,
     fetchNextPage: listFetchNextPage,
     refetch: listRefetch,
-  } = useTaskInfiniteList()
+  } = useTaskInfiniteList({ enabled: !isSearching })
 
   const {
     data: searchData,
@@ -39,11 +43,11 @@ export function AdminTaskList({
     fetchNextPage: searchFetchNextPage,
     refetch: searchRefetch,
   } = useTaskSearch(
-    { search: searchText },
-    { enabled: isSearching }, // Only run search query when there's a search term
+    { search: searchText, ...filters },
+    { enabled: isSearching },
   )
 
-  // Select the appropriate data source based on search state
+  // Select the appropriate data source based on search/filter state
   const data = isSearching ? searchData : listData
   const hasNextPage = isSearching ? searchHasNextPage : listHasNextPage
   const isFetchingNextPage = isSearching
@@ -94,7 +98,9 @@ export function AdminTaskList({
             image="laziness"
             messageDescription={
               isSearching
-                ? `Không tìm thấy công việc nào khớp với "${searchText}".`
+                ? searchText
+                  ? `Không tìm thấy công việc nào khớp với "${searchText}".`
+                  : 'Không có công việc nào phù hợp với bộ lọc đã chọn.'
                 : 'Hãy tạo công việc mới để bắt đầu làm việc.'
             }
             messageTitle={
