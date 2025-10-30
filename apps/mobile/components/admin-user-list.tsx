@@ -7,7 +7,6 @@ import {
   NotificationFeedbackType,
   notificationAsync,
 } from 'expo-haptics'
-import Fuse from 'fuse.js'
 import {
   ChevronRightIcon,
   CircleSlashIcon,
@@ -19,7 +18,7 @@ import {
   SquareArrowOutUpRightIcon,
   SquareAsteriskIcon,
 } from 'lucide-react-native'
-import { type FC, type RefObject, useMemo, useRef } from 'react'
+import { type FC, type RefObject, useRef } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -33,6 +32,7 @@ import {
 import { useBanUnbanUser } from '@/api/user/use-ban-unban-user'
 import { useUpdateUserRoles } from '@/api/user/use-update-user-roles'
 import { type User, useUserList } from '@/api/user/use-user-list'
+import { useUserSearch } from '@/hooks/use-user-search'
 import { cn } from '@/lib/utils'
 import {
   formatPhoneNumber,
@@ -69,28 +69,8 @@ export const AdminUserList: FC<AdminUserListProps> = ({
     await refetch()
   }
 
-  const users = useMemo(() => {
-    if (!data) {
-      return []
-    }
-
-    if (!searchText) {
-      return data
-    }
-
-    const fuse = new Fuse(
-      data.map((user) => ({
-        ...user,
-        phoneNumber: getUserPhoneNumber(user),
-      })),
-      {
-        keys: ['firstName', 'lastName', 'phoneNumber', 'username'],
-        threshold: 0.3,
-      },
-    )
-
-    return fuse.search(searchText).map((result) => result.item)
-  }, [data, searchText])
+  // Use Fuse.js for fuzzy search with accent-insensitive matching
+  const users = useUserSearch(data, searchText || '')
 
   if (isLoading) {
     return <ActivityIndicator className="my-2" />
@@ -184,7 +164,7 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
       <BottomSheetView className="gap-2 px-4 pb-safe">
         <View className="flex-row items-center gap-4">
           <UserAvatar className="size-16" user={user} />
-          <View>
+          <View className="flex-1 gap-1">
             <View className="flex-row items-center gap-2">
               <Text
                 className={cn({ 'line-through': isUserBanned(user) })}
@@ -197,11 +177,18 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
                   <UserRoleBadge key={role} role={role} />
                 ))}
             </View>
-            <Text>
-              {user.username} •{' '}
-              {getUserPrimaryEmail(user) ||
-                formatPhoneNumber(getUserPhoneNumber(user))}
+            <Text className="text-muted-foreground text-sm" numberOfLines={1}>
+              {user.username}
             </Text>
+            {getUserPrimaryEmail(user) && (
+              <Text
+                className="text-muted-foreground text-sm"
+                ellipsizeMode="middle"
+                numberOfLines={1}
+              >
+                {getUserPrimaryEmail(user)}
+              </Text>
+            )}
           </View>
         </View>
         <Separator />

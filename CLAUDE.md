@@ -270,6 +270,33 @@ These patterns were established during the Employee Summary feature implementati
   - Use `useMemo` to optimize filtering performance
   - Provide search highlighting for better UX
 
+#### User Search & Bottom Sheet Patterns (2025-10-30)
+
+Patterns established while fixing Vietnamese search and bottom sheet usability:
+
+- **Vietnamese Accent-Insensitive Search**: Support typing without diacritics
+  - Use `removeVietnameseAccents()` utility for search normalization
+  - Apply to both search query and target text for matching
+  - Critical for Vietnamese users who omit accents for typing speed
+  - Implemented with Fuse.js for fuzzy matching and typo tolerance
+  - Task: `.claude/tasks/20251030-045028-fix-user-search-and-bottom-sheet.md`
+
+- **Bottom Sheet List Integration**: Use specialized components for proper gesture handling
+  - Always use `BottomSheetFlatList` from `@gorhom/bottom-sheet` (never standard `FlatList`)
+  - Set appropriate `index` prop for initial height (e.g., `index={1}` for 90% screen)
+  - Place action buttons in `ListFooterComponent` to scroll with content
+  - Prevents gesture conflicts between sheet drag and list scroll
+
+- **Null-Safe String Operations**: Defensive programming for optional fields
+  - Always use `(value || '').toLowerCase()` for potentially null strings
+  - Prevents runtime crashes with missing data (e.g., phone numbers)
+  - Apply consistently across all string transformations
+
+- **Email Display Pattern**: Graceful truncation for long text
+  - Use `numberOfLines={1}` with `ellipsizeMode="middle"` for emails
+  - Shows beginning and end of address for better recognition
+  - Prevents UI overflow in constrained spaces
+
 ### Navigation Stability Patterns (2025-10-30)
 
 Key learnings from navigation system debugging and migration:

@@ -1,16 +1,15 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet'
+import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet'
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
-import Fuse from 'fuse.js'
 import { CheckIcon } from 'lucide-react-native'
-import { type FC, useMemo, useState } from 'react'
+import { type FC, useState } from 'react'
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   RefreshControl,
   View,
 } from 'react-native'
 import { useUserList } from '@/api/user/use-user-list'
+import { useUserSearch } from '@/hooks/use-user-search'
 import { cn } from '@/lib/utils'
 import {
   formatPhoneNumber,
@@ -37,42 +36,43 @@ export const UserSelectBottomSheetModal: FC<
   const [searchText, setSearchText] = useState('')
   const { data, isLoading, refetch, isRefetching } = useUserList()
 
-  const users = useMemo(() => {
-    if (!data) {
-      return []
-    }
-
-    if (!searchText) {
-      return data
-    }
-
-    const fuse = new Fuse(
-      data.map((user) => ({
-        ...user,
-        phoneNumber: getUserPhoneNumber(user),
-      })),
-      {
-        keys: ['firstName', 'lastName', 'phoneNumber', 'username'],
-        threshold: 0.3,
-      },
-    )
-
-    return fuse.search(searchText).map((result) => result.item)
-  }, [data, searchText])
+  // Use Fuse.js for fuzzy search with accent-insensitive matching
+  const users = useUserSearch(data, searchText)
 
   return (
-    <BottomSheetView className="h-full flex-1 gap-2 px-4">
+    <BottomSheetView className="gap-2 px-4">
       <SearchBox
         isInBottomSheet
         onChangeTextDebounced={setSearchText}
         placeholder="Tìm nhân viên..."
       />
       {isLoading && <ActivityIndicator className="my-1" />}
-      <FlatList
-        className="flex-1"
-        contentContainerClassName="flex-1"
+      {/*
+        IMPORTANT: Use BottomSheetFlatList from @gorhom/bottom-sheet for scrolling within bottom sheets.
+        Regular FlatList from react-native does NOT work properly in bottom sheets.
+        - Buttons are placed in ListFooterComponent to ensure they scroll with content
+        - contentContainerStyle provides padding for the bottom content
+      */}
+      <BottomSheetFlatList
+        contentContainerStyle={{ paddingBottom: 16 }}
         data={users}
         keyExtractor={(item) => item.id}
+        ListFooterComponent={
+          (onCancel || onSave) && (
+            <View className="flex-row gap-2 pt-4 pb-6">
+              {onCancel && (
+                <Button className="flex-1" onPress={onCancel} variant="outline">
+                  <Text>Hủy</Text>
+                </Button>
+              )}
+              {onSave && (
+                <Button className="flex-1" onPress={onSave}>
+                  <Text>Lưu</Text>
+                </Button>
+              )}
+            </View>
+          )
+        }
         refreshControl={
           <RefreshControl onRefresh={refetch} refreshing={isRefetching} />
         }
@@ -114,20 +114,6 @@ export const UserSelectBottomSheetModal: FC<
           </Pressable>
         )}
       />
-      {(onCancel || onSave) && (
-        <View className="flex-row gap-2 pb-4">
-          {onCancel && (
-            <Button className="flex-1" onPress={onCancel} variant="outline">
-              <Text>Hủy</Text>
-            </Button>
-          )}
-          {onSave && (
-            <Button className="flex-1" onPress={onSave}>
-              <Text>Lưu</Text>
-            </Button>
-          )}
-        </View>
-      )}
     </BottomSheetView>
   )
 }

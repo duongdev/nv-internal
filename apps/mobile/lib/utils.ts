@@ -38,3 +38,40 @@ export function formatCurrencyCompact(amount: number): string {
   // Under 1000: 500 ₫
   return `${absAmount.toLocaleString('vi-VN')} ₫`
 }
+
+/**
+ * Remove Vietnamese accents and diacritics from a string
+ * Used for accent-insensitive search functionality
+ *
+ * @param str - The string to normalize
+ * @returns A normalized string without Vietnamese accents
+ *
+ * @example
+ * removeVietnameseAccents("Dương Đỗ") // "Duong Do"
+ * removeVietnameseAccents("Nguyễn Văn A") // "Nguyen Van A"
+ */
+export function removeVietnameseAccents(str: string): string {
+  return str
+    .normalize('NFD') // Normalize to decomposed form
+    .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks
+    .replace(/đ/g, 'd') // Replace lowercase đ
+    .replace(/Đ/g, 'D') // Replace uppercase Đ
+}
+
+/**
+ * Perform accent-insensitive search on a Vietnamese string
+ * Normalizes both the search query and target string before comparison
+ *
+ * @param text - The text to search in
+ * @param query - The search query
+ * @returns True if the normalized text contains the normalized query
+ *
+ * @example
+ * vietnameseSearch("Dương Đỗ", "duong") // true
+ * vietnameseSearch("Nguyễn Văn A", "nguyen van") // true
+ */
+export function vietnameseSearch(text: string, query: string): boolean {
+  const normalizedText = removeVietnameseAccents(text.toLowerCase())
+  const normalizedQuery = removeVietnameseAccents(query.toLowerCase())
+  return normalizedText.includes(normalizedQuery)
+}

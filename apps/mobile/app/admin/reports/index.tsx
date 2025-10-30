@@ -1,5 +1,6 @@
 import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
 import { router, Stack } from 'expo-router'
+import Fuse from 'fuse.js'
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -31,6 +32,7 @@ import {
   getNextMonth,
   getPreviousMonth,
 } from '@/lib/date-utils'
+import { removeVietnameseAccents } from '@/lib/utils'
 import { getUserFullName } from '@/utils/user-helper'
 
 // Constant for FlatList optimization
@@ -86,17 +88,41 @@ export default function ReportsSummaryScreen() {
     })
   }, [data?.employees])
 
-  // Filter employees by search query
+  // Filter employees by search query with fuzzy search (Fuse.js)
   const filteredEmployees = useMemo(() => {
     if (!searchQuery.trim()) {
       return employeesWithRanks
     }
 
-    const query = searchQuery.toLowerCase().trim()
-    return employeesWithRanks.filter((emp) => {
-      const fullName = getUserFullName(emp).toLowerCase()
-      const email = emp.email?.toLowerCase() || ''
-      return fullName.includes(query) || email.includes(query)
+    // Create searchable data with normalized fields
+    const searchableEmployees = employeesWithRanks.map((emp) => ({
+      ...emp,
+      searchName: removeVietnameseAccents(getUserFullName(emp).toLowerCase()),
+      searchEmail: removeVietnameseAccents((emp.email || '').toLowerCase()),
+    }))
+
+    // Configure Fuse.js for fuzzy matching
+    const fuse = new Fuse(searchableEmployees, {
+      keys: ['searchName', 'searchEmail'],
+      threshold: 0.3,
+      includeScore: true,
+      shouldSort: true,
+      ignoreLocation: true,
+    })
+
+    // Normalize search query
+    const normalizedQuery = removeVietnameseAccents(
+      searchQuery.toLowerCase().trim(),
+    )
+
+    // Perform fuzzy search
+    const results = fuse.search(normalizedQuery)
+
+    // Return original employee objects (without search* fields) while preserving rank
+    return results.map((result) => {
+      // biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit search* fields
+      const { searchName, searchEmail, ...emp } = result.item
+      return emp as EmployeeSummary & { rank: number }
     })
   }, [employeesWithRanks, searchQuery])
 

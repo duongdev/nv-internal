@@ -377,6 +377,7 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
       {/* Assignee Selection Bottom Sheet (Admin Only) */}
       {appRole === 'admin' && (
         <BottomSheet
+          index={1}
           onDismiss={handleModalDismiss}
           ref={assigneeModalRef}
           snapPoints={['50%', '90%']}
