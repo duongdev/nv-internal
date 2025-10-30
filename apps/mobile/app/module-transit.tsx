@@ -66,10 +66,10 @@ export default function ModuleTransitScreen() {
       }
 
       // MODE B: Entry Point - determine module based on role + preference
+      // Note: user is guaranteed to be authenticated by index.tsx redirect guard
       if (!user) {
-        // Not logged in - this shouldn't happen as transit is protected
-        // But handle it gracefully
-        router.replace('/(auth)/sign-in')
+        // This should never happen, but if it does, wait for user to load
+        // The loading state will handle the UI
         return
       }
 
