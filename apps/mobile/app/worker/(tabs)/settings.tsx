@@ -6,7 +6,7 @@ export default function WorkerSettingsScreen() {
     <ScrollView
       bounces={false}
       className="flex-1 bg-background"
-      contentContainerClassName="px-4 pt-4 pb-safe"
+      contentContainerClassName="px-4 pt-safe pb-safe"
     >
       <UserSettingsScreen isAdminView={false} />
     </ScrollView>

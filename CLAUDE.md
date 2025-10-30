@@ -225,17 +225,20 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[File Uploads](./docs/architecture/patterns/file-upload.md)** - Hono RPC limitations
 - **[Cache Invalidation](./docs/architecture/patterns/cache-invalidation.md)** - TanStack Query patterns
 - **[Timezone Handling](./docs/architecture/patterns/timezone-handling.md)** - Modern TZDate for accurate date boundaries
-- **[NativeTabs Navigation](./docs/architecture/patterns/nativetabs-navigation.md)** - **CRITICAL**: Avoiding unresponsive UI with NativeTabs
+- **[Tabs Navigation](./docs/architecture/patterns/tabs-navigation.md)** - **CRITICAL**: Stable tabs implementation with haptic feedback
 
 ### Recently Established Patterns
 
-#### NativeTabs Navigation Fix (2025-10-30)
+#### Stable Tabs Migration (2025-10-30)
 
-**Critical Discovery**: Using `screenOptions` at Stack level creates invisible overlays that block NativeTabs touch events.
-- **Problem**: Both admin and worker tabs became completely unresponsive
-- **Solution**: Use individual `options` on each Stack.Screen instead
-- **Task**: `.claude/tasks/20251030-025700-fix-worker-unresponsive-ui.md`
-- **Pattern**: [NativeTabs Navigation](./docs/architecture/patterns/nativetabs-navigation.md)
+**Critical Migration**: Replaced unstable NativeTabs with stable Tabs component due to persistent UI responsiveness issues.
+- **Problem**: NativeTabs (unstable-native-tabs) caused unresponsive UI on initial module load
+- **Root Cause**: Component marked as unstable with race conditions in navigation state
+- **Solution**: Migrated to stable Tabs from expo-router with haptic feedback
+- **Additional Fix**: Continue avoiding `screenOptions` at Stack level (causes invisible overlays)
+- **Migration Task**: `.claude/tasks/20251030-041902-migrate-nativetabs-to-stable-tabs.md`
+- **Original Issue**: `.claude/tasks/20251030-025700-fix-worker-unresponsive-ui.md`
+- **Pattern**: [Tabs Navigation](./docs/architecture/patterns/tabs-navigation.md)
 
 #### Employee Summary Implementation (2025-10-30)
 
@@ -267,6 +270,36 @@ These patterns were established during the Employee Summary feature implementati
   - Use `useMemo` to optimize filtering performance
   - Provide search highlighting for better UX
 
+### Navigation Stability Patterns (2025-10-30)
+
+Key learnings from navigation system debugging and migration:
+
+- **Avoid Unstable APIs in Production**:
+  - The "unstable" prefix means it - NativeTabs had race conditions and initialization issues
+  - Always prefer stable, battle-tested components for production apps
+  - Migration path: `unstable-native-tabs` → stable `Tabs` from expo-router
+
+- **Stack Navigator screenOptions Pitfall**:
+  - Using `screenOptions` on Stack creates invisible header overlays even with `headerShown: false`
+  - These overlays block touch events on child components (tabs, buttons, etc.)
+  - Solution: Always use individual `options` on each Stack.Screen
+
+- **Navigation State Timing**:
+  - Immediate redirects (`<Redirect />`) can cause navigation state race conditions
+  - Use delayed navigation with `setTimeout` and `router.replace()` for module transitions
+  - Small delays (100ms) allow navigation state to stabilize
+
+- **Haptic Feedback Enhancement**:
+  - Adding haptic feedback to tab presses significantly improves perceived responsiveness
+  - Implementation is simple with `expo-haptics` but has high UX impact
+  - Use `ImpactFeedbackStyle.Light` for subtle, pleasant feedback
+
+- **Debugging Navigation Issues**:
+  - Systematic elimination approach: Try one fix at a time and document results
+  - Check for invisible overlays first (most common cause of unresponsive UI)
+  - Test both iOS and Android - navigation behavior can differ
+  - Clean builds don't always help - often it's a code issue, not cache
+
 ### API Structure
 
 - **Routes**: All routes in `apps/api/src/v1/` with authentication middleware from `@hono/clerk-auth`
@@ -284,10 +317,12 @@ These patterns were established during the Employee Summary feature implementati
 ### Mobile App Structure
 
 - **Routing**: Expo Router file-based routing in `apps/mobile/app/`
-  - **⚠️ CRITICAL WARNING**: Never use `screenOptions` with NativeTabs - it creates invisible overlays that block touch events
+  - **⚠️ CRITICAL WARNING**: Never use `screenOptions` with Stack navigators wrapping Tabs - it creates invisible overlays that block touch events
   - **✅ CORRECT**: Use individual `options` on each Stack.Screen
   - **❌ WRONG**: `<Stack screenOptions={{ headerShown: false }}>`
-  - See [NativeTabs Navigation Pattern](./docs/architecture/patterns/nativetabs-navigation.md) for details
+  - **Tab Navigation**: Using stable `Tabs` from expo-router (NOT unstable NativeTabs)
+  - **Haptic Feedback**: Tab presses trigger light haptic feedback for better UX
+  - See [Tabs Navigation Pattern](./docs/architecture/patterns/tabs-navigation.md) for details
 - **Authentication**: Clerk SDK with protected routes using auth state
 - **API Calls**: Use `callHonoApi` utility for type-safe API calls
 - **State Management**: TanStack Query with aggressive caching (1 week gcTime)

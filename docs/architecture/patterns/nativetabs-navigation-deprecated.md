@@ -162,13 +162,57 @@ After implementing or modifying navigation:
 6. ✅ Touch events aren't blocked anywhere
 7. ✅ Test on both iOS and Android
 
+## Module Index Pattern
+
+Module index files must NOT use immediate `<Redirect>` components as they cause NativeTabs to become unresponsive on initial load.
+
+### ✅ CORRECT: Delayed Navigation
+
+```tsx
+// app/worker/index.tsx or app/admin/index.tsx
+import { useRouter } from 'expo-router'
+import { useEffect } from 'react'
+import { ActivityIndicator, View } from 'react-native'
+
+export default function WorkerIndex() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Small delay lets navigation state stabilize before mounting NativeTabs
+    const timer = setTimeout(() => {
+      router.replace('/worker/(tabs)')
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [router])
+
+  return (
+    <View className="flex-1 items-center justify-center bg-background">
+      <ActivityIndicator size="small" />
+    </View>
+  )
+}
+```
+
+### ❌ WRONG: Immediate Redirect
+
+```tsx
+// THIS CAUSES UNRESPONSIVE TABS ON INITIAL LOAD!
+import { Redirect } from 'expo-router'
+
+export default function WorkerIndex() {
+  return <Redirect href="/worker/(tabs)" />
+}
+```
+
 ## Common Pitfalls
 
 1. **Using screenOptions with NativeTabs** - Always use individual Screen options
-2. **Missing _layout.tsx files** - Every module needs a layout file
-3. **Incorrect hierarchy** - Tabs must be wrapped by Stack
-4. **Not testing all tabs** - One working tab doesn't mean all work
-5. **Copying patterns blindly** - Understand why the pattern exists
+2. **Using immediate Redirect to tabs** - Use delayed router.replace instead
+3. **Missing _layout.tsx files** - Every module needs a layout file
+4. **Incorrect hierarchy** - Tabs must be wrapped by Stack
+5. **Not testing all tabs** - One working tab doesn't mean all work
+6. **Copying patterns blindly** - Understand why the pattern exists
 
 ## Migration Guide
 

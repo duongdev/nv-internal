@@ -84,12 +84,12 @@ function Routes() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
-        headerBackButtonDisplayMode: 'minimal',
-      }}
-    >
+    <Stack>
+      {/*
+        IMPORTANT: Don't use screenOptions here - it creates invisible overlays
+        that block Tabs touch events. Apply options to individual screens instead.
+        See: docs/architecture/patterns/tabs-navigation.md
+      */}
       {/* Screens only shown when the user is NOT signed in */}
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)/sign-in" options={SIGN_IN_SCREEN_OPTIONS} />
@@ -109,12 +109,26 @@ function Routes() {
         <Stack.Screen
           dangerouslySingular={() => 'admin'}
           name="admin"
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            animation: 'fade',
+          }}
         />
         <Stack.Screen
           dangerouslySingular={() => 'worker'}
           name="worker"
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            animation: 'fade',
+          }}
+        />
+        {/* Module transit screen - prevents Tabs state corruption */}
+        <Stack.Screen
+          name="module-transit"
+          options={{
+            headerShown: false,
+            animation: 'fade',
+          }}
         />
         {/* User settings */}
         <Stack.Screen
@@ -122,6 +136,8 @@ function Routes() {
           options={{
             title: 'Chọn giao diện',
             presentation: 'modal',
+            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
+            headerBackButtonDisplayMode: 'minimal',
           }}
         />
         <Stack.Screen
@@ -129,6 +145,8 @@ function Routes() {
           options={{
             title: 'Đổi mật khẩu',
             presentation: 'modal',
+            headerTitleStyle: { fontFamily: FONT_FAMILY.semi },
+            headerBackButtonDisplayMode: 'minimal',
           }}
         />
       </Stack.Protected>
@@ -137,7 +155,10 @@ function Routes() {
       {/* Inputs */}
       <Stack.Screen
         name="(inputs)/location-picker"
-        options={{ headerShown: false, presentation: 'modal' }}
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+        }}
       />
     </Stack>
   )

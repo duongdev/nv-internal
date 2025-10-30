@@ -1,53 +1,55 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import {
-  Icon,
-  Label,
-  NativeTabs,
-  VectorIcon,
-} from 'expo-router/unstable-native-tabs'
+import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
+import { Tabs } from 'expo-router'
 import { useColorScheme } from 'nativewind'
-import { Platform } from 'react-native'
-import { FONT_FAMILY, THEME } from '@/lib/theme'
+import { THEME } from '@/lib/theme'
 
 export default function WorkerTabLayout() {
   const { colorScheme } = useColorScheme()
   const isDark = colorScheme === 'dark'
   const primaryColor = THEME[colorScheme ?? 'light'].primary
 
-  return (
-    <NativeTabs
-      iconColor={{
-        default: isDark ? '#9ca3af' : '#6b7280',
-        selected: primaryColor,
-      }}
-      labelStyle={{
-        fontFamily: FONT_FAMILY.medium,
-        fontSize: 12,
-      }}
-      {...(Platform.OS === 'ios' && {
-        blurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
-      })}
-      {...(Platform.OS === 'android' && {
-        backgroundColor: isDark ? '#000000' : '#ffffff',
-        labelVisibilityMode: 'labeled',
-      })}
-    >
-      <NativeTabs.Trigger name="index">
-        <Icon
-          src={
-            <VectorIcon
-              family={MaterialCommunityIcons}
-              name="format-list-checks"
-            />
-          }
-        />
-        <Label>Công việc</Label>
-      </NativeTabs.Trigger>
+  const handleTabPress = () => {
+    impactAsync(ImpactFeedbackStyle.Light)
+  }
 
-      <NativeTabs.Trigger name="settings">
-        <Icon src={<VectorIcon family={MaterialCommunityIcons} name="cog" />} />
-        <Label>Cài đặt</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
+  return (
+    <Tabs
+      screenListeners={{
+        tabPress: handleTabPress,
+      }}
+      screenOptions={{
+        tabBarActiveTintColor: primaryColor,
+        tabBarInactiveTintColor: isDark ? '#9ca3af' : '#6b7280',
+        tabBarStyle: {
+          backgroundColor: isDark ? '#000000' : '#ffffff',
+        },
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Công việc',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              color={color}
+              name="format-list-checks"
+              size={size}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Cài đặt',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons color={color} name="cog" size={size} />
+          ),
+        }}
+      />
+    </Tabs>
   )
 }

@@ -53,11 +53,12 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
       // Save the preference before navigating
       await saveModulePreference(module)
 
-      // Navigate to the selected module
-      router.replace(module === 'admin' ? '/admin' : '/worker')
-    } catch (error) {
-      console.error('Error switching module:', error)
-      // Still attempt navigation even if save fails
+      // Navigate to transit screen with target module as parameter
+      // This breaks the NativeTabs state connection between modules
+      // biome-ignore lint/suspicious/noExplicitAny: expo-router typing issue
+      router.push(`/module-transit?target=${module}` as any)
+    } catch {
+      // Fallback: direct navigation
       router.replace(module === 'admin' ? '/admin' : '/worker')
     }
   }
