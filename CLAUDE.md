@@ -326,6 +326,49 @@ Comprehensive search and filter functionality added to admin and worker task lis
   - Safe area padding with pb-safe utility
   - Proper gesture handling with specialized components
 
+#### Task Comments Implementation Patterns (2025-10-31)
+
+Patterns established during Task Comments feature implementation:
+
+- **Activity-Based Features**: Use Activity model for any feature that logs events
+  - Zero new tables needed - reuse existing Activity model
+  - Automatic integration with activity feed
+  - Built-in pagination and filtering support
+  - Example: Task comments implemented with TASK_COMMENTED action
+  - Task: `.claude/tasks/20251030-130330-implement-task-comments.md`
+
+- **FormData Handling in Hono**: Proper multipart/form-data parsing
+  - Always use `formData()` method, not `parseBody()` for multipart endpoints
+  - Example: `const { comment, files } = c.req.valid('form')`
+  - Support both JSON and FormData in same endpoint by checking content type
+  - Pattern documented in task comments implementation
+
+- **Dual-Mode API Calls**: Optimize for different data types
+  - Use JSON for simple data (text-only comments)
+  - Use FormData with native fetch for file uploads
+  - Pattern: Check for files and switch modes dynamically
+  ```typescript
+  if (!photos || photos.length === 0) {
+    return callHonoApi(...) // JSON mode
+  } else {
+    return fetch(...) // FormData mode
+  }
+  ```
+
+- **Photo Picker UI Pattern**: Consistent mobile photo selection
+  - Permission handling with settings redirect on denial
+  - Camera single selection + Gallery multi-selection
+  - Preview thumbnails with individual remove buttons
+  - Horizontal ScrollView for photo list
+  - Badge component for count indicator (e.g., "3/5")
+  - Max limit enforcement with user-friendly warnings
+
+- **Static vs Dynamic Imports**: Keep it simple
+  - Prefer static imports for service dependencies
+  - Only use dynamic imports when truly needed (conditional loading)
+  - Static imports are more reliable and better for TypeScript
+  - Issue discovered when dynamic import caused runtime errors
+
 ### Navigation Stability Patterns (2025-10-30)
 
 Key learnings from navigation system debugging and migration:
@@ -365,8 +408,10 @@ Key learnings from navigation system debugging and migration:
 - **Testing**: Jest tests in `__tests__/` directories alongside source files
 - **Transactions**: Use transactions for multi-model operations
 - **Activity Logging**: Log all state changes to Activity table
-  - **Unified Event Log**: Activity model serves as single source for all events (check-ins, payments, status changes)
-  - **Flexible Queries**: Query by action type (e.g., `TASK_CHECKED_IN`) for specific events
+  - **Unified Event Log**: Activity model serves as single source for all events (check-ins, payments, status changes, comments)
+  - **Flexible Queries**: Query by action type (e.g., `TASK_CHECKED_IN`, `TASK_COMMENTED`) for specific events
+  - **Feature Pattern**: Use Activity for any feature that logs events (zero new tables needed)
+  - **Implementation Example**: Task comments use TASK_COMMENTED action with comment in payload
 - **Pagination**: Use cursor-based pagination for lists
 - **Authentication**: Optimized to use JWT claims (see [Auth Optimization](./docs/architecture/patterns/auth-optimization.md))
 

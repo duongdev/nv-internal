@@ -13,7 +13,6 @@
 import type { User } from '@clerk/backend'
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { TaskStatus } from '@nv-internal/prisma-client'
-import type { TaskSearchFilterQuery } from '@nv-internal/validation'
 import { createMockAdminUser, type MockUser } from '../../../test/mock-auth'
 import {
   createMockPrismaClient,

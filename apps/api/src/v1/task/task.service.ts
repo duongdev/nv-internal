@@ -4,10 +4,12 @@ import type {
   CreateTaskValues,
   TaskSearchFilterQuery,
 } from '@nv-internal/validation'
+import { HTTPException } from 'hono/http-exception'
 import { getLogger } from '../../lib/log'
 import { getPrisma } from '../../lib/prisma'
 import { normalizeForSearch } from '../../lib/text-utils'
 import { createActivity } from '../activity/activity.service'
+import { uploadTaskAttachments } from '../attachment/attachment.service'
 import { isUserAdmin } from '../user/user.service'
 
 const DEFAULT_TASK_INCLUDE: Prisma.TaskInclude = {
@@ -62,7 +64,7 @@ function buildSearchableText(data: {
  * @param taskId - ID of the task to refresh
  * @param tx - Prisma transaction client
  */
-async function refreshTaskSearchableText(
+async function _refreshTaskSearchableText(
   taskId: number,
   tx: Prisma.TransactionClient,
 ): Promise<void> {
@@ -71,7 +73,9 @@ async function refreshTaskSearchableText(
     include: { customer: true, geoLocation: true },
   })
 
-  if (!task) return
+  if (!task) {
+    return
+  }
 
   await tx.task.update({
     where: { id: taskId },
@@ -579,6 +583,166 @@ export async function updateTaskStatus({
     return updatedTask
   } catch (error) {
     logger.error({ error }, 'Error updating task status')
+    throw error
+  }
+}
+
+/**
+ * Add a comment to a task with optional photo attachments
+ *
+ * Requirements:
+ * - Task must exist
+ * - User must be assigned to task OR be an admin
+ * - Comment text is required (validated by Zod schema)
+ * - Photo attachments are optional (0-5 files allowed)
+ *
+ * Effects:
+ * - Creates Activity with TASK_COMMENTED action
+ * - Payload contains comment text and attachment summaries (if provided)
+ * - Uploads files using uploadTaskAttachments service
+ * - Links attachments to task automatically
+ *
+ * @param taskId - ID of the task to comment on
+ * @param user - The user adding the comment
+ * @param comment - Comment text (1-5000 characters)
+ * @param files - Optional photo attachments (0-5 files)
+ * @param storage - Storage provider for file uploads
+ * @returns Created activity record
+ */
+export async function addTaskComment({
+  taskId,
+  user,
+  comment,
+  files,
+  storage,
+}: {
+  taskId: number
+  user: User
+  comment: string
+  files?: File[]
+  storage?: import('../../lib/storage/storage.types').StorageProvider
+}) {
+  const logger = getLogger('task.service:addTaskComment')
+  const prisma = getPrisma()
+
+  logger.trace(
+    {
+      taskId,
+      userId: user.id,
+      commentLength: comment.length,
+      fileCount: files?.length || 0,
+    },
+    'Adding task comment',
+  )
+
+  // 1. Get task with assigneeIds to verify access
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { id: true, assigneeIds: true },
+  })
+
+  if (!task) {
+    throw new HTTPException(404, { message: 'Không tìm thấy công việc' })
+  }
+
+  // 2. Check user is assigned to task or is admin
+  const isAssigned = isUserAssignedToTask({ user, task })
+  const isAdmin = isUserAdmin({ user })
+
+  if (!isAssigned && !isAdmin) {
+    throw new HTTPException(403, {
+      message: 'Bạn không có quyền bình luận vào công việc này',
+    })
+  }
+
+  // 3. Upload attachments if files provided
+  let attachmentSummaries: Array<{
+    id: string
+    mimeType: string
+    originalFilename: string
+  }> = []
+
+  if (files && files.length > 0 && storage) {
+    try {
+      const uploadedAttachments = await uploadTaskAttachments({
+        taskId,
+        files,
+        user,
+        storage,
+      })
+
+      attachmentSummaries = uploadedAttachments.map((att) => ({
+        id: att.id,
+        mimeType: att.mimeType,
+        originalFilename: att.originalFilename,
+      }))
+
+      logger.info(
+        {
+          taskId,
+          userId: user.id,
+          attachmentCount: attachmentSummaries.length,
+        },
+        'Uploaded comment attachments',
+      )
+    } catch (error) {
+      logger.error(
+        {
+          error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          taskId,
+          userId: user.id,
+        },
+        'Error uploading comment attachments',
+      )
+      throw error
+    }
+  }
+
+  // 4. Create activity using existing createActivity service
+  try {
+    const payload: {
+      type: 'COMMENT'
+      comment: string
+      attachments?: Array<{
+        id: string
+        mimeType: string
+        originalFilename: string
+      }>
+    } = {
+      type: 'COMMENT',
+      comment,
+    }
+
+    // Include attachment summaries if any were uploaded
+    if (attachmentSummaries.length > 0) {
+      payload.attachments = attachmentSummaries
+    }
+
+    const activity = await createActivity({
+      action: 'TASK_COMMENTED',
+      userId: user.id,
+      topic: { entityType: 'TASK', entityId: taskId },
+      payload,
+    })
+
+    logger.info(
+      {
+        taskId,
+        userId: user.id,
+        activityId: activity.id,
+        hasAttachments: attachmentSummaries.length > 0,
+      },
+      'Task comment added successfully',
+    )
+
+    return activity
+  } catch (error) {
+    logger.error(
+      { error, taskId, userId: user.id },
+      'Error adding task comment',
+    )
     throw error
   }
 }

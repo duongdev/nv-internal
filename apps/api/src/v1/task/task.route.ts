@@ -20,6 +20,7 @@ import {
   setTaskExpectedRevenue,
 } from '../payment/payment.service'
 import {
+  addTaskComment,
   canUserCreateTask,
   canUserListTasks,
   canUserUpdateTaskAssignees,
@@ -293,6 +294,90 @@ const router = new Hono()
       }
     },
   )
+  /**
+   * POST /v1/task/:id/comment
+   *
+   * Add a comment to a task with optional photo attachments
+   *
+   * Authorization:
+   * - Admin: Can comment on any task
+   * - Worker: Can only comment on assigned tasks
+   *
+   * Request body (FormData):
+   * - comment: string (1-5000 characters) - The comment text (required)
+   * - files: File | File[] - Optional photo attachments (0-5 files)
+   *
+   * Phase 1: Text-only comments (backward compatible)
+   * Phase 2: Comments with optional photo attachments (1-5 photos)
+   *
+   * Response:
+   * - Activity record with TASK_COMMENTED action
+   */
+  .post('/:id/comment', zValidator('param', zNumericIdParam), async (c) => {
+    const logger = getLogger('task.route:addComment')
+    const { id: taskId } = c.req.valid('param')
+    const user = getAuthUserStrict(c)
+
+    try {
+      // Parse FormData properly (like attachments endpoint)
+      const form = await c.req.formData()
+
+      // Extract comment text
+      const commentField = form.get('comment')
+      const comment =
+        typeof commentField === 'string' ? commentField.trim() : ''
+
+      // Validate comment
+      if (!comment || comment.length === 0) {
+        throw new HTTPException(400, {
+          message: 'Bình luận không được để trống',
+        })
+      }
+      if (comment.length > 5000) {
+        throw new HTTPException(400, {
+          message: 'Bình luận không được quá 5000 ký tự',
+        })
+      }
+
+      // Extract files (like attachments endpoint)
+      const filesRaw = form.getAll('files')
+      const files = filesRaw.filter((f): f is File => f instanceof File)
+
+      // Validate file count
+      if (files.length > 5) {
+        throw new HTTPException(400, { message: 'Tối đa 5 ảnh' })
+      }
+
+      // Select storage provider based on STORAGE_PROVIDER env var
+      // Default to vercel-blob if not set
+      const storageProvider = process.env.STORAGE_PROVIDER || 'vercel-blob'
+      const storage =
+        storageProvider === 'local'
+          ? new LocalDiskProvider()
+          : new VercelBlobProvider()
+
+      const activity = await addTaskComment({
+        taskId,
+        user,
+        comment,
+        files: files.length > 0 ? files : undefined,
+        storage,
+      })
+
+      c.status(201)
+      return c.json({ data: activity })
+    } catch (error) {
+      if (error instanceof HTTPException) {
+        throw error
+      }
+
+      logger.error({ error, taskId, userId: user.id }, 'Failed to add comment')
+      throw new HTTPException(500, {
+        message: 'Không thể thêm bình luận. Vui lòng thử lại.',
+        cause: error,
+      })
+    }
+  })
   // Update task assignees
   .put(
     '/:id/assignees',
@@ -417,7 +502,7 @@ const router = new Hono()
       }
 
       // Check permission with task and target status
-      const canUpdate = await canUserUpdateTaskStatus({
+      const canUpdate = canUserUpdateTaskStatus({
         user,
         task,
         targetStatus: status,

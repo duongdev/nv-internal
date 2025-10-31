@@ -529,6 +529,38 @@ export const ActivityItem: FC<ActivityItemProps> = ({ activity }) => {
       return <Text>{description}</Text>
     }
 
+    // TASK_COMMENTED - User added a comment
+    if (action === 'TASK_COMMENTED' && payload) {
+      const comment = payload.comment as string | undefined
+      const attachments = payload.attachments as
+        | Array<{ id?: string }>
+        | undefined
+
+      if (!comment) {
+        return <Text>Đã bình luận</Text>
+      }
+
+      return (
+        <View className="gap-2">
+          <Text>Đã bình luận</Text>
+          <View className="flex-row gap-2 rounded-lg border border-border bg-card p-2">
+            <Icon
+              as={MessageSquareIcon}
+              className="mt-1 text-muted-foreground"
+              size={16}
+            />
+            <Text className="flex-1 text-sm">{comment}</Text>
+          </View>
+          {attachments && attachments.length > 0 && (
+            <AttachmentsWithDeletedPlaceholders
+              attachmentIds={attachments.map((att) => att.id as string)}
+              compact
+            />
+          )}
+        </View>
+      )
+    }
+
     return <Text className="text-muted-foreground text-sm">{action}</Text>
   }, [action, pl])
 

@@ -16,12 +16,12 @@ export type AdminTaskListProps = {
 export function AdminTaskList({
   contentContainerClassName,
   searchText = '',
-  filters = {},
+  filters,
 }: AdminTaskListProps) {
   const router = useRouter()
 
   // Determine if we should use search API (when search text or filters are present)
-  const hasFilters = Object.keys(filters).length > 0
+  const hasFilters = filters ? Object.keys(filters).length > 0 : false
   const isSearching = searchText.trim().length > 0 || hasFilters
 
   const {
@@ -43,7 +43,22 @@ export function AdminTaskList({
     fetchNextPage: searchFetchNextPage,
     refetch: searchRefetch,
   } = useTaskSearch(
-    { search: searchText, ...filters },
+    {
+      search: searchText,
+      take: 20,
+      status: filters?.status,
+      assigneeIds: filters?.assigneeIds,
+      assignedOnly: filters?.assignedOnly,
+      customerId: filters?.customerId,
+      scheduledFrom: filters?.scheduledFrom,
+      scheduledTo: filters?.scheduledTo,
+      createdFrom: filters?.createdFrom,
+      createdTo: filters?.createdTo,
+      completedFrom: filters?.completedFrom,
+      completedTo: filters?.completedTo,
+      sortBy: filters?.sortBy || 'createdAt',
+      sortOrder: filters?.sortOrder || 'desc',
+    },
     { enabled: isSearching },
   )
 

@@ -423,7 +423,7 @@ describe('Task Route', () => {
         attachments: [],
       }
       asMock(taskService.getTaskById).mockResolvedValue(task)
-      asMock(taskService.canUserUpdateTaskStatus).mockResolvedValue(false)
+      asMock(taskService.canUserUpdateTaskStatus).mockReturnValue(false)
 
       const res = await app.request('/v1/task/1/status', {
         method: 'PUT',
@@ -469,7 +469,7 @@ describe('Task Route', () => {
         attachments: [],
       }
       asMock(taskService.getTaskById).mockResolvedValue(task)
-      asMock(taskService.canUserUpdateTaskStatus).mockResolvedValue(false)
+      asMock(taskService.canUserUpdateTaskStatus).mockReturnValue(false)
 
       const res = await app.request('/v1/task/1/status', {
         method: 'PUT',
@@ -515,7 +515,7 @@ describe('Task Route', () => {
         attachments: [],
       }
       asMock(taskService.getTaskById).mockResolvedValue(task)
-      asMock(taskService.canUserUpdateTaskStatus).mockResolvedValue(true)
+      asMock(taskService.canUserUpdateTaskStatus).mockReturnValue(true)
       asMock(taskService.updateTaskStatus).mockResolvedValue({ id: 1 })
 
       const res = await app.request('/v1/task/1/status', {

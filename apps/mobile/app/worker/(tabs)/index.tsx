@@ -87,13 +87,14 @@ export default function WorkerIndex() {
           activeFilter === 'active'
             ? [TaskStatus.READY, TaskStatus.IN_PROGRESS]
             : [TaskStatus.COMPLETED],
+        assigneeIds: undefined, // Workers filter by assignedOnly, not specific IDs
         assignedOnly: 'true', // Worker should only see their tasks
         createdFrom: filterState.createdFrom?.toISOString(),
         createdTo: filterState.createdTo?.toISOString(),
         completedFrom: filterState.completedFrom?.toISOString(),
         completedTo: filterState.completedTo?.toISOString(),
-        sortBy: filterState.sortBy,
-        sortOrder: filterState.sortOrder,
+        sortBy: filterState.sortBy || 'createdAt',
+        sortOrder: filterState.sortOrder || 'desc',
       }
     }, [filterState, activeFilter])
 
@@ -109,7 +110,19 @@ export default function WorkerIndex() {
   } = useTaskSearch(
     {
       search: searchText,
-      ...apiFilters,
+      take: 20,
+      status: apiFilters.status,
+      assigneeIds: apiFilters.assigneeIds,
+      assignedOnly: apiFilters.assignedOnly,
+      customerId: apiFilters.customerId,
+      scheduledFrom: apiFilters.scheduledFrom,
+      scheduledTo: apiFilters.scheduledTo,
+      createdFrom: apiFilters.createdFrom,
+      createdTo: apiFilters.createdTo,
+      completedFrom: apiFilters.completedFrom,
+      completedTo: apiFilters.completedTo,
+      sortBy: apiFilters.sortBy || 'createdAt',
+      sortOrder: apiFilters.sortOrder || 'desc',
     },
     { enabled: isSearching },
   )

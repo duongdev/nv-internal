@@ -51,8 +51,8 @@ export default function AdminTasksScreen() {
         createdTo: filterState.createdTo?.toISOString(),
         completedFrom: filterState.completedFrom?.toISOString(),
         completedTo: filterState.completedTo?.toISOString(),
-        sortBy: filterState.sortBy,
-        sortOrder: filterState.sortOrder,
+        sortBy: filterState.sortBy || 'createdAt',
+        sortOrder: filterState.sortOrder || 'desc',
       }
     }, [filterState])
 

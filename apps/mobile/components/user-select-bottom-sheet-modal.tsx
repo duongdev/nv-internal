@@ -56,7 +56,7 @@ export const UserSelectBottomSheetModal: FC<
       <BottomSheetFlatList
         contentContainerStyle={{ paddingBottom: 16 }}
         data={users}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: (typeof users)[number]) => item.id}
         ListFooterComponent={
           (onCancel || onSave) && (
             <View className="flex-row gap-2 pt-4 pb-6">
@@ -76,7 +76,7 @@ export const UserSelectBottomSheetModal: FC<
         refreshControl={
           <RefreshControl onRefresh={refetch} refreshing={isRefetching} />
         }
-        renderItem={({ item }) => (
+        renderItem={({ item }: { item: (typeof users)[number] }) => (
           <Pressable
             className="flex-row items-center justify-between gap-2 rounded-lg border-muted border-b px-2 active:bg-muted"
             onPress={() => {

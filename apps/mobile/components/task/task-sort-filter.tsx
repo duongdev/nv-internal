@@ -6,7 +6,12 @@ import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { cn } from '@/lib/utils'
 
-export type TaskSortBy = 'createdAt' | 'updatedAt' | 'completedAt' | 'id'
+export type TaskSortBy =
+  | 'scheduledAt'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'completedAt'
+  | 'id'
 export type TaskSortOrder = 'asc' | 'desc'
 
 export type TaskSortFilterProps = {
@@ -20,6 +25,7 @@ const SORT_BY_OPTIONS: { value: TaskSortBy; label: string }[] = [
   { value: 'createdAt', label: 'Ngày tạo' },
   { value: 'updatedAt', label: 'Ngày cập nhật' },
   { value: 'completedAt', label: 'Ngày hoàn thành' },
+  { value: 'scheduledAt', label: 'Ngày hẹn' },
   { value: 'id', label: 'Mã công việc' },
 ]
 
