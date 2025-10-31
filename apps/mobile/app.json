@@ -13,7 +13,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "config": {
@@ -47,6 +49,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "efc85258-12ce-4f6a-826a-ab5765d18ebc"
+      }
+    },
+    "owner": "duongdev"
   }
 }
