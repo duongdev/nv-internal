@@ -7,17 +7,24 @@ This directory contains documented enhancement ideas and feature proposals that 
 Enhancement files follow the naming pattern:
 - `YYYYMMDD-HHMMSS-description.md` (UTC timestamp for chronological sorting)
 
+## Priority Roadmap
+
+See `20251024-120300-enhancement-priorities.md` for the complete prioritized implementation roadmap with timeline, resource allocation, and cost-benefit analysis.
+
 ## Categories
 
 ### Performance Optimizations
 - `20251024-105530-location-prefetch-optimization.md` - GPS prefetching for instant check-in/out
+- `20251024-180000-client-side-direct-upload-optimization.md` - Direct upload to Vercel Blob from mobile
 
 ### User Experience
 - `20251024-120000-pull-to-refresh-improvements.md` - Unified pull-to-refresh across all screens
 - `20251024-120100-search-and-filter-system.md` - Comprehensive task search and filtering
+- `20251031-task-comment-enhancements.md` - Future enhancements for task comments feature
 
 ### Technical Improvements
 - `20251024-120200-e2e-testing-strategy.md` - End-to-end testing with Maestro/Detox for mobile app
+- `20251031-posthog-observability-implementation.md` - **[High Priority]** Complete observability with PostHog (replaces Sentry)
 
 ### Feature Extensions
 - `20251029-173000-employee-summary-report.md` - Monthly summary view for all employees (enhancement to V1 Phase 3)

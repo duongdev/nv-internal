@@ -685,6 +685,69 @@ When creating task files for v1 features:
 
 See `.claude/enhancements/` for detailed specifications and `.claude/enhancements/20251024-120300-enhancement-priorities.md` for priority roadmap.
 
+## Observability Strategy (Ready for Implementation) ✅ UPDATED
+
+**Status**: 📋 High priority - Expert review complete, ready to implement
+
+### PostHog Integration
+
+The project will use **PostHog** for comprehensive observability, replacing Sentry and providing unified analytics, feature flags, and error tracking.
+
+**Architecture Decision**:
+- **Mobile**: Feature flags + analytics + error tracking (✅ Expo Go compatible!)
+- **API**: Error tracking with root-level handler (serverless-optimized)
+- **Cost**: $0/month (free tier: 1M events, project uses ~30k events/month)
+- **Implementation**: 2-3 days effort
+- **Risk**: LOW (with rollback plan via feature flag)
+
+**Documentation**:
+- Implementation Plan: `.claude/enhancements/20251031-posthog-observability-implementation.md`
+- Error Tracking Guide: `.claude/docs/error-tracking-guide.md`
+
+**Key Implementation Patterns**:
+
+#### Mobile Patterns
+```typescript
+// Async initialization (CRITICAL)
+await posthog.initAsync();
+
+// Error queue for reliability
+const errorQueue = [];
+
+// Manual screen tracking
+posthog.screen(semanticName);
+
+// Feature flags with PostHogProvider
+<PostHogProvider client={posthog}>
+  {children}
+</PostHogProvider>
+```
+
+#### API Patterns
+```typescript
+// Root error handler (NOT middleware)
+app.onError(async (err, c) => {
+  await captureAndFlush('$exception', {...});
+});
+
+// Serverless-safe flushing
+await posthog.captureImmediate({...});
+
+// Request sanitization
+sanitizeRequestBody(body);
+
+// Stack trace scrubbing
+scrubStackTrace(stack);
+```
+
+**Key Benefits**:
+- ✅ Works with Expo Go (no dev builds needed!)
+- Data-driven feature rollouts with cached flags
+- Complete error tracking with context
+- Performance monitoring built-in
+- Offline support with event queuing
+- Zero ongoing costs for our scale
+
 ## Backend Architecture Refactoring (Planned)
 
 **Status**: 📋 Planning complete, awaiting team approval

@@ -11,14 +11,25 @@ None currently - all v1 features take precedence
 
 ### High Priority (Implement Soon)
 
-#### 1. Pull-to-Refresh Improvements
+#### 1. PostHog Observability Implementation ✅ UPDATED
+- **Impact**: High - Enables data-driven decisions and better debugging
+- **Effort**: 2-3 days
+- **Complexity**: LOW (not MEDIUM - expert review confirmed)
+- **Dependencies**: None (replace existing Sentry)
+- **Compatibility**: ✅ Works with Expo Go (no dev builds needed!)
+- **Risk Level**: LOW (with proper implementation)
+- **Recommendation**: Implement after v1 features are stable
+- **Why**: Critical for understanding user behavior, tracking errors, and feature rollouts
+- **Cost**: $0/month (free tier covers our scale)
+
+#### 2. Pull-to-Refresh Improvements
 - **Impact**: High - Directly affects daily user experience
 - **Effort**: 2-3 days
 - **Dependencies**: None
 - **Recommendation**: Implement immediately after current v1 phase
 - **Why**: Poor network conditions are common for field workers
 
-#### 2. Search and Filter System
+#### 3. Search and Filter System
 - **Impact**: High - Essential as task volume grows
 - **Effort**: 7-8 days
 - **Dependencies**: Backend API changes needed
@@ -27,7 +38,7 @@ None currently - all v1 features take precedence
 
 ### Medium-High Priority (Strong ROI)
 
-#### 3. Client-Side Direct Upload to Vercel Blob
+#### 4. Client-Side Direct Upload to Vercel Blob
 - **Impact**: High - Removes 4.5 MB limit, enables large files, saves bandwidth costs
 - **Effort**: 4.5-6.5 days
 - **Dependencies**: Vercel Blob already enabled
@@ -36,14 +47,14 @@ None currently - all v1 features take precedence
 
 ### Medium Priority (Plan for Next Quarter)
 
-#### 4. E2E Testing Strategy
+#### 5. E2E Testing Strategy
 - **Impact**: Medium-High - Prevents regressions
 - **Effort**: 12-15 days
 - **Dependencies**: Testing framework selection
 - **Recommendation**: Start with critical paths after v1
 - **Why**: Will save significant QA time as features grow
 
-#### 5. Location Prefetch Optimization
+#### 6. Location Prefetch Optimization
 - **Impact**: Medium - Improves check-in speed
 - **Effort**: 3-4 days
 - **Dependencies**: Check-in/out system must be live
@@ -60,34 +71,40 @@ None currently - all v1 features take precedence
 - Document any new enhancement ideas discovered
 
 ### Next Sprint (Week 1-2 after v1 features)
-1. **Pull-to-Refresh Improvements** (2-3 days)
+1. **PostHog Observability** (2-3 days)
+   - Remove Sentry, install PostHog SDKs
+   - Implement mobile analytics and feature flags
+   - Setup API error tracking
+   - Create initial dashboards
+
+2. **Pull-to-Refresh Improvements** (2-3 days)
    - Start with RefreshableScreen component
    - Update Task Details screen first (highest pain point)
    - Roll out to other screens incrementally
 
-2. **Client-Side Direct Upload - Phase 1** (2-3 days)
+### Following Sprint (Week 3-4)
+3. **Client-Side Direct Upload - Phase 1** (2-3 days)
    - Backend token generation endpoint
    - Upload callback implementation
    - Feature flag setup
 
-### Following Sprint (Week 3-4)
-3. **Client-Side Direct Upload - Phase 2** (2-3 days)
+4. **Client-Side Direct Upload - Phase 2** (2-3 days)
    - Mobile implementation with progress tracking
    - Testing and validation
    - Gradual rollout with monitoring
 
-4. **Search and Filter System - Phase 1** (3-4 days)
+5. **Search and Filter System - Phase 1** (3-4 days)
    - Backend search API
    - Basic search UI
    - Quick status filters
 
 ### Next Quarter
-5. **E2E Testing - Phase 1** (5 days)
+6. **E2E Testing - Phase 1** (5 days)
    - Framework setup (Maestro recommended)
    - Critical path tests only
    - CI/CD integration
 
-6. **Search and Filter System - Phase 2** (3-4 days)
+7. **Search and Filter System - Phase 2** (3-4 days)
    - Advanced filters
    - Search suggestions
    - Performance optimization
@@ -98,9 +115,9 @@ None currently - all v1 features take precedence
 If working alone, follow the timeline above sequentially.
 
 ### Team Approach
-- **Frontend Dev**: Pull-to-Refresh → Search UI → E2E Tests
-- **Backend Dev**: Search API → Performance optimizations
-- **QA/Test Engineer**: E2E Testing setup and implementation
+- **Frontend Dev**: PostHog Mobile → Pull-to-Refresh → Search UI → E2E Tests
+- **Backend Dev**: PostHog API → Search API → Performance optimizations
+- **QA/Test Engineer**: PostHog dashboards → E2E Testing setup and implementation
 
 ## Risk Mitigation
 
@@ -115,6 +132,13 @@ If working alone, follow the timeline above sequentially.
 3. **Performance Impact**: Monitor metrics after each enhancement
 
 ## Success Criteria
+
+### PostHog Observability
+- [ ] Sentry completely removed
+- [ ] All errors tracked in PostHog
+- [ ] Feature flags working in mobile
+- [ ] Analytics events capturing user behavior
+- [ ] Dashboards created for key metrics
 
 ### Pull-to-Refresh
 - [ ] All screens support pull-to-refresh
@@ -145,6 +169,7 @@ If working alone, follow the timeline above sequentially.
 
 ### Go/No-Go Criteria
 
+**PostHog**: GO - Critical for visibility and debugging
 **Pull-to-Refresh**: GO - Low risk, high impact
 **Search Phase 1**: GO - After v1 completion
 **Search Phase 2**: WAIT - Evaluate Phase 1 usage first
@@ -152,6 +177,12 @@ If working alone, follow the timeline above sequentially.
 **Location Prefetch**: WAIT - Until check-in/out is stable
 
 ## Cost-Benefit Analysis
+
+### PostHog Observability
+- **Cost**: 2-3 developer days + $0/month (free tier)
+- **Benefit**: Complete visibility into errors, user behavior, feature adoption
+- **ROI**: Extremely High - Essential for data-driven decisions
+- **Break-even**: Immediate - prevents hours of debugging blind
 
 ### Pull-to-Refresh Improvements
 - **Cost**: 2-3 developer days
