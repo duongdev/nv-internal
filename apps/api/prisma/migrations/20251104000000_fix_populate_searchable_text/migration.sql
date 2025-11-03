@@ -2,8 +2,8 @@
 -- The previous migration had a bug in the UPDATE query that prevented proper population
 -- This migration correctly populates all NULL searchableText values
 
--- Temporarily make searchableText nullable to allow the fix
-ALTER TABLE "Task" ALTER COLUMN "searchableText" DROP NOT NULL;
+-- Note: searchableText should already be nullable from previous migration
+-- (the SET NOT NULL failed due to NULL values, so column remained nullable)
 
 -- Recreate helper function (dropped in previous migration)
 CREATE OR REPLACE FUNCTION normalize_for_search(text TEXT) RETURNS TEXT AS $$
