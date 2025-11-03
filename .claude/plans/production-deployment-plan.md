@@ -8,6 +8,352 @@
 
 ---
 
+## 📋 Deployment Progress Tracker
+
+Use this checklist to track your progress through the deployment process. Check off items as you complete them.
+
+### 🔐 Phase 1-2: Account Setup (Week 1, Day 1-2)
+
+#### Apple Developer Account
+
+- [ ] Visit https://developer.apple.com/programs/enroll/
+- [ ] Sign in or create Apple ID
+- [ ] Choose account type (Individual/Organization)
+- [ ] If Organization: Request D-U-N-S Number (1-2 weeks)
+- [ ] Pay $99/year fee
+- [ ] Wait for account approval (24-48 hours)
+- [ ] Access App Store Connect: https://appstoreconnect.apple.com/
+- [ ] Get Team ID from Membership section
+- [ ] Save Team ID securely (DO NOT commit to repo)
+
+#### Google Play Console Account
+
+- [ ] Visit https://play.google.com/console/signup
+- [ ] Sign in with Google Account
+- [ ] Accept Developer Distribution Agreement
+- [ ] Pay $25 one-time fee
+- [ ] Complete identity verification (ID + address proof)
+- [ ] Wait for account approval (24 hours)
+- [ ] Set up organization details in Play Console
+- [ ] Create internal testing track
+
+### ⚙️ Phase 3: EAS CLI Setup (Week 1, Day 3)
+
+- [ ] Install EAS CLI globally: `npm install -g eas-cli`
+- [ ] Login to Expo: `eas login` (duongdev)
+- [ ] Verify login: `eas whoami`
+- [ ] Navigate to mobile app: `cd apps/mobile`
+- [ ] Verify EAS project link: `eas init`
+- [ ] Confirm Project ID: efc85258-12ce-4f6a-826a-ab5765d18ebc
+
+### 🔑 Phase 4: Environment Configuration (Week 1, Day 3-5)
+
+#### Clerk Production Instance
+
+- [x] Visit https://dashboard.clerk.com/
+- [x] Create new application: "Nam Việt Internal (Production)"
+- [x] Configure sign-in methods (match development)
+- [x] Copy production Publishable Key (`pk_live_...`)
+- [x] Copy production Secret Key (`sk_live_...`)
+- [x] Configure user metadata fields
+- [x] Save keys securely
+
+#### Google Maps API Keys
+
+- [x] Visit https://console.cloud.google.com/apis/credentials
+- [x] Create iOS Production Key
+  - [x] Name: "Nam Việt Internal - iOS Production"
+  - [x] Restrict to iOS apps
+  - [x] Add bundle ID: `vn.dienlanhnamviet.internal`
+  - [x] Enable Maps SDK for iOS + Places API
+  - [x] Save key as `GOOGLE_MAPS_IOS_PROD_KEY`
+- [ ] Create Android Production Key
+  - [ ] Name: "Nam Việt Internal - Android Production"
+  - [ ] Restrict to Android apps
+  - [ ] Add package name: `vn.dienlanhnamviet.internal`
+  - [ ] Enable Maps SDK for Android + Places API
+  - [ ] Save key as `GOOGLE_MAPS_ANDROID_PROD_KEY`
+  - [ ] Note: SHA-1 fingerprint to be added after first build
+- [x] Enable billing on Google Cloud project
+- [x] Set budget alert ($50/month)
+
+#### EAS Secrets Configuration
+
+- [ ] Create staging secrets (from `apps/mobile/`):
+  - [ ] `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_STAGING`
+  - [ ] `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING`
+  - [ ] `EXPO_PUBLIC_API_URL_STAGING`
+- [ ] Create production secrets:
+  - [ ] `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION`
+  - [ ] `EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY_PRODUCTION`
+  - [ ] `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY_PRODUCTION`
+  - [ ] `EXPO_PUBLIC_API_URL_PRODUCTION`
+- [ ] Verify all secrets: `eas secret:list`
+
+### 📱 Phase 5-6: EAS Build Configuration (Week 1, Day 5-7)
+
+- [ ] Review `eas.json` configuration (already exists)
+- [ ] Update `eas.json` with Apple Team ID (in `submit.production.ios.appleTeamId`)
+- [ ] Update `eas.json` with Apple ID email (in `submit.production.ios.appleId`)
+- [ ] Review `app.config.ts` for dynamic configuration
+- [ ] Verify environment-specific Google Maps keys in config
+- [ ] Test local build with dev profile: `eas build --platform ios --profile development --local` (optional)
+- [ ] Commit `eas.json` and `app.config.ts` changes
+
+### 🌿 Phase 7: Git Branching Workflow (Week 1, Day 6)
+
+- [ ] Create `develop` branch from `main`
+- [ ] Push `develop` to remote: `git push -u origin develop`
+- [ ] Configure Vercel deployment settings
+  - [ ] Set `main` as production branch
+  - [ ] Enable auto-deploy on `main`
+  - [ ] Enable preview deployments for `develop`
+- [ ] Test feature branch workflow (optional)
+
+### 🗺️ Phase 8: Google Maps Production Setup (After First Build)
+
+- [ ] Trigger first Android production build (see Phase 10)
+- [ ] Get SHA-1 fingerprint from build output or `eas credentials`
+- [ ] Add SHA-1 to Android API key restrictions
+- [ ] Verify iOS key restrictions (bundle ID)
+- [ ] Verify Android key restrictions (package + SHA-1)
+- [ ] Test Maps integration with production keys
+
+### 🔧 Phase 9: Third-Party Services (Week 1, Day 7)
+
+#### Vercel API Configuration
+
+- [ ] Verify API auto-deploys on `main` push
+- [ ] Update storage service with environment prefixes (`prod/` vs `dev/`)
+- [ ] Add `NODE_ENV` to Vercel environment variables
+
+#### Vercel Environment Variables
+
+- [ ] Visit https://vercel.com/duongdev/nv-internal-api/settings/environment-variables
+- [ ] Add production variables:
+  - [ ] `DATABASE_URL` (Neon production)
+  - [ ] `CLERK_SECRET_KEY` (`sk_live_...`)
+  - [ ] `CLERK_PUBLISHABLE_KEY` (`pk_live_...`)
+  - [ ] `STORAGE_PROVIDER` (vercel-blob)
+  - [ ] `BLOB_READ_WRITE_TOKEN`
+  - [ ] `NODE_ENV` (production)
+- [ ] Trigger redeploy after adding variables
+
+#### Neon Database
+
+- [ ] Test production database connection
+- [ ] Run `npx prisma migrate status` on production DB
+- [ ] Verify all migrations applied
+- [ ] Document: NEVER use `migrate dev` on production
+
+#### Clerk Production
+
+- [ ] Verify sign-in methods match development
+- [ ] Verify user metadata fields configured
+- [ ] Configure webhooks to point to production API (if used)
+- [ ] Test authentication with production instance
+
+### 🏗️ Phase 10: Build & Deploy (Week 2)
+
+#### Pre-Build Validation
+
+- [ ] All EAS secrets configured
+- [ ] `app.config.ts` and `eas.json` committed
+- [ ] Version number updated in `app.config.ts` (if applicable)
+- [ ] Code tested locally
+- [ ] API deployed to production
+- [ ] Database migrations applied
+
+#### iOS Production Build (Week 2, Day 13-14)
+
+- [ ] Run: `eas build --platform ios --profile production`
+- [ ] Wait for build completion (~15-20 min)
+- [ ] Receive build completion email
+- [ ] Download .ipa (optional): `eas build:download --id <BUILD_ID>`
+- [ ] Verify build on EAS dashboard
+
+#### Android Production Build (Week 2, Day 13-14)
+
+- [ ] Run: `eas build --platform android --profile production`
+- [ ] Wait for build completion (~10-15 min)
+- [ ] Receive build completion email
+- [ ] Copy SHA-1 fingerprint from build output
+- [ ] Add SHA-1 to Google Maps Android API key (Phase 8)
+- [ ] Download .aab (optional): `eas build:download --id <BUILD_ID>`
+- [ ] Verify build on EAS dashboard
+
+### 🔄 Phase 11: OTA Updates Setup (Week 2)
+
+- [ ] Create `.github/workflows/eas-update.yml` workflow
+- [ ] Get Expo access token from https://expo.dev/accounts/[account]/settings/access-tokens
+- [ ] Add `EXPO_TOKEN` to GitHub Secrets
+- [ ] Test OTA update to staging channel
+- [ ] Document OTA vs App Store update decision criteria
+
+### 📲 Phase 12: iOS App Store Submission (Week 3-4)
+
+#### Create App Listing (Week 3, Day 15-16)
+
+- [ ] Visit https://appstoreconnect.apple.com/apps
+- [ ] Create new app: "Nam Việt Internal"
+- [ ] Set primary language: Vietnamese
+- [ ] Select bundle ID: `vn.dienlanhnamviet.internal`
+- [ ] Set SKU: `nv-internal`
+- [ ] Copy App Store Connect App ID (ASC App ID)
+- [ ] Update `eas.json` with ASC App ID
+
+#### Prepare Store Listing (Week 3, Day 15-16)
+
+- [ ] Take screenshots (6.7", 6.5", 5.5" displays)
+- [ ] Write Vietnamese description
+- [ ] Set keywords (Vietnamese)
+- [ ] Create/host privacy policy
+- [ ] Add support URL/email
+- [ ] Set category: Productivity/Business
+- [ ] Set age rating: 4+
+
+#### TestFlight Distribution (Week 3, Day 17-21)
+
+- [ ] Submit build: `eas submit --platform ios --profile production`
+- [ ] Wait for processing (5-10 min)
+- [ ] Configure export compliance in TestFlight
+- [ ] Add internal testers (App Store Connect users)
+- [ ] Add external testers (optional, requires review)
+- [ ] Send TestFlight invitations
+- [ ] Gather feedback (1-2 weeks)
+- [ ] Test on multiple devices
+- [ ] Verify GPS check-in/check-out
+- [ ] Verify photo uploads
+- [ ] Fix any critical bugs found
+
+#### App Store Review (Week 4, Day 22-28)
+
+- [ ] Create version 1.0.0 in App Store tab
+- [ ] Upload all screenshots
+- [ ] Fill in description, keywords, URLs
+- [ ] Select build to submit
+- [ ] Provide demo account credentials
+- [ ] Add review notes
+- [ ] Submit for review
+- [ ] Wait for approval (24-48 hours)
+- [ ] Monitor review status
+- [ ] Address any rejection reasons
+- [ ] Release app when approved
+
+### 🤖 Phase 13: Android Play Store Submission (Week 3-4)
+
+#### Create App Listing (Week 3, Day 15-16)
+
+- [ ] Visit https://play.google.com/console/
+- [ ] Create new app: "Nam Việt Internal"
+- [ ] Set default language: Vietnamese
+- [ ] Set app type: App (not game)
+- [ ] Set pricing: Free
+- [ ] Accept declarations
+
+#### App Content Configuration (Week 3, Day 15-16)
+
+- [ ] Add privacy policy URL
+- [ ] Configure app access (restricted + test credentials)
+- [ ] Complete content ratings questionnaire
+- [ ] Set target audience: 18+
+- [ ] Configure data safety section
+  - [ ] Location, Photos, User account info
+  - [ ] Encryption in transit: Yes
+  - [ ] Data deletion available: Yes
+
+#### Store Listing (Week 3, Day 15-16)
+
+- [ ] Take screenshots (phone: 1080x1920-2340)
+- [ ] Create app icon (512x512, no transparency)
+- [ ] Create feature graphic (1024x500)
+- [ ] Write Vietnamese description
+- [ ] Set category: Productivity
+- [ ] Add contact email
+- [ ] Add website (optional)
+
+#### Internal Testing (Week 3, Day 17-21)
+
+- [ ] Submit to internal testing: `eas submit --platform android --profile production`
+- [ ] Create tester email list: "Nam Việt Team"
+- [ ] Add tester emails
+- [ ] Share testing link with testers
+- [ ] Gather feedback (1-2 weeks)
+- [ ] Test on multiple Android devices
+- [ ] Fix any critical bugs found
+
+#### Production Release (Week 4, Day 22-28)
+
+- [ ] Create production release
+- [ ] Promote internal testing build (or upload new AAB)
+- [ ] Select countries (Vietnam or all)
+- [ ] Write release notes (Vietnamese)
+- [ ] Start rollout to production
+- [ ] Wait for review (1-3 days)
+- [ ] Monitor review status
+- [ ] App goes live automatically after approval
+
+### 📊 Phase 14: Post-Launch Monitoring
+
+#### Monitoring Setup
+
+- [ ] Set up App Store Connect analytics
+- [ ] Set up Play Console statistics
+- [ ] Monitor TestFlight/internal testing feedback
+- [ ] Set up crash reporting (Sentry or PostHog)
+- [ ] Configure Sentry DSN in EAS secrets (if using Sentry)
+- [ ] Set up PostHog account (recommended)
+  - [ ] Create project: "Nam Việt Internal - Mobile"
+  - [ ] Get API key
+  - [ ] Integrate with mobile app
+  - [ ] Configure event tracking
+
+#### Daily Monitoring (After Launch)
+
+- [ ] Check crash reports
+- [ ] Monitor user reviews/ratings
+- [ ] Track app store analytics
+- [ ] Review error logs
+- [ ] Monitor API performance (Vercel)
+- [ ] Check database performance (Neon)
+
+### 🔒 Phase 16: Security Best Practices
+
+- [ ] Verify `.gitignore` includes all sensitive files
+- [ ] Confirm no secrets in committed code
+- [ ] Document secret rotation schedule (every 6 months)
+- [ ] Set API key restrictions (Google Maps)
+- [ ] Enable Clerk security features:
+  - [ ] Bot detection
+  - [ ] Rate limiting
+  - [ ] IP restrictions (if applicable)
+- [ ] Document security incident response plan
+
+### 📚 Documentation & Training
+
+- [ ] Update README with production deployment info
+- [ ] Document OTA update process for team
+- [ ] Create runbook for common operations
+- [ ] Train team on monitoring dashboards
+- [ ] Document support process
+- [ ] Create FAQ for common issues
+- [ ] Document rollback procedures
+
+### 🎉 Launch Readiness
+
+- [ ] All above phases completed
+- [ ] App tested on iOS physical device
+- [ ] App tested on Android physical device
+- [ ] GPS verification tested with production keys
+- [ ] Photo uploads tested with production storage
+- [ ] Authentication tested with production Clerk
+- [ ] Monitoring dashboards configured
+- [ ] Team trained and ready
+- [ ] Support process documented
+- [ ] Launch announcement prepared (if applicable)
+
+---
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -44,20 +390,22 @@
 
 ### Build & Distribution Strategy
 
-| Type | Trigger | Distribution | Use Case |
-|------|---------|--------------|----------|
-| **Development** | Manual (local) | Expo Go | Local testing |
-| **Staging Build** | Manual (GitHub Actions) | Internal OTA (staging channel) | QA testing |
-| **Production Build** | Manual (GitHub Actions) | TestFlight/Play Console + OTA | Beta → Public release |
-| **OTA Update** | Manual (GitHub Actions) | EAS Update (production channel) | Hot fixes, JS-only updates |
+| Type                 | Trigger                 | Distribution                    | Use Case                   |
+| -------------------- | ----------------------- | ------------------------------- | -------------------------- |
+| **Development**      | Manual (local)          | Expo Go                         | Local testing              |
+| **Staging Build**    | Manual (GitHub Actions) | Internal OTA (staging channel)  | QA testing                 |
+| **Production Build** | Manual (GitHub Actions) | TestFlight/Play Console + OTA   | Beta → Public release      |
+| **OTA Update**       | Manual (GitHub Actions) | EAS Update (production channel) | Hot fixes, JS-only updates |
 
 ### Cost Breakdown
 
 #### One-Time Costs
+
 - **Apple Developer Program**: $99/year (required for TestFlight & App Store)
 - **Google Play Console**: $25 one-time (required for Play Store)
 
 #### Monthly Costs (Free Tier)
+
 - **EAS Build**: FREE (30 builds/month per platform)
 - **EAS Submit**: FREE (included)
 - **EAS Update**: FREE (unlimited OTA updates)
@@ -179,6 +527,7 @@ eas init
 ### Phase 4: Environment Variables Setup
 
 We need **three environments**:
+
 1. **Development** (local `.env`)
 2. **Staging** (EAS secrets)
 3. **Production** (EAS secrets)
@@ -411,87 +760,96 @@ Create `apps/mobile/eas.json`:
 Replace `apps/mobile/app.json` with `apps/mobile/app.config.ts`:
 
 ```typescript
-import { ExpoConfig, ConfigContext } from '@expo/config';
+import { ExpoConfig, ConfigContext } from "@expo/config";
 
-const IS_PRODUCTION = process.env.EXPO_PUBLIC_ENV === 'production';
-const IS_STAGING = process.env.EXPO_PUBLIC_ENV === 'staging';
+const IS_PRODUCTION = process.env.EXPO_PUBLIC_ENV === "production";
+const IS_STAGING = process.env.EXPO_PUBLIC_ENV === "staging";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Nam Việt Internal',
-  slug: 'nv-internal',
-  version: '1.0.0',
-  orientation: 'portrait',
-  icon: './assets/images/icon.png',
-  scheme: 'nv-internal',
-  userInterfaceStyle: 'automatic',
+  name: "Nam Việt Internal",
+  slug: "nv-internal",
+  version: "1.0.0",
+  orientation: "portrait",
+  icon: "./assets/images/icon.png",
+  scheme: "nv-internal",
+  userInterfaceStyle: "automatic",
   newArchEnabled: true,
   splash: {
-    image: './assets/images/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff',
+    image: "./assets/images/splash.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff",
   },
-  assetBundlePatterns: ['**/*'],
+  assetBundlePatterns: ["**/*"],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'vn.dienlanhnamviet.internal',
+    bundleIdentifier: "vn.dienlanhnamviet.internal",
     config: {
       googleMapsApiKey: IS_PRODUCTION
         ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY_PRODUCTION
-        : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING ||
+          process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
     },
     infoPlist: {
-      NSLocationWhenInUseUsageDescription: 'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
-      NSLocationAlwaysAndWhenInUseUsageDescription: 'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
-      NSCameraUsageDescription: 'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc và đính kèm vào nhiệm vụ.',
-      NSPhotoLibraryUsageDescription: 'Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
+      NSLocationWhenInUseUsageDescription:
+        "Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.",
+      NSLocationAlwaysAndWhenInUseUsageDescription:
+        "Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.",
+      NSCameraUsageDescription:
+        "Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc và đính kèm vào nhiệm vụ.",
+      NSPhotoLibraryUsageDescription:
+        "Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.",
     },
   },
   android: {
-    package: 'vn.dienlanhnamviet.internal',
+    package: "vn.dienlanhnamviet.internal",
     edgeToEdgeEnabled: true,
     adaptiveIcon: {
-      foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: '#ffffff',
+      foregroundImage: "./assets/images/adaptive-icon.png",
+      backgroundColor: "#ffffff",
     },
     permissions: [
-      'ACCESS_COARSE_LOCATION',
-      'ACCESS_FINE_LOCATION',
-      'CAMERA',
-      'READ_EXTERNAL_STORAGE',
-      'WRITE_EXTERNAL_STORAGE',
+      "ACCESS_COARSE_LOCATION",
+      "ACCESS_FINE_LOCATION",
+      "CAMERA",
+      "READ_EXTERNAL_STORAGE",
+      "WRITE_EXTERNAL_STORAGE",
     ],
     config: {
       googleMaps: {
         apiKey: IS_PRODUCTION
           ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY_PRODUCTION
-          : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+          : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING ||
+            process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
       },
     },
   },
   web: {
-    bundler: 'metro',
-    output: 'static',
-    favicon: './assets/images/favicon.png',
+    bundler: "metro",
+    output: "static",
+    favicon: "./assets/images/favicon.png",
   },
   plugins: [
-    'expo-router',
-    'expo-secure-store',
-    'expo-web-browser',
-    'expo-font',
-    'expo-asset',
-    'expo-video',
+    "expo-router",
+    "expo-secure-store",
+    "expo-web-browser",
+    "expo-font",
+    "expo-asset",
+    "expo-video",
     [
-      'expo-location',
+      "expo-location",
       {
-        locationAlwaysAndWhenInUsePermission: 'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
+        locationAlwaysAndWhenInUsePermission:
+          "Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.",
       },
     ],
     [
-      'expo-image-picker',
+      "expo-image-picker",
       {
-        photosPermission: 'Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
-        cameraPermission: 'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc.',
+        photosPermission:
+          "Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.",
+        cameraPermission:
+          "Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc.",
       },
     ],
   ],
@@ -500,20 +858,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     eas: {
-      projectId: 'efc85258-12ce-4f6a-826a-ab5765d18ebc',
+      projectId: "efc85258-12ce-4f6a-826a-ab5765d18ebc",
     },
   },
-  owner: 'duongdev',
+  owner: "duongdev",
   updates: {
-    url: 'https://u.expo.dev/efc85258-12ce-4f6a-826a-ab5765d18ebc',
+    url: "https://u.expo.dev/efc85258-12ce-4f6a-826a-ab5765d18ebc",
   },
   runtimeVersion: {
-    policy: 'appVersion', // OTA updates only work for same app version
+    policy: "appVersion", // OTA updates only work for same app version
   },
 });
 ```
 
 **Important Changes**:
+
 1. ✅ App name: "Nam Việt Internal"
 2. ✅ Bundle IDs: `vn.dienlanhnamviet.internal`
 3. ✅ Dynamic Google Maps API keys based on environment
@@ -557,7 +916,9 @@ main (production)
 ```
 
 **Workflow**:
+
 1. **Feature Development**:
+
    ```bash
    git checkout develop
    git checkout -b feature/task-comments
@@ -572,6 +933,7 @@ main (production)
    - Merge when ready
 
 3. **Release to Production**:
+
    ```bash
    git checkout main
    git merge develop
@@ -610,6 +972,7 @@ eas credentials
 **Option B: From First Build Output**
 
 After running your first production Android build, the output will include:
+
 ```
 ✔ Build successful
   SHA-1 Fingerprint: A1:B2:C3:D4:E5:F6:...
@@ -629,10 +992,12 @@ After running your first production Android build, the output will include:
 #### Step 8.3: Verify API Key Restrictions
 
 **iOS Key Restrictions**:
+
 - ✅ iOS bundle ID: `vn.dienlanhnamviet.internal`
 - ✅ APIs: Maps SDK for iOS, Places API
 
 **Android Key Restrictions**:
+
 - ✅ Package name: `vn.dienlanhnamviet.internal`
 - ✅ SHA-1 fingerprint: (from build)
 - ✅ APIs: Maps SDK for Android, Places API
@@ -671,7 +1036,7 @@ Add environment-based prefix:
 
 ```typescript
 // Get environment prefix
-const ENV_PREFIX = process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
+const ENV_PREFIX = process.env.NODE_ENV === "production" ? "prod" : "dev";
 
 // When uploading files
 const blobPath = `${ENV_PREFIX}/attachments/${filename}`;
@@ -683,6 +1048,7 @@ const blobPath = `${ENV_PREFIX}/attachments/${filename}`;
 
 **Environment Variable**:
 Add to `apps/api/.env` and Vercel environment variables:
+
 ```bash
 NODE_ENV=production  # Set in Vercel production environment
 ```
@@ -723,14 +1089,14 @@ npx prisma migrate status
 1. **Visit**: https://vercel.com/duongdev/nv-internal-api/settings/environment-variables
 2. **Add Production Variables**:
 
-| Variable | Value | Environment |
-|----------|-------|-------------|
-| `DATABASE_URL` | Your Neon production URL | Production |
-| `CLERK_SECRET_KEY` | `sk_live_...` | Production |
-| `CLERK_PUBLISHABLE_KEY` | `pk_live_...` | Production |
-| `STORAGE_PROVIDER` | `vercel-blob` | Production |
-| `BLOB_READ_WRITE_TOKEN` | Your Vercel Blob token | Production |
-| `NODE_ENV` | `production` | Production |
+| Variable                | Value                    | Environment |
+| ----------------------- | ------------------------ | ----------- |
+| `DATABASE_URL`          | Your Neon production URL | Production  |
+| `CLERK_SECRET_KEY`      | `sk_live_...`            | Production  |
+| `CLERK_PUBLISHABLE_KEY` | `pk_live_...`            | Production  |
+| `STORAGE_PROVIDER`      | `vercel-blob`            | Production  |
+| `BLOB_READ_WRITE_TOKEN` | Your Vercel Blob token   | Production  |
+| `NODE_ENV`              | `production`             | Production  |
 
 3. **Redeploy** after adding variables:
    ```bash
@@ -826,6 +1192,7 @@ OTA updates allow you to push JavaScript/React changes without going through app
 #### Step 11.1: When to Use OTA vs App Store Update
 
 **✅ Safe for OTA** (no app store review needed):
+
 - Bug fixes in JavaScript code
 - UI/UX changes
 - Business logic updates
@@ -834,6 +1201,7 @@ OTA updates allow you to push JavaScript/React changes without going through app
 - New screens (pure React Native)
 
 **❌ Requires App Store Update**:
+
 - Native module version changes (e.g., `expo-location@18.0.0` → `19.0.0`)
 - New iOS/Android permissions
 - Changes to `app.config.ts` native config
@@ -851,14 +1219,14 @@ on:
   workflow_dispatch:
     inputs:
       channel:
-        description: 'Update channel (staging or production)'
+        description: "Update channel (staging or production)"
         required: true
         type: choice
         options:
           - staging
           - production
       message:
-        description: 'Update message'
+        description: "Update message"
         required: true
         type: string
 
@@ -957,6 +1325,7 @@ eas update:list --branch production
 ```
 
 **User Impact**:
+
 - Users with internet connection get update on next app restart
 - No app store review (updates in minutes vs days)
 - Works only for same runtime version (1.0.0 updates 1.0.0 users)
@@ -990,11 +1359,13 @@ eas update:list --branch production
 **Tip**: Use Expo's screenshot tool or Xcode simulator.
 
 **App Information**:
+
 - **Category**: Productivity / Business
 - **Content Rights**: Does not contain third-party content
 - **Age Rating**: 4+ (unless your app has specific content)
 
 **Description** (Vietnamese):
+
 ```
 Nam Việt Internal là ứng dụng quản lý công việc nội bộ dành cho nhân viên Điện Lạnh Nam Việt.
 
@@ -1009,6 +1380,7 @@ Tính năng chính:
 ```
 
 **Keywords** (Vietnamese):
+
 ```
 quản lý công việc, điện lạnh, nam việt, nhiệm vụ, check-in
 ```
@@ -1016,6 +1388,7 @@ quản lý công việc, điện lạnh, nam việt, nhiệm vụ, check-in
 **Support URL**: Your company website or support email
 
 **Privacy Policy URL**: Required by Apple
+
 - Create a simple privacy policy (can use template)
 - Host on GitHub Pages or company website
 - Example: `https://github.com/yourusername/nv-internal/blob/main/PRIVACY.md`
@@ -1068,12 +1441,14 @@ eas submit --platform ios --profile production
 #### Step 12.6: Distribute via TestFlight
 
 Testers will:
+
 1. Receive email invitation
 2. Download **TestFlight** app from App Store
 3. Tap invitation link → Install "Nam Việt Internal"
 4. Provide feedback via TestFlight
 
 **Gather Feedback** (1-2 weeks recommended):
+
 - Test all features
 - Check GPS check-in/check-out
 - Verify photo uploads
@@ -1098,16 +1473,19 @@ After TestFlight testing:
 6. **Click**: "Submit for Review"
 
 **Review Timeline**:
+
 - Typical: 24-48 hours
 - Can be longer during holidays
 
 **Common Rejection Reasons**:
+
 - Missing privacy policy
 - Insufficient demo account access
 - Crashes during review
 - Missing screenshots
 
 **After Approval**:
+
 - App goes live automatically (or on your chosen date)
 - Can manually release via "Release this version"
 
@@ -1155,6 +1533,7 @@ After TestFlight testing:
 **Dashboard → Grow → Store presence → Main store listing**:
 
 **Screenshots** (at least 2 per type):
+
 - **Phone**: 1080 x 1920 to 1080 x 2340 pixels
 - **7" Tablet**: 1024 x 1920 to 1024 x 2340 pixels (optional)
 - **10" Tablet**: 1200 x 2000 to 1200 x 2340 pixels (optional)
@@ -1164,6 +1543,7 @@ After TestFlight testing:
 **Feature Graphic**: 1024 x 500 pixels (JPG or PNG)
 
 **Description** (same as iOS, Vietnamese):
+
 ```
 Nam Việt Internal là ứng dụng quản lý công việc nội bộ dành cho nhân viên Điện Lạnh Nam Việt.
 ...
@@ -1172,6 +1552,7 @@ Nam Việt Internal là ứng dụng quản lý công việc nội bộ dành ch
 **Category**: Productivity
 
 **Contact details**:
+
 - Email: support@yourcompany.com
 - Phone: (optional)
 - Website: (optional)
@@ -1183,6 +1564,7 @@ Nam Việt Internal là ứng dụng quản lý công việc nội bộ dành ch
 3. **Upload AAB**:
 
    **Via EAS Submit**:
+
    ```bash
    cd apps/mobile
 
@@ -1217,6 +1599,7 @@ Nam Việt Internal là ứng dụng quản lý công việc nội bộ dành ch
 4. **Copy testing link** and share with testers
 
 **Testers will**:
+
 1. Click testing link on Android device
 2. Tap "Download it on Google Play"
 3. Install app
@@ -1236,10 +1619,12 @@ After internal testing (1-2 weeks):
 6. **Review release** → **Start rollout to Production**
 
 **Review Timeline**:
+
 - Typical: 1-3 days (faster than iOS)
 - First release can take up to 7 days
 
 **After Approval**:
+
 - App goes live automatically
 - Available in Play Store within 2-4 hours
 
@@ -1252,11 +1637,13 @@ After internal testing (1-2 weeks):
 #### Step 14.1: Set Up Monitoring
 
 **App Store Connect** (iOS):
+
 - **Analytics**: Daily active users, sessions, crashes
 - **TestFlight**: Beta feedback
 - **Ratings & Reviews**: Monitor user feedback
 
 **Play Console** (Android):
+
 - **Statistics**: Installs, uninstalls, crashes
 - **Ratings & Reviews**: User feedback
 - **Pre-launch reports**: Automated testing results
@@ -1266,10 +1653,12 @@ After internal testing (1-2 weeks):
 You already have **Sentry** integrated (from `apps/mobile/package.json`):
 
 **Verify Sentry is configured**:
+
 1. Check `apps/mobile/app/_layout.tsx` for Sentry initialization
 2. If not configured, add:
+
    ```typescript
-   import * as Sentry from '@sentry/react-native';
+   import * as Sentry from "@sentry/react-native";
 
    Sentry.init({
      dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -1291,12 +1680,14 @@ You already have **Sentry** integrated (from `apps/mobile/package.json`):
 **Recommended**: PostHog (from your enhancement plan `.claude/enhancements/20251031-posthog-observability-implementation.md`)
 
 **Set up PostHog**:
+
 1. Create account: https://posthog.com/
 2. Create project: "Nam Việt Internal - Mobile"
 3. Get API key
 4. Add to mobile app (follow enhancement plan)
 
 **Track key events**:
+
 - App opens
 - Task check-ins
 - Photo uploads
@@ -1314,16 +1705,19 @@ You already have **Sentry** integrated (from `apps/mobile/package.json`):
 When you exceed EAS free tier (30 builds/month):
 
 **Benefits**:
+
 - Unlimited free builds (open source repo)
 - Full control over build environment
 - Same output (.ipa/.aab) as EAS
 
 **Drawbacks**:
+
 - More complex setup (code signing, credentials)
 - Longer build times (~20-30 min vs 10-15 min)
 - Manual credential management
 
 **Implementation**:
+
 - See: `.github/workflows/eas-build.yml` (create later)
 - Guide: https://docs.expo.dev/build-reference/local-builds/
 - Use `eas build --local` to test locally first
@@ -1334,6 +1728,7 @@ When you exceed EAS free tier (30 builds/month):
 **Optimization**: Automatic OTA on merge to `main`
 
 **Create**: `.github/workflows/auto-ota.yml`
+
 ```yaml
 name: Auto OTA Update
 
@@ -1342,8 +1737,8 @@ on:
     branches:
       - main
     paths:
-      - 'apps/mobile/**'
-      - '!apps/mobile/app.config.ts'  # Exclude native changes
+      - "apps/mobile/**"
+      - "!apps/mobile/app.config.ts" # Exclude native changes
 
 jobs:
   update:
@@ -1375,6 +1770,7 @@ Since your repo is public, follow these guidelines:
 #### Step 16.1: Never Commit Secrets
 
 **Already gitignored** (verify):
+
 ```bash
 # Check .gitignore includes:
 .env
@@ -1389,16 +1785,19 @@ google-play-service-account.json
 #### Step 16.2: Use Environment Variables
 
 **For mobile app**:
+
 - ✅ EAS Secrets (encrypted)
 - ❌ Never in `app.config.ts` or `eas.json`
 
 **For API**:
+
 - ✅ Vercel environment variables
 - ❌ Never in `.env` committed to repo
 
 #### Step 16.3: Rotate Keys Periodically
 
 **Every 6 months**:
+
 - Regenerate Clerk production keys
 - Rotate Google Maps API keys
 - Update Vercel Blob tokens
@@ -1406,11 +1805,13 @@ google-play-service-account.json
 #### Step 16.4: Limit API Key Restrictions
 
 **Google Maps**:
+
 - ✅ Restrict by bundle ID/package name
 - ✅ Restrict to specific APIs
 - ✅ Set usage quotas
 
 **Clerk**:
+
 - ✅ Enable bot detection
 - ✅ Rate limiting
 - ✅ IP restrictions (if applicable)
@@ -1472,12 +1873,14 @@ git push origin v1.0.0
 ### Pre-Launch Checklist
 
 #### Accounts
+
 - [ ] Apple Developer Account created and verified
 - [ ] Google Play Console account created and verified
 - [ ] Team ID copied from Apple Developer account
 - [ ] Play Console service account created (for EAS Submit)
 
 #### Configuration
+
 - [ ] `app.config.ts` created with production bundle IDs
 - [ ] `eas.json` created and committed
 - [ ] Production environment variables set in EAS Secrets
@@ -1485,6 +1888,7 @@ git push origin v1.0.0
 - [ ] Production database migrations applied
 
 #### Third-Party Services
+
 - [ ] Clerk production instance created
 - [ ] Production Google Maps API keys created (iOS + Android)
 - [ ] API key restrictions configured
@@ -1492,12 +1896,14 @@ git push origin v1.0.0
 - [ ] Billing alerts set up for Google Maps API
 
 #### Git & CI/CD
+
 - [ ] `develop` branch created
 - [ ] Vercel connected to `main` (production) and `develop` (preview)
 - [ ] GitHub Actions workflow for OTA updates created
 - [ ] `EXPO_TOKEN` added to GitHub Secrets
 
 #### Testing
+
 - [ ] App tested on physical iOS device
 - [ ] App tested on physical Android device
 - [ ] GPS check-in/check-out verified with production keys
@@ -1505,6 +1911,7 @@ git push origin v1.0.0
 - [ ] Authentication tested with production Clerk instance
 
 #### Store Listings
+
 - [ ] App Store Connect app created
 - [ ] Play Console app created
 - [ ] Screenshots prepared (iOS + Android)
@@ -1513,6 +1920,7 @@ git push origin v1.0.0
 - [ ] Support email configured
 
 #### Builds
+
 - [ ] First iOS production build successful
 - [ ] First Android production build successful
 - [ ] SHA-1 fingerprint added to Android API key
@@ -1520,6 +1928,7 @@ git push origin v1.0.0
 - [ ] Play Console internal testing build uploaded
 
 #### Documentation
+
 - [ ] README updated with production deployment info
 - [ ] Team trained on OTA update process
 - [ ] Monitoring dashboards set up (Sentry/PostHog)
@@ -1530,21 +1939,25 @@ git push origin v1.0.0
 ## Timeline Estimate
 
 ### Week 1: Setup
+
 - **Day 1-2**: Create Apple & Google accounts (wait for approval)
 - **Day 3-4**: Configure EAS, create production keys
 - **Day 5-7**: Update app config, set environment variables
 
 ### Week 2: Testing
+
 - **Day 8-10**: Build staging versions, internal testing
 - **Day 11-12**: Fix bugs found in testing
 - **Day 13-14**: Build production versions
 
 ### Week 3: Submission
+
 - **Day 15-16**: Create store listings, upload screenshots
 - **Day 17**: Submit to TestFlight (iOS) and internal testing (Android)
 - **Day 18-21**: Gather feedback from beta testers
 
 ### Week 4: Review & Launch
+
 - **Day 22-23**: Fix issues from beta testing
 - **Day 24**: Submit for App Store and Play Store review
 - **Day 25-28**: Wait for approval (iOS: 1-2 days, Android: 1-3 days)
@@ -1557,6 +1970,7 @@ git push origin v1.0.0
 ## Support & Resources
 
 ### Official Documentation
+
 - **EAS Build**: https://docs.expo.dev/build/introduction/
 - **EAS Submit**: https://docs.expo.dev/submit/introduction/
 - **EAS Update**: https://docs.expo.dev/eas-update/introduction/
@@ -1564,11 +1978,13 @@ git push origin v1.0.0
 - **Play Console**: https://support.google.com/googleplay/android-developer/
 
 ### Troubleshooting
+
 - **EAS Build Issues**: https://docs.expo.dev/build-reference/troubleshooting/
 - **iOS Code Signing**: https://docs.expo.dev/app-signing/managed-credentials/
 - **Android Signing**: https://docs.expo.dev/app-signing/android-credentials/
 
 ### Community
+
 - **Expo Forums**: https://forums.expo.dev/
 - **Discord**: https://chat.expo.dev/
 
