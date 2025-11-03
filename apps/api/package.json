@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "vercel-build": "pnpm run build:packages && prisma generate && (prisma migrate resolve --rolled-back 20251104000000_fix_populate_searchable_text || true) && prisma migrate deploy && pnpm run build",
+    "vercel-build": "pnpm run build:packages && prisma generate && prisma migrate deploy && pnpm run build",
     "build:packages": "pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/validation build",
     "build": "tsc -p tsconfig.build.json",
     "test": "jest",
