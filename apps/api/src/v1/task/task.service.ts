@@ -225,9 +225,17 @@ export async function createTask({
         geoLocationId = geoLocation.id
       }
 
-      // Build searchableText before creating the task
-      // Note: We can't include task.id in searchableText yet because it's auto-generated
-      // We'll update it after creation
+      // Build initial searchableText (without task ID since it's auto-generated)
+      // We'll update it after creation to include the ID
+      const initialSearchableText = buildSearchableText({
+        title: data.title,
+        description: data.description,
+        customer,
+        geoLocation: geoLocationId
+          ? await tx.geoLocation.findUnique({ where: { id: geoLocationId } })
+          : null,
+      })
+
       const taskData = {
         title: data.title,
         description: data.description,
@@ -235,6 +243,7 @@ export async function createTask({
         geoLocationId,
         expectedRevenue: data.expectedRevenue,
         expectedCurrency: 'VND' as const, // Default currency
+        searchableText: initialSearchableText, // Required field
       }
 
       const createdTask = await tx.task.create({
@@ -242,8 +251,8 @@ export async function createTask({
         include: DEFAULT_TASK_INCLUDE,
       })
 
-      // Now update searchableText with the generated task ID
-      await tx.task.update({
+      // Now update searchableText to include the generated task ID
+      const finalTask = await tx.task.update({
         where: { id: createdTask.id },
         data: {
           searchableText: buildSearchableText({
@@ -254,6 +263,7 @@ export async function createTask({
             geoLocation: createdTask.geoLocation,
           }),
         },
+        include: DEFAULT_TASK_INCLUDE,
       })
 
       // Create activity log
@@ -261,13 +271,13 @@ export async function createTask({
         {
           action: 'TASK_CREATED',
           userId: user.id,
-          topic: { entityType: 'TASK', entityId: createdTask.id },
+          topic: { entityType: 'TASK', entityId: finalTask.id },
           payload: {},
         },
         tx,
       )
 
-      return createdTask
+      return finalTask
     })
 
     logger.info({ task }, 'Task created successfully')
@@ -439,18 +449,12 @@ export async function searchAndFilterTasks(
       search.trim().replace(/\s+/g, ' '),
     )
 
-    // Note: searchableText should never be null after migration, but we add
-    // a defensive check to prevent 500 errors if any records slip through
+    // searchableText is NOT NULL after migration, so we can query directly
     whereConditions.push({
-      AND: [
-        { searchableText: { not: null } },
-        {
-          searchableText: {
-            contains: normalizedSearch,
-            mode: 'insensitive',
-          },
-        },
-      ],
+      searchableText: {
+        contains: normalizedSearch,
+        mode: 'insensitive',
+      },
     })
   }
 
