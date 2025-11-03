@@ -47,7 +47,8 @@ model Task {
 
   // Vietnamese accent-insensitive search optimization
   // Stores normalized concatenation of: id, title, description, customer name/phone, location name/address
-  searchableText String?      @db.Text
+  // NOT NULL for Task (always has at least ID), nullable for Customer/GeoLocation
+  searchableText String       @db.Text
 
   // Standard indexes (managed by Prisma)
   // These indexes can be expressed in Prisma schema and don't require special PostgreSQL features

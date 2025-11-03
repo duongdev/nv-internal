@@ -439,11 +439,18 @@ export async function searchAndFilterTasks(
       search.trim().replace(/\s+/g, ' '),
     )
 
+    // Note: searchableText should never be null after migration, but we add
+    // a defensive check to prevent 500 errors if any records slip through
     whereConditions.push({
-      searchableText: {
-        contains: normalizedSearch,
-        mode: 'insensitive',
-      },
+      AND: [
+        { searchableText: { not: null } },
+        {
+          searchableText: {
+            contains: normalizedSearch,
+            mode: 'insensitive',
+          },
+        },
+      ],
     })
   }
 
