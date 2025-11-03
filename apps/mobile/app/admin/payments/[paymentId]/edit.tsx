@@ -21,6 +21,7 @@ import { Text } from '@/components/ui/text'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toasts'
 import { UserFullName } from '@/components/user-public-info'
+import { getApiUrl } from '@/lib/env'
 import { cn } from '@/lib/utils'
 
 export default function PaymentEditModal() {
@@ -92,7 +93,7 @@ export default function PaymentEditModal() {
       const token = await clerk.session?.getToken()
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/v1/payment/${params.paymentId}`,
+        `${getApiUrl()}/v1/payment/${params.paymentId}`,
         {
           method: 'PUT',
           headers: {

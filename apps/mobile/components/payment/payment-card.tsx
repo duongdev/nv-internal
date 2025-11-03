@@ -2,6 +2,7 @@ import { AlertTriangle, Edit3, FileImage } from 'lucide-react-native'
 import { Image, Pressable, View } from 'react-native'
 import { formatCurrencyDisplay } from '@/components/ui/currency-input'
 import { UserFullName } from '@/components/user-public-info'
+import { getApiUrl } from '@/lib/env'
 import { cn } from '@/lib/utils'
 import { Badge } from '../ui/badge'
 import {
@@ -57,7 +58,7 @@ export function PaymentCard({
 
   // Get attachment URL for existing attachment
   const getAttachmentUrl = (attachmentId: string) => {
-    return `${process.env.EXPO_PUBLIC_API_URL}/v1/attachment/${attachmentId}/download`
+    return `${getApiUrl()}/v1/attachment/${attachmentId}/download`
   }
 
   return (

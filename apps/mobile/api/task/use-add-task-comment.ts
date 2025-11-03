@@ -4,6 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import type * as ImagePicker from 'expo-image-picker'
+import { getApiUrl } from '@/lib/env'
 import {
   type Activity,
   activitiesQueryOptions,
@@ -43,7 +44,7 @@ async function addTaskCommentReal({
   const { clerk } = await import('@/lib/api-client')
   const token = await clerk.session?.getToken()
 
-  const url = `${process.env.EXPO_PUBLIC_API_URL}/v1/task/${taskId}/comment`
+  const url = `${getApiUrl()}/v1/task/${taskId}/comment`
 
   const response = await fetch(url, {
     method: 'POST',

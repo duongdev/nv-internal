@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTask } from '@/api/task/use-task'
 import type { TaskStatus } from '@/components/ui/task-status-badge'
 import { toast } from '@/components/ui/toasts'
+import { getApiUrl } from '@/lib/env'
 
 const DISTANCE_THRESHOLD = 100 // meters
 
@@ -334,7 +335,7 @@ export function useTaskEvent(
       const token = await clerk.session?.getToken()
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/v1/task/${taskId}/${eventType}`,
+        `${getApiUrl()}/v1/task/${taskId}/${eventType}`,
         {
           method: 'POST',
           headers: {

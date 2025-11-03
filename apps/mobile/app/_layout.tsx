@@ -25,6 +25,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { Toasts } from '@/components/ui/toasts'
 import { queryClient } from '@/lib/api-client'
+import { getClerkPublishableKey } from '@/lib/env'
 import { FONT_FAMILY, NAV_THEME } from '@/lib/theme'
 
 export {
@@ -36,7 +37,7 @@ export default function RootLayout() {
   const { colorScheme } = useColorScheme()
 
   return (
-    <ClerkProvider tokenCache={tokenCache}>
+    <ClerkProvider tokenCache={tokenCache} publishableKey={getClerkPublishableKey()}>
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <QueryClientProvider client={queryClient}>
           <KeyboardProvider>

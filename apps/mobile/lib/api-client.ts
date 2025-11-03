@@ -3,10 +3,11 @@ import type { AppType } from '@nv-internal/api'
 import { QueryClient } from '@tanstack/react-query'
 import { type ClientResponse, hc } from 'hono/client'
 import { toast } from '@/components/ui/toasts'
+import { getApiUrl, getClerkPublishableKey } from './env'
 import { tokenCache } from './token-cache'
 
 export const clerk = getClerkInstance({
-  publishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  publishableKey: getClerkPublishableKey(),
   tokenCache,
 })
 
@@ -57,7 +58,7 @@ export const getHonoClient = async () => {
     headers.Authorization = `Bearer ${token}`
   }
 
-  return hc<AppType>(process.env.EXPO_PUBLIC_API_URL!, {
+  return hc<AppType>(getApiUrl(), {
     headers,
   })
 }

@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query'
 import type * as DocumentPicker from 'expo-document-picker'
 import type * as ImagePicker from 'expo-image-picker'
+import { getApiUrl } from '@/lib/env'
 import { activitiesQueryOptions } from '../activity/use-activities'
 import { taskQueryOptions } from '../task/use-task'
 import { TASK_LIST_QUERY_KEY } from '../task/use-task-infinite-list'
@@ -81,7 +82,7 @@ async function uploadAttachmentsReal({
   const token = await clerk.session?.getToken()
 
   const response = await fetch(
-    `${process.env.EXPO_PUBLIC_API_URL}/v1/task/${taskId}/attachments`,
+    `${getApiUrl()}/v1/task/${taskId}/attachments`,
     {
       method: 'POST',
       headers: {

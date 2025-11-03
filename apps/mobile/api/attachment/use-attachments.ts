@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { callHonoApi } from '@/lib/api-client'
+import { getApiUrl } from '@/lib/env'
 
 export interface Attachment {
   id: string
@@ -29,7 +30,7 @@ export async function fetchAttachmentsByIds(ids: string[]) {
     { throwOnError: true },
   )
 
-  const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || ''
+  const apiBaseUrl = getApiUrl()
 
   // Convert relative URLs to absolute URLs using the API base URL
   // Also convert date strings to Date objects

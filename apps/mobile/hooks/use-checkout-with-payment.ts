@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import type { InvoiceFile } from '@/components/payment/invoice-photo-capture'
 import { toast } from '@/components/ui/toasts'
 import { queryClient } from '@/lib/api-client'
+import { getApiUrl } from '@/lib/env'
 import { useTaskEvent } from './use-task-event'
 
 /**
@@ -137,7 +138,7 @@ export function useCheckoutWithPayment(taskId: number) {
       const token = await clerk.session?.getToken()
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/v1/task/${taskId}/check-out`,
+        `${getApiUrl()}/v1/task/${taskId}/check-out`,
         {
           method: 'POST',
           headers: {
