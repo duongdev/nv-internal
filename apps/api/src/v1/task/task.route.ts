@@ -124,7 +124,16 @@ const router = new Hono()
 
       return c.json(result, 200)
     } catch (error) {
-      logger.error({ error, userId: user.id, filters }, 'Task search failed')
+      logger.error(
+        {
+          error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          userId: user.id,
+          filters,
+        },
+        'Task search failed',
+      )
       throw new HTTPException(500, {
         message: 'Không thể tìm kiếm công việc. Vui lòng thử lại.',
         cause: error,

@@ -1,7 +1,8 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   // Output the generated Prisma client into the prisma-client workspace package
-  output   = "../../../packages/prisma-client/generated"
+  output          = "../../../packages/prisma-client/generated"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -33,33 +34,33 @@ model Task {
   assigneeIds   String[]
   startedAt     DateTime?
   completedAt   DateTime?
-  scheduledAt   DateTime?    // Planned/scheduled date for the task
+  scheduledAt   DateTime? // Planned/scheduled date for the task
   geoLocation   GeoLocation? @relation(fields: [geoLocationId], references: [id])
   geoLocationId String?
 
   // Payment tracking (GAAP-compliant precision)
-  expectedRevenue  Decimal?  @db.Decimal(15, 4)  // Set by admin - expected payment amount
-  expectedCurrency String    @default("VND")     // Support for future multi-currency
-  payments         Payment[]                      // Auto-created at checkout
+  expectedRevenue  Decimal?  @db.Decimal(15, 4) // Set by admin - expected payment amount
+  expectedCurrency String    @default("VND") // Support for future multi-currency
+  payments         Payment[] // Auto-created at checkout
 
   // Attachments linked to this task
-  attachments   Attachment[]
+  attachments Attachment[]
 
   // Vietnamese accent-insensitive search optimization
   // Stores normalized concatenation of: id, title, description, customer name/phone, location name/address
   // Nullable temporarily due to migration issues - will be made NOT NULL after data population
-  searchableText String?      @db.Text
-
-  // Standard indexes (managed by Prisma)
-  // These indexes can be expressed in Prisma schema and don't require special PostgreSQL features
-  @@index([status])                  // Status filtering (common in list queries)
-  @@index([customerId])              // Customer task history
-  @@index([status, completedAt])     // Completed task date range queries (existing)
-  @@index([status, createdAt])       // Status + creation date sorting (common pattern)
-  @@index([assigneeIds])             // Array overlap queries (existing - becomes GIN in migration)
+  searchableText String? @db.Text
 
   // Note: Advanced indexes with CONCURRENTLY, GIN operators, and partial WHERE clauses
   // are defined in manual migrations (see migrations/20251030053152_add_task_search_indexes)
+
+  // Standard indexes (managed by Prisma)
+  // These indexes can be expressed in Prisma schema and don't require special PostgreSQL features
+  @@index([status]) // Status filtering (common in list queries)
+  @@index([customerId]) // Customer task history
+  @@index([status, completedAt]) // Completed task date range queries (existing)
+  @@index([status, createdAt]) // Status + creation date sorting (common pattern)
+  @@index([assigneeIds]) // Array overlap queries (existing - becomes GIN in migration)
 }
 
 model GeoLocation {
@@ -76,12 +77,12 @@ model GeoLocation {
   // Stores normalized concatenation of: name, address
   searchableText String? @db.Text
 
-  // Standard indexes (managed by Prisma)
-  @@index([lat, lng])  // Geospatial queries (existing)
-  @@index([address])   // Address search
-
   // Note: GIN indexes for text search with pg_trgm are in manual migration
   // (see migrations/20251030053152_add_task_search_indexes)
+
+  // Standard indexes (managed by Prisma)
+  @@index([lat, lng]) // Geospatial queries (existing)
+  @@index([address]) // Address search
 }
 
 model Customer {
@@ -96,12 +97,12 @@ model Customer {
   // Stores normalized concatenation of: name, phone
   searchableText String? @db.Text
 
-  // Standard indexes (managed by Prisma)
-  @@index([phone])  // Phone lookup (existing)
-  @@index([name])   // Name search
-
   // Note: GIN indexes for text search with pg_trgm are in manual migration
   // (see migrations/20251030053152_add_task_search_indexes)
+
+  // Standard indexes (managed by Prisma)
+  @@index([phone]) // Phone lookup (existing)
+  @@index([name]) // Name search
 }
 
 model Activity {
@@ -122,29 +123,29 @@ model Activity {
 }
 
 model Attachment {
-  id               String   @id @default(cuid())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  deletedAt        DateTime? // Soft delete timestamp
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete timestamp
 
   // Nullable to allow attachments for other entities in future
-  task             Task?    @relation(fields: [taskId], references: [id])
-  taskId           Int?
+  task   Task? @relation(fields: [taskId], references: [id])
+  taskId Int?
 
-  provider         String   // e.g., 'vercel-blob' | 'local-disk'
-  url              String?  // optional, private by default
-  pathname         String   // storage key/path
+  provider         String // e.g., 'vercel-blob' | 'local-disk'
+  url              String? // optional, private by default
+  pathname         String // storage key/path
   size             Int
   mimeType         String
   originalFilename String
   fileHash         String?
-  uploadedBy       String   // Clerk userId
+  uploadedBy       String // Clerk userId
 
   // Thumbnail and preview support
-  thumbnailPathname String?  // Storage path for video thumbnail or resized image
-  blurhash          String?  // BlurHash placeholder for images and videos
-  width             Int?     // Original width in pixels
-  height            Int?     // Original height in pixels
+  thumbnailPathname String? // Storage path for video thumbnail or resized image
+  blurhash          String? // BlurHash placeholder for images and videos
+  width             Int? // Original width in pixels
+  height            Int? // Original height in pixels
 
   // Payment invoice relation (one-to-one)
   invoiceForPayment Payment?
@@ -155,28 +156,28 @@ model Attachment {
 }
 
 model Payment {
-  id                  String      @id @default(cuid())
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  taskId              Int
-  task                Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   // Financial data - GAAP compliant precision (15 digits total, 4 after decimal)
   // Supports up to 999,999,999,999.9999 (nearly 1 trillion with 4 decimal precision)
-  amount              Decimal     @db.Decimal(15, 4)
-  currency            String      @default("VND")     // ISO 4217 currency code
+  amount   Decimal @db.Decimal(15, 4)
+  currency String  @default("VND") // ISO 4217 currency code
 
   // Collection metadata
-  collectedAt         DateTime    @default(now())
-  collectedBy         String      // Clerk userId (worker who collected payment)
+  collectedAt DateTime @default(now())
+  collectedBy String // Clerk userId (worker who collected payment)
 
   // Invoice attachment (OPTIONAL - trust workers)
   invoiceAttachmentId String?     @unique
   invoiceAttachment   Attachment? @relation(fields: [invoiceAttachmentId], references: [id], onDelete: SetNull)
 
-  notes               String?     @db.Text
+  notes String? @db.Text
 
   @@index([taskId])
   @@index([collectedBy])

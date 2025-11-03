@@ -25,6 +25,7 @@ const prefixes: Partial<Record<ModelName, string>> = {
   GeoLocation: 'geo',
   Activity: 'act',
   Attachment: 'att',
+  Payment: 'payment',
   /** biome-ignore-end lint/style/useNamingConvention: <extend model name> */
 }
 
@@ -38,12 +39,6 @@ export const getPrisma = (databaseUrl = process.env.DATABASE_URL) => {
   }
 
   const options: ConstructorParameters<typeof PrismaClient>[0] = {
-    // Connection pool configuration for serverless
-    datasources: {
-      db: {
-        url: databaseUrl,
-      },
-    },
     // Query timeout configuration
     log:
       process.env.NODE_ENV === 'development'
@@ -53,9 +48,25 @@ export const getPrisma = (databaseUrl = process.env.DATABASE_URL) => {
 
   if (isVercelRuntime) {
     // Use the PrismaNeon adapter in Vercel serverless environment.
-    options.adapter = new PrismaNeon({
-      connectionString: databaseUrl,
-    })
+    // IMPORTANT: Use the unpooled (direct) connection string for the adapter
+    // When using a driver adapter, do NOT set datasources - the adapter handles the connection
+    const unpooledUrl =
+      process.env.POSTGRES_DATABASE_URL_UNPOOLED ||
+      process.env.POSTGRES_POSTGRES_URL_NON_POOLING ||
+      databaseUrl?.replace(/-pooler\./, '.')
+
+    // Remove channel_binding parameter as it's not supported by the serverless driver
+    const serverlessUrl = unpooledUrl?.replace(/[?&]channel_binding=require/, '')
+
+    options.adapter = new PrismaNeon({ connectionString: serverlessUrl })
+    // Do NOT set options.datasources when using adapter - it causes conflict
+  } else {
+    // Non-serverless: use standard connection
+    options.datasources = {
+      db: {
+        url: databaseUrl,
+      },
+    }
   }
 
   const prisma = new PrismaClient(options)
