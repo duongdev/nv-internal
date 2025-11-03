@@ -5,19 +5,27 @@
 -- Note: searchableText should already be nullable from previous migration
 -- (the SET NOT NULL failed due to NULL values, so column remained nullable)
 
--- Recreate helper function (dropped in previous migration)
-CREATE OR REPLACE FUNCTION normalize_for_search(text TEXT) RETURNS TEXT AS $$
+-- Recreate helper function (may or may not exist from previous migration)
+-- Use IF NOT EXISTS to avoid errors if function already exists
+DO $$
 BEGIN
-  -- Convert to lowercase and remove Vietnamese accents
-  RETURN lower(
-    translate(
-      text,
-      'áàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ',
-      'aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyAAAAAAAAAAAAAAAAADEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYY'
-    )
-  );
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
+  -- Drop function if it exists (to ensure clean slate)
+  DROP FUNCTION IF EXISTS normalize_for_search(TEXT);
+
+  -- Create the function
+  CREATE FUNCTION normalize_for_search(text TEXT) RETURNS TEXT AS $func$
+  BEGIN
+    -- Convert to lowercase and remove Vietnamese accents
+    RETURN lower(
+      translate(
+        text,
+        'áàảãạăắằẳẵặâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ',
+        'aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyAAAAAAAAAAAAAAAAADEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYY'
+      )
+    );
+  END;
+  $func$ LANGUAGE plpgsql IMMUTABLE;
+END $$;
 
 -- Update Task searchableText for tasks WITH customer
 -- Using proper JOIN instead of subquery
