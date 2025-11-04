@@ -1,6 +1,7 @@
 import { useSignIn } from '@clerk/clerk-expo'
 import * as React from 'react'
 import { type TextInput, View } from 'react-native'
+import Svg, { ClipPath, Defs, G, Path } from 'react-native-svg'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -12,6 +13,40 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Text } from '@/components/ui/text'
+
+function Logo({ size = 120 }: { size?: number }) {
+  return (
+    <Svg
+      height={size}
+      style={{ alignSelf: 'center' }}
+      viewBox="75 50 225 275"
+      width={size}
+    >
+      <Defs>
+        <ClipPath id="clip1">
+          <Path d="M 150 82 L 299.617188 82 L 299.617188 323.285156 L 150 323.285156 Z M 150 82" />
+        </ClipPath>
+        <ClipPath id="clip2">
+          <Path d="M 75.367188 51.785156 L 225 51.785156 L 225 293 L 75.367188 293 Z M 75.367188 51.785156" />
+        </ClipPath>
+      </Defs>
+      <G clipPath="url(#clip1)">
+        <Path
+          d="M 260.117188 248.34375 L 150.125 184.839844 L 150.125 236.855469 L 299.609375 323.160156 L 299.609375 82.816406 L 260.117188 82.816406 L 260.117188 248.34375"
+          fill="#2542c6"
+          fillRule="nonzero"
+        />
+      </G>
+      <G clipPath="url(#clip2)">
+        <Path
+          d="M 75.386719 51.765625 L 75.386719 292.109375 L 114.878906 292.109375 L 114.878906 126.582031 L 224.867188 190.085938 L 224.867188 138.070312 L 75.386719 51.765625"
+          fill="#00adef"
+          fillRule="nonzero"
+        />
+      </G>
+    </Svg>
+  )
+}
 
 export function SignInForm() {
   const { signIn, setActive, isLoaded } = useSignIn()
@@ -107,6 +142,9 @@ export function SignInForm() {
     <View className="gap-6">
       <Card className="border-border/0 shadow-none sm:border-border sm:shadow-black/5 sm:shadow-sm">
         <CardHeader>
+          <View className="mb-4">
+            <Logo size={120} />
+          </View>
           <CardTitle className="text-center text-2xl text-primary sm:text-left">
             Điện lạnh Nam Việt
           </CardTitle>
