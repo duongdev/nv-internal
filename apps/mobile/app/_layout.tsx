@@ -37,7 +37,10 @@ export default function RootLayout() {
   const { colorScheme } = useColorScheme()
 
   return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={getClerkPublishableKey()}>
+    <ClerkProvider
+      publishableKey={getClerkPublishableKey()}
+      tokenCache={tokenCache}
+    >
       <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
         <QueryClientProvider client={queryClient}>
           <KeyboardProvider>

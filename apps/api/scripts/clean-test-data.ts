@@ -27,7 +27,6 @@ const prisma = getPrisma()
 const isDryRun = process.argv.includes('--dry-run')
 const isConfirmed = process.argv.includes('--confirm')
 
-// biome-ignore lint/suspicious/noConsole: This is a CLI script that needs console output
 async function cleanTestData() {
   if (!isDryRun && !isConfirmed) {
     console.error('❌ Error: You must specify either --dry-run or --confirm\n')
@@ -50,7 +49,6 @@ async function cleanTestData() {
   // Step 1: Find test customers
   const testCustomers = await prisma.customer.findMany({
     where: {
-      // biome-ignore lint/style/useNamingConvention: Prisma query syntax
       OR: [
         { name: { contains: 'Nguyễn Văn A', mode: 'insensitive' } },
         { name: { contains: 'Trần Thị B', mode: 'insensitive' } },
@@ -65,10 +63,8 @@ async function cleanTestData() {
   // Step 2: Find test geo locations
   const testGeoLocations = await prisma.geoLocation.findMany({
     where: {
-      // biome-ignore lint/style/useNamingConvention: Prisma query syntax
       OR: [
         {
-          // biome-ignore lint/style/useNamingConvention: Prisma query syntax
           AND: [{ name: 'Hà Nội' }, { lat: 21.0285 }, { lng: 105.8542 }],
         },
         { address: { contains: 'Số 123, Đường Láng', mode: 'insensitive' } },
@@ -82,7 +78,6 @@ async function cleanTestData() {
   // Step 3: Find test tasks
   const testTasks = await prisma.task.findMany({
     where: {
-      // biome-ignore lint/style/useNamingConvention: Prisma query syntax
       OR: [
         { customerId: { in: testCustomerIds } },
         { geoLocationId: { in: testGeoLocationIds } },

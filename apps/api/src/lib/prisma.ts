@@ -56,7 +56,10 @@ export const getPrisma = (databaseUrl = process.env.DATABASE_URL) => {
       databaseUrl?.replace(/-pooler\./, '.')
 
     // Remove channel_binding parameter as it's not supported by the serverless driver
-    const serverlessUrl = unpooledUrl?.replace(/[?&]channel_binding=require/, '')
+    const serverlessUrl = unpooledUrl?.replace(
+      /[?&]channel_binding=require/,
+      '',
+    )
 
     options.adapter = new PrismaNeon({ connectionString: serverlessUrl })
     // Do NOT set options.datasources when using adapter - it causes conflict

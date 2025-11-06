@@ -240,11 +240,14 @@
   },
   "overrides": [
     {
-      "includes": ["scripts/**/*.ts"],
+      "includes": ["scripts/**/*.ts", "**/scripts/**/*.ts", "scripts/**/*.mjs", "**/scripts/**/*.mjs"],
       "linter": {
         "rules": {
           "suspicious": {
             "noConsole": "off"
+          },
+          "style": {
+            "useNamingConvention": "off"
           }
         }
       }

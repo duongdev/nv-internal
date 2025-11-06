@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-import sharp from 'sharp'
 import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import sharp from 'sharp'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const Filename = fileURLToPath(import.meta.url)
+const Dirname = dirname(Filename)
 
-const assetsDir = join(__dirname, '../assets/images')
+const assetsDir = join(Dirname, '../assets/images')
 const logoSvgPath = join(assetsDir, 'logo.svg')
 
 async function convertSvgToPng() {
@@ -20,7 +20,11 @@ async function convertSvgToPng() {
   const conversions = [
     { name: 'icon.png', size: 1024, description: 'App Icon' },
     { name: 'splash.png', size: 1024, description: 'Splash Screen' },
-    { name: 'adaptive-icon.png', size: 1024, description: 'Android Adaptive Icon' },
+    {
+      name: 'adaptive-icon.png',
+      size: 1024,
+      description: 'Android Adaptive Icon',
+    },
     { name: 'favicon.png', size: 48, description: 'Web Favicon' },
   ]
 
@@ -32,7 +36,7 @@ async function convertSvgToPng() {
       await sharp(svgBuffer)
         .resize(size, size, {
           fit: 'contain',
-          background: { r: 255, g: 255, b: 255, alpha: 1 }
+          background: { r: 255, g: 255, b: 255, alpha: 1 },
         })
         .png()
         .toFile(outputPath)

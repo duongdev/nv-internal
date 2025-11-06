@@ -17,7 +17,6 @@ import { normalizeForSearch } from '../src/lib/text-utils'
 
 const prisma = getPrisma()
 
-// biome-ignore lint/suspicious/noConsole: This is a CLI script that needs console output
 async function backfillSearchableText() {
   console.log('🔄 Starting searchableText backfill...\n')
 

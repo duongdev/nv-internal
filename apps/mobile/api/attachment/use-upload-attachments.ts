@@ -81,17 +81,14 @@ async function uploadAttachmentsReal({
   const { clerk } = await import('@/lib/api-client')
   const token = await clerk.session?.getToken()
 
-  const response = await fetch(
-    `${getApiUrl()}/v1/task/${taskId}/attachments`,
-    {
-      method: 'POST',
-      headers: {
-        // biome-ignore lint/style/useNamingConvention: <header>
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+  const response = await fetch(`${getApiUrl()}/v1/task/${taskId}/attachments`, {
+    method: 'POST',
+    headers: {
+      // biome-ignore lint/style/useNamingConvention: <header>
+      Authorization: `Bearer ${token}`,
     },
-  )
+    body: formData,
+  })
 
   if (!response.ok) {
     let errorMessage = 'Không thể tải tệp lên. Vui lòng thử lại.'

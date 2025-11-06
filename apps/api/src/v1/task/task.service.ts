@@ -452,6 +452,7 @@ export async function searchAndFilterTasks(
     // Defensive: Check for NOT NULL to handle existing records with NULL values
     // This is temporary until migration populates all records
     whereConditions.push({
+      // biome-ignore lint/style/useNamingConvention: Prisma uses uppercase for logical operators
       AND: [
         { searchableText: { not: null } },
         {

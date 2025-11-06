@@ -15,14 +15,12 @@ import { getPrisma } from '../src/lib/prisma'
 
 const prisma = getPrisma()
 
-// biome-ignore lint/suspicious/noConsole: This is a CLI script that needs console output
 async function checkForTestData() {
   console.log('🔍 Checking for potential test/dummy data in database...\n')
 
   // Check for test customers
   const testCustomers = await prisma.customer.findMany({
     where: {
-      // biome-ignore lint/style/useNamingConvention: Prisma query syntax
       OR: [
         { name: { contains: 'Nguyễn Văn A', mode: 'insensitive' } },
         { name: { contains: 'Trần Thị B', mode: 'insensitive' } },
@@ -46,10 +44,8 @@ async function checkForTestData() {
   // Check for test geo locations
   const testGeoLocations = await prisma.geoLocation.findMany({
     where: {
-      // biome-ignore lint/style/useNamingConvention: Prisma query syntax
       OR: [
         {
-          // biome-ignore lint/style/useNamingConvention: Prisma query syntax
           AND: [{ name: 'Hà Nội' }, { lat: 21.0285 }, { lng: 105.8542 }],
         },
         { address: { contains: 'Số 123, Đường Láng', mode: 'insensitive' } },
@@ -74,7 +70,6 @@ async function checkForTestData() {
   // Check for test tasks (with specific test titles)
   const testTasks = await prisma.task.findMany({
     where: {
-      // biome-ignore lint/style/useNamingConvention: Prisma query syntax
       OR: [
         { title: { contains: 'Sửa điều hòa', mode: 'insensitive' } },
         { title: { contains: 'Lắp đặt máy lạnh mới', mode: 'insensitive' } },

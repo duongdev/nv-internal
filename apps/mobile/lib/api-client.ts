@@ -54,7 +54,6 @@ export const getHonoClient = async () => {
 
   const headers: Record<string, string> = {}
 
-  console.log('🚀 ~ getHonoClient ~ token:', token)
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }

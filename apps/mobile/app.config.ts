@@ -1,7 +1,7 @@
-import { ConfigContext, ExpoConfig } from '@expo/config'
+import type { ConfigContext, ExpoConfig } from '@expo/config'
 
 const IS_PRODUCTION = process.env.EXPO_PUBLIC_ENV === 'production'
-const IS_STAGING = process.env.EXPO_PUBLIC_ENV === 'staging'
+const _IS_STAGING = process.env.EXPO_PUBLIC_ENV === 'staging'
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -29,14 +29,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
     },
     infoPlist: {
+      // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSLocationWhenInUseUsageDescription:
         'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
+      // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSLocationAlwaysAndWhenInUseUsageDescription:
         'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
+      // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSCameraUsageDescription:
         'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc và đính kèm vào nhiệm vụ.',
+      // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSPhotoLibraryUsageDescription:
         'Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
+      // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       ITSAppUsesNonExemptEncryption: false,
     },
   },

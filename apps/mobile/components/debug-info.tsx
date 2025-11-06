@@ -13,7 +13,7 @@ export function DebugInfo() {
 
   let apiUrl = 'Error loading'
   let clerkKey = 'Error loading'
-  let env = getEnvironment()
+  const env = getEnvironment()
 
   try {
     apiUrl = getApiUrl()
@@ -42,7 +42,10 @@ export function DebugInfo() {
               <Text className="font-medium text-amber-900 text-xs dark:text-amber-200">
                 Environment:
               </Text>
-              <Text className="font-mono text-amber-800 text-xs dark:text-amber-300" selectable>
+              <Text
+                className="font-mono text-amber-800 text-xs dark:text-amber-300"
+                selectable
+              >
                 {env}
               </Text>
             </View>
@@ -51,7 +54,10 @@ export function DebugInfo() {
               <Text className="font-medium text-amber-900 text-xs dark:text-amber-200">
                 API URL:
               </Text>
-              <Text className="font-mono text-amber-800 text-xs dark:text-amber-300" selectable>
+              <Text
+                className="font-mono text-amber-800 text-xs dark:text-amber-300"
+                selectable
+              >
                 {apiUrl}
               </Text>
             </View>
@@ -60,11 +66,19 @@ export function DebugInfo() {
               <Text className="font-medium text-amber-900 text-xs dark:text-amber-200">
                 Clerk Key:
               </Text>
-              <Text className="font-mono text-amber-800 text-xs dark:text-amber-300" selectable>
+              <Text
+                className="font-mono text-amber-800 text-xs dark:text-amber-300"
+                selectable
+              >
                 {clerkKey}
               </Text>
               <Text className="font-mono text-amber-700 text-xs dark:text-amber-400">
-                Type: {clerkKey.startsWith('pk_test_') ? 'TEST' : clerkKey.startsWith('pk_live_') ? 'LIVE/PRODUCTION' : 'UNKNOWN'}
+                Type:{' '}
+                {clerkKey.startsWith('pk_test_')
+                  ? 'TEST'
+                  : clerkKey.startsWith('pk_live_')
+                    ? 'LIVE/PRODUCTION'
+                    : 'UNKNOWN'}
               </Text>
             </View>
 
@@ -72,17 +86,29 @@ export function DebugInfo() {
               <Text className="font-medium text-amber-900 text-xs dark:text-amber-200">
                 Available Env Vars:
               </Text>
-              <Text className="font-mono text-amber-800 text-xs dark:text-amber-300" selectable>
+              <Text
+                className="font-mono text-amber-800 text-xs dark:text-amber-300"
+                selectable
+              >
                 {JSON.stringify(
                   {
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     HAS_PROD_API: !!process.env.EXPO_PUBLIC_API_URL_PRODUCTION,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     HAS_STAGING_API: !!process.env.EXPO_PUBLIC_API_URL_STAGING,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     HAS_GENERIC_API: !!process.env.EXPO_PUBLIC_API_URL,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     HAS_PROD_CLERK:
-                      !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION,
+                      !!process.env
+                        .EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     HAS_STAGING_CLERK:
                       !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_STAGING,
-                    HAS_GENERIC_CLERK: !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
+                    HAS_GENERIC_CLERK:
+                      !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     ENV: process.env.EXPO_PUBLIC_ENV,
                   },
                   null,
