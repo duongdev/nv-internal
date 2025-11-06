@@ -55,12 +55,7 @@
               "contentContainerClassName",
               "contentClassName"
             ],
-            "functions": [
-              "clsx",
-              "cva",
-              "tw",
-              "cn"
-            ]
+            "functions": ["clsx", "cva", "tw", "cn"]
           }
         }
       },
@@ -138,12 +133,7 @@
           "fix": "none",
           "level": "warn",
           "options": {
-            "allow": [
-              "assert",
-              "error",
-              "info",
-              "warn"
-            ]
+            "allow": ["assert", "error", "info", "warn"]
           }
         },
         "noControlCharactersInRegex": "error",
@@ -229,46 +219,31 @@
                 "selector": {
                   "kind": "function"
                 },
-                "formats": [
-                  "camelCase",
-                  "PascalCase"
-                ]
+                "formats": ["camelCase", "PascalCase"]
               },
               {
                 "selector": {
                   "kind": "variable"
                 },
-                "formats": [
-                  "camelCase",
-                  "PascalCase",
-                  "CONSTANT_CASE"
-                ]
+                "formats": ["camelCase", "PascalCase", "CONSTANT_CASE"]
               },
               {
                 "selector": {
                   "kind": "typeLike"
                 },
-                "formats": [
-                  "PascalCase"
-                ]
+                "formats": ["PascalCase"]
               },
               {
                 "selector": {
                   "kind": "objectLiteralMember"
                 },
-                "formats": [
-                  "camelCase",
-                  "snake_case"
-                ]
+                "formats": ["camelCase", "snake_case"]
               },
               {
                 "selector": {
                   "kind": "objectLiteralProperty"
                 },
-                "formats": [
-                  "camelCase",
-                  "snake_case"
-                ]
+                "formats": ["camelCase", "snake_case"]
               }
             ]
           }
@@ -319,10 +294,7 @@
       }
     },
     {
-      "includes": [
-        "*.ts",
-        "*.tsx"
-      ],
+      "includes": ["*.ts", "*.tsx"],
       "linter": {
         "rules": {
           "correctness": {
@@ -350,9 +322,7 @@
     }
   ],
   "javascript": {
-    "globals": [
-      "__DEV__"
-    ],
+    "globals": ["__DEV__"],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
