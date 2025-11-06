@@ -232,8 +232,8 @@ The NV Internal project uses a structured documentation system designed to track
 - Recording agent-specific patterns
 
 **Files**:
-- `backend-expert.md`
-- `frontend-expert.md`
+- `backend-engineer.md`
+- `frontend-engineer.md`
 - `task-doc-tracker.md`
 
 ---

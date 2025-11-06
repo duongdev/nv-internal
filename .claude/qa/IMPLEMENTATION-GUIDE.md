@@ -227,12 +227,12 @@ See `/apps/mobile/MOBILE-MCP-TESTING.md` for complete element reference.
 graph TD
     A[Feature Request] --> B[task-doc-tracker: Create Task]
     B --> C[qa-ui: Create Test Plan & Scenarios]
-    C --> D[backend/frontend-expert: Implement]
+    C --> D[backend/frontend-engineer: Implement]
     D --> E[code-quality-enforcer: Verify]
     E --> F[qa-ui: Execute Tests]
     F --> G{All Tests Pass?}
     G -->|No| H[Document Bugs]
-    H --> I[backend/frontend-expert: Fix]
+    H --> I[backend/frontend-engineer: Fix]
     I --> E
     G -->|Yes| J[qa-ui: Document Results]
     J --> K[task-doc-tracker: Update & Extract Learnings]
@@ -243,7 +243,7 @@ graph TD
 ```mermaid
 graph TD
     A[Bug Found in Testing] --> B[qa-ui: Document Bug]
-    B --> C[backend/frontend-expert: Analyze & Fix]
+    B --> C[backend/frontend-engineer: Analyze & Fix]
     C --> D[code-quality-enforcer: Verify Fix]
     D --> E[qa-ui: Regression Testing]
     E --> F{Bug Fixed?}
@@ -469,6 +469,6 @@ Consult the `qa-ui` agent for:
 
 - **qa-ui**: All testing activities
 - **task-doc-tracker**: Linking tests to tasks
-- **frontend-expert**: Fixing mobile bugs
-- **backend-expert**: Fixing API bugs
+- **frontend-engineer**: Fixing mobile bugs
+- **backend-engineer**: Fixing API bugs
 - **code-quality-enforcer**: Verifying fixes

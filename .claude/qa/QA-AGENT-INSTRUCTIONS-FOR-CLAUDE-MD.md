@@ -264,7 +264,7 @@ Feature Implementation Flow with QA:
    - qa-ui: Create test plan and scenarios
 
 2. Development Phase:
-   - backend-expert or frontend-expert: Implement feature
+   - backend-engineer or frontend-engineer: Implement feature
    - Reference test scenarios for acceptance criteria
 
 3. Quality Assurance Phase:
@@ -273,7 +273,7 @@ Feature Implementation Flow with QA:
    - qa-ui: Document test results
 
 4. Bug Fix Phase (if needed):
-   - backend-expert or frontend-expert: Fix bugs
+   - backend-engineer or frontend-engineer: Fix bugs
    - code-quality-enforcer: Verify fixes
    - qa-ui: Run regression tests
 
@@ -311,7 +311,7 @@ Replace the existing "Agent Workflow Example" section with:
 
 1. **Documentation Setup**: Launch `task-doc-tracker` to create task file
 2. **Test Planning**: Launch `qa-ui` to create test plan and scenarios
-3. **Implementation**: Launch `backend-expert` or `frontend-expert` for implementation
+3. **Implementation**: Launch `backend-engineer` or `frontend-engineer` for implementation
 4. **Quality Assurance**: Launch `code-quality-enforcer` to verify changes
 5. **Testing**: Launch `qa-ui` to execute tests and document results
 6. **Documentation Update**: Launch `task-doc-tracker` to mark complete and extract learnings
@@ -319,7 +319,7 @@ Replace the existing "Agent Workflow Example" section with:
 **Bug fix workflow**:
 
 1. **Bug Analysis**: Review test results from `qa-ui`
-2. **Fix Implementation**: Launch `backend-expert` or `frontend-expert` to fix
+2. **Fix Implementation**: Launch `backend-engineer` or `frontend-engineer` to fix
 3. **Code Quality**: Launch `code-quality-enforcer` to verify fix
 4. **Regression Testing**: Launch `qa-ui` to retest and verify
 5. **Documentation**: Launch `task-doc-tracker` to update task status

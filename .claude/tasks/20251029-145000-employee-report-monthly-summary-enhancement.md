@@ -14,12 +14,12 @@
 ## Review Feedback
 
 **Reviews Completed**: 2025-10-30
-**Reviewers**: frontend-expert, backend-expert, code-quality-enforcer
+**Reviewers**: frontend-engineer, backend-engineer, code-quality-enforcer
 
 ### Overall Assessment
 
-- **Frontend Expert**: Plan is mostly sound but needs FlatList optimization, search functionality, and better accessibility
-- **Backend Expert**: Critical N+1 query problem must be fixed, needs batch queries and proper indexing
+- **Frontend Engineer**: Plan is mostly sound but needs FlatList optimization, search functionality, and better accessibility
+- **Backend Engineer**: Critical N+1 query problem must be fixed, needs batch queries and proper indexing
 - **Quality Enforcer**: Comprehensive testing strategy required (40+ test cases), performance targets need adjustment
 
 ### Review Summary

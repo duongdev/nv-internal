@@ -426,7 +426,7 @@ If issues arise:
 ## Notes
 
 ### Implementation by Backend Expert
-This task should be implemented by the `backend-expert` agent who has deep knowledge of:
+This task should be implemented by the `backend-engineer` agent who has deep knowledge of:
 - Prisma schema design
 - Database indexing strategies
 - Transaction management

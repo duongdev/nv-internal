@@ -40,7 +40,7 @@ Detailed documentation is organized in the `docs/` directory:
 
 ### Backend Development Agent
 
-**Agent**: `backend-expert`
+**Agent**: `backend-engineer`
 
 **USE THIS AGENT FOR ALL BACKEND WORK**
 
@@ -65,9 +65,54 @@ Detailed documentation is organized in the `docs/` directory:
 - ✅ Working with Prisma models or queries
 - ✅ Adding or updating validation schemas
 
+**Project-Specific Context for backend-engineer**:
+
+The backend-engineer agent is configured with generic backend development expertise. When working on this project, it needs to be aware of these NV Internal-specific details:
+
+**Technology Stack**:
+- **Framework**: Hono-based REST API
+- **Database**: PostgreSQL via Neon (serverless)
+- **ORM**: Prisma
+- **Authentication**: Clerk with @hono/clerk-auth middleware
+- **Deployment**: Vercel serverless functions
+- **Validation**: Zod schemas in `@nv-internal/validation` package
+- **Testing**: Jest with ts-jest preset, mock-based (no real database)
+
+**Project Architecture**:
+- **Monorepo Structure**: pnpm workspaces with apps/api, apps/mobile, and shared packages
+- **API Routes**: Located in `apps/api/src/v1/` with service layer pattern
+- **Shared Packages**:
+  - `@nv-internal/validation` - Zod validation schemas
+  - `@nv-internal/prisma-client` - Shared Prisma client
+- **Database Schema**: Task management system with prefixed IDs (cust*, geo*, act_*, pay_*)
+- **Authentication**: All routes require Clerk middleware; no public endpoints
+- **Testing**: Tests in `__tests__/` directories alongside source files
+
+**Key Implementation Patterns**:
+- Use prefixed IDs for all models (follow patterns: cust*, geo*, act_*, pay_*)
+- Log all state changes to Activity table for audit trails
+- Use Prisma transactions for multi-model operations
+- Place business logic in `*.service.ts` files, not route handlers
+- Define Zod schemas in `@nv-internal/validation` for type safety
+- Follow cursor-based pagination for lists
+- Use Clerk JWT claims for optimized authentication (see Auth Optimization pattern)
+
+**Quality Standards**:
+- Run `pnpm biome:check --write .` before committing
+- Ensure all tests pass: `pnpm --filter @nv-internal/api test`
+- Use conventional commit format: `type(scope): description`
+- Rebuild shared packages if modified:
+  - `pnpm --filter @nv-internal/prisma-client build`
+  - `pnpm --filter @nv-internal/validation build`
+
+**Reference Documentation**:
+- Architecture patterns: `docs/architecture/patterns/`
+- Testing patterns: `docs/testing/` and `apps/api/README.md#testing`
+- V1 feature plans: `.claude/plans/v1/`
+
 ### Frontend Development Agent
 
-**Agent**: `frontend-expert`
+**Agent**: `frontend-engineer`
 
 **USE THIS AGENT FOR ALL MOBILE/UI WORK**
 
@@ -198,7 +243,7 @@ Detailed documentation is organized in the `docs/` directory:
 **Typical feature implementation flow**:
 
 1. **Documentation Setup**: Launch `task-doc-tracker` to create task file
-2. **Implementation**: Launch `backend-expert` or `frontend-expert` for implementation
+2. **Implementation**: Launch `backend-engineer` or `frontend-engineer` for implementation
 3. **Code Quality**: Launch `code-quality-enforcer` to verify changes
 4. **Mobile Testing**: Launch `qa-ui` to test mobile features (if applicable)
 5. **Documentation Update**: Launch `task-doc-tracker` to mark complete and extract learnings
