@@ -273,8 +273,21 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[Tabs Navigation](./docs/architecture/patterns/tabs-navigation.md)** - **CRITICAL**: Stable tabs implementation with haptic feedback
 - **[Vietnamese Search](./docs/architecture/patterns/vietnamese-search.md)** - Accent-insensitive search for Vietnamese text
 - **[SearchableText](./docs/architecture/patterns/searchable-text.md)** - Pre-computed search fields for performance
+- **[OTA Updates](./docs/architecture/patterns/ota-updates.md)** - Hook-Only pattern for Expo Updates with graceful degradation
 
 ### Recently Established Patterns
+
+#### OTA Updates Pattern (2025-11-06)
+
+**Hook-Only Pattern**: Implemented Over-The-Air updates with version tracking using a standalone hook pattern.
+- **Problem**: No version visibility or update mechanism for users
+- **Solution**: Hook-Only pattern without provider for single-component state
+- **Key Features**: Expo Go detection, automatic background checks, user-controlled reload
+- **Vietnamese UI**: All update strings in Vietnamese for consistency
+- **Persistence**: AsyncStorage for update state following existing patterns
+- **Implementation Task**: `.claude/tasks/20251106-085928-app-version-tracking-ota-updates.md`
+- **Pattern Documentation**: [OTA Updates](./docs/architecture/patterns/ota-updates.md)
+- **Fixed Deprecation**: Changed `appOwnership` to `executionEnvironment` for Expo Go detection
 
 #### Stable Tabs Migration (2025-10-30)
 

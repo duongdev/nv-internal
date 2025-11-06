@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 import { UserAvatar } from '@/components/user-avatar'
 import { UserRoleBadge } from '@/components/user-role-badge'
+import { VersionInfoFooter } from '@/components/version-info-footer'
 import { saveModulePreference } from '@/lib/module-preference'
 import {
   formatPhoneNumber,
@@ -243,6 +244,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
           }
         />
       </MenuGroup>
+      <VersionInfoFooter className="mt-8" />
     </View>
   )
 }

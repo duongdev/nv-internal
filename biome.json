@@ -240,7 +240,12 @@
   },
   "overrides": [
     {
-      "includes": ["scripts/**/*.ts", "**/scripts/**/*.ts", "scripts/**/*.mjs", "**/scripts/**/*.mjs"],
+      "includes": [
+        "scripts/**/*.ts",
+        "**/scripts/**/*.ts",
+        "scripts/**/*.mjs",
+        "**/scripts/**/*.mjs"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
@@ -301,6 +306,7 @@
     }
   ],
   "javascript": {
+    "globals": ["__DEV__"],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",

@@ -29,6 +29,7 @@ This directory contains detailed implementation patterns and best practices for 
 
 - **[File Upload Limitations](./file-upload.md)** - Hono RPC limitations and workarounds for React Native
 - **[Cache Invalidation](./cache-invalidation.md)** - TanStack Query patterns for mutations
+- **[OTA Updates](./ota-updates.md)** - Hook-Only pattern for Expo Updates with graceful degradation
 
 ## Pattern Selection Guide
 
@@ -56,6 +57,9 @@ This directory contains detailed implementation patterns and best practices for 
 
 ### When implementing search:
 - Use [Vietnamese Search](./vietnamese-search.md) for accent-insensitive text search
+
+### When implementing OTA updates:
+- Use [OTA Updates](./ota-updates.md) for Expo Updates with Hook-Only pattern
 
 ## Adding New Patterns
 
