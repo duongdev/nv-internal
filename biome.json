@@ -55,7 +55,12 @@
               "contentContainerClassName",
               "contentClassName"
             ],
-            "functions": ["clsx", "cva", "tw", "cn"]
+            "functions": [
+              "clsx",
+              "cva",
+              "tw",
+              "cn"
+            ]
           }
         }
       },
@@ -86,7 +91,10 @@
         "useValidAriaProps": "error",
         "useValidAriaRole": {
           "level": "error",
-          "options": { "allowInvalidRoles": [], "ignoreNonDom": false }
+          "options": {
+            "allowInvalidRoles": [],
+            "ignoreNonDom": false
+          }
         },
         "useValidAriaValues": "error",
         "useValidLang": "error"
@@ -130,7 +138,12 @@
           "fix": "none",
           "level": "warn",
           "options": {
-            "allow": ["assert", "error", "info", "warn"]
+            "allow": [
+              "assert",
+              "error",
+              "info",
+              "warn"
+            ]
           }
         },
         "noControlCharactersInRegex": "error",
@@ -213,21 +226,49 @@
             "strictCase": false,
             "conventions": [
               {
-                "selector": { "kind": "function" },
-                "formats": ["camelCase", "PascalCase"]
+                "selector": {
+                  "kind": "function"
+                },
+                "formats": [
+                  "camelCase",
+                  "PascalCase"
+                ]
               },
               {
-                "selector": { "kind": "variable" },
-                "formats": ["camelCase", "PascalCase", "CONSTANT_CASE"]
+                "selector": {
+                  "kind": "variable"
+                },
+                "formats": [
+                  "camelCase",
+                  "PascalCase",
+                  "CONSTANT_CASE"
+                ]
               },
-              { "selector": { "kind": "typeLike" }, "formats": ["PascalCase"] },
               {
-                "selector": { "kind": "objectLiteralMember" },
-                "formats": ["camelCase", "snake_case"]
+                "selector": {
+                  "kind": "typeLike"
+                },
+                "formats": [
+                  "PascalCase"
+                ]
               },
               {
-                "selector": { "kind": "objectLiteralProperty" },
-                "formats": ["camelCase", "snake_case"]
+                "selector": {
+                  "kind": "objectLiteralMember"
+                },
+                "formats": [
+                  "camelCase",
+                  "snake_case"
+                ]
+              },
+              {
+                "selector": {
+                  "kind": "objectLiteralProperty"
+                },
+                "formats": [
+                  "camelCase",
+                  "snake_case"
+                ]
               }
             ]
           }
@@ -278,7 +319,10 @@
       }
     },
     {
-      "includes": ["*.ts", "*.tsx"],
+      "includes": [
+        "*.ts",
+        "*.tsx"
+      ],
       "linter": {
         "rules": {
           "correctness": {
@@ -306,7 +350,9 @@
     }
   ],
   "javascript": {
-    "globals": ["__DEV__"],
+    "globals": [
+      "__DEV__"
+    ],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
