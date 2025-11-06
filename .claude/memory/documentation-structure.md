@@ -232,9 +232,9 @@ The NV Internal project uses a structured documentation system designed to track
 - Recording agent-specific patterns
 
 **Files**:
-- `backend-engineer.md`
-- `frontend-engineer.md`
 - `task-doc-tracker.md`
+
+**Note**: `backend-engineer` and `frontend-engineer` are now global agents (not project-specific files).
 
 ---
 
