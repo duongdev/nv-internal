@@ -2,9 +2,9 @@ name: Code Quality Checks
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   quality:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -52,7 +52,7 @@ jobs:
           echo "::group::Complexity Analysis"
           npx ts-node scripts/check-complexity.ts
           echo "::endgroup::"
-        continue-on-error: true  # Warning only for now
+        continue-on-error: true # Warning only for now
 
       # 6. File Size Check (new requirement)
       - name: File Size Check
@@ -81,7 +81,7 @@ jobs:
           echo "::group::Performance Benchmarks"
           pnpm --filter @nv-internal/api test --testMatch='**/*.perf.test.ts'
           echo "::endgroup::"
-        continue-on-error: true  # Optional for now
+        continue-on-error: true # Optional for now
 
   # Separate job for contract tests during refactoring
   contract-tests:
@@ -99,7 +99,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -112,7 +112,7 @@ jobs:
           echo "::group::API Contract Tests"
           pnpm --filter @nv-internal/api test --testMatch='**/*.contract.test.ts'
           echo "::endgroup::"
-        continue-on-error: true  # Only during refactoring
+        continue-on-error: true # Only during refactoring
 
   # Monitor memory usage and cold starts
   performance-monitoring:
@@ -130,7 +130,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
