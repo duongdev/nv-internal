@@ -1,0 +1,200 @@
+name: EAS Build & Submit
+
+on:
+  # Trigger on version tags (e.g., v1.0.0, v1.0.0-beta.1)
+  push:
+    tags:
+      - 'v*'
+
+  # Allow manual triggering with custom options
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+        default: 'all'
+      profile:
+        description: 'Build profile'
+        required: true
+        type: choice
+        options:
+          - production
+          - preview
+          - staging
+        default: 'production'
+      submit:
+        description: 'Submit to stores after build'
+        required: true
+        type: boolean
+        default: true
+      auto_submit:
+        description: 'Auto-submit without waiting for build'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: EAS Build
+    runs-on: ubuntu-latest
+
+    # Allow concurrent builds for different platforms
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ github.event.inputs.platform == 'all' && fromJSON('["ios", "android"]') || fromJSON(format('["{0}"]', github.event.inputs.platform || 'all')) }}
+
+    steps:
+      - name: Check for tag or manual dispatch
+        id: check-trigger
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "platform=${{ matrix.platform }}" >> $GITHUB_OUTPUT
+            echo "profile=production" >> $GITHUB_OUTPUT
+            echo "submit=true" >> $GITHUB_OUTPUT
+            echo "auto_submit=true" >> $GITHUB_OUTPUT
+          else
+            echo "platform=${{ github.event.inputs.platform }}" >> $GITHUB_OUTPUT
+            echo "profile=${{ github.event.inputs.profile }}" >> $GITHUB_OUTPUT
+            echo "submit=${{ github.event.inputs.submit }}" >> $GITHUB_OUTPUT
+            echo "auto_submit=${{ github.event.inputs.auto_submit }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
+      # Android-specific secrets setup
+      - name: Setup Android secrets
+        if: matrix.platform == 'android' || steps.check-trigger.outputs.platform == 'all'
+        working-directory: apps/mobile
+        run: |
+          # Create Google Play service account file
+          echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
+
+          # Verify keystore exists (should be checked in as per app.config.ts)
+          if [ ! -f "@duongdev__nv-internal.jks" ]; then
+            echo "Error: Android keystore not found"
+            exit 1
+          fi
+
+      # iOS-specific setup
+      - name: Setup iOS secrets
+        if: matrix.platform == 'ios' || steps.check-trigger.outputs.platform == 'all'
+        run: |
+          echo "iOS builds use Expo managed credentials"
+          echo "Apple ID: ${{ secrets.APPLE_ID || 'dustin.do95@gmail.com' }}"
+
+      - name: Build on EAS
+        working-directory: apps/mobile
+        run: |
+          PLATFORM="${{ matrix.platform }}"
+          PROFILE="${{ steps.check-trigger.outputs.profile }}"
+
+          # Handle 'all' platform case
+          if [ "${{ steps.check-trigger.outputs.platform }}" == "all" ]; then
+            PLATFORM="${{ matrix.platform }}"
+          fi
+
+          echo "Building for platform: $PLATFORM with profile: $PROFILE"
+
+          # Build command with auto-submit if enabled
+          if [ "${{ steps.check-trigger.outputs.submit }}" == "true" ] && [ "${{ steps.check-trigger.outputs.auto_submit }}" == "true" ]; then
+            eas build --platform $PLATFORM --profile $PROFILE --non-interactive --auto-submit
+          else
+            eas build --platform $PLATFORM --profile $PROFILE --non-interactive
+          fi
+
+      - name: Cleanup secrets
+        if: always()
+        working-directory: apps/mobile
+        run: |
+          rm -f google-play-service-account.json
+
+  submit:
+    name: Submit to Stores
+    needs: build
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.inputs.submit == 'true' && github.event.inputs.auto_submit == 'false') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+
+    strategy:
+      matrix:
+        platform: ${{ github.event.inputs.platform == 'all' && fromJSON('["ios", "android"]') || fromJSON(format('["{0}"]', github.event.inputs.platform || 'all')) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to stores
+        working-directory: apps/mobile
+        run: |
+          PLATFORM="${{ matrix.platform }}"
+          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+
+          # Handle 'all' platform case
+          if [ "${{ github.event.inputs.platform }}" == "all" ] || [ "${{ github.event_name }}" == "push" ]; then
+            PLATFORM="${{ matrix.platform }}"
+          fi
+
+          echo "Submitting $PLATFORM build with profile: $PROFILE"
+          eas submit --platform $PLATFORM --profile $PROFILE --non-interactive --latest
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Successfully submitted ${{ matrix.platform }} build to store"
+          # Add Slack/Discord notification here if needed
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Failed to submit ${{ matrix.platform }} build"
+          # Add Slack/Discord notification here if needed
