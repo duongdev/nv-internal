@@ -282,6 +282,10 @@ jobs:
 
       - name: Submit to stores
         working-directory: apps/mobile
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           PLATFORM="${{ matrix.platform }}"
           PROFILE="${{ github.event.inputs.profile || 'production' }}"
