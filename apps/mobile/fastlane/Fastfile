@@ -77,6 +77,8 @@ platform :ios do
       use_automatic_signing: false,
       path: "ios/NamVitInternal.xcodeproj",
       team_id: "9F77J83SKT",
+      targets: ["NamVitInternal"],
+      build_configurations: ["Release"],
       profile_name: "match AppStore vn.dienlanhnamviet.internal",
       code_sign_identity: "Apple Distribution"
     )
@@ -150,6 +152,8 @@ platform :ios do
       use_automatic_signing: false,
       path: "ios/NamVitInternal.xcodeproj",
       team_id: "9F77J83SKT",
+      targets: ["NamVitInternal"],
+      build_configurations: ["Release"],
       profile_name: "match AdHoc vn.dienlanhnamviet.internal",
       code_sign_identity: "Apple Distribution"
     )
