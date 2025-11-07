@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
+import { FEATURE_FLAGS, useFeatureFlag } from '@/hooks/use-feature-flag'
 
 export default function AdminTasksScreen() {
   const router = useRouter()
@@ -25,6 +26,11 @@ export default function AdminTasksScreen() {
   })
 
   const filterSheetRef = useRef<TaskFilterBottomSheetMethods>(null)
+
+  // Feature flag: Enable/disable task list filtering functionality
+  const { isEnabled: isFilterEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_ADMIN,
+  )
 
   // Fetch user list for displaying names in filter chips
   const { data: users } = useUserList()
@@ -115,29 +121,31 @@ export default function AdminTasksScreen() {
           },
           headerRight: () => (
             <View className="flex-row items-center gap-2">
-              {/* Filter Button */}
-              <Button
-                accessibilityHint="Mở bộ lọc để tìm kiếm công việc theo trạng thái, người thực hiện, và ngày tháng"
-                accessibilityLabel="Bộ lọc công việc"
-                accessibilityRole="button"
-                className="relative w-10"
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light)
-                  filterSheetRef.current?.present()
-                }}
-                size={null}
-                testID="tasks-filter-button"
-                variant={null}
-              >
-                <Icon as={FilterIcon} className="size-6" />
-                {activeFilterCount > 0 && (
-                  <View className="absolute top-0 right-0 size-5 items-center justify-center rounded-full bg-primary">
-                    <Text className="font-sans-bold text-[10px] text-primary-foreground">
-                      {activeFilterCount}
-                    </Text>
-                  </View>
-                )}
-              </Button>
+              {/* Filter Button - Controlled by feature flag */}
+              {isFilterEnabled && (
+                <Button
+                  accessibilityHint="Mở bộ lọc để tìm kiếm công việc theo trạng thái, người thực hiện, và ngày tháng"
+                  accessibilityLabel="Bộ lọc công việc"
+                  accessibilityRole="button"
+                  className="relative w-10"
+                  onPress={() => {
+                    impactAsync(ImpactFeedbackStyle.Light)
+                    filterSheetRef.current?.present()
+                  }}
+                  size={null}
+                  testID="tasks-filter-button"
+                  variant={null}
+                >
+                  <Icon as={FilterIcon} className="size-6" />
+                  {activeFilterCount > 0 && (
+                    <View className="absolute top-0 right-0 size-5 items-center justify-center rounded-full bg-primary">
+                      <Text className="font-sans-bold text-[10px] text-primary-foreground">
+                        {activeFilterCount}
+                      </Text>
+                    </View>
+                  )}
+                </Button>
+              )}
 
               {/* Create Button */}
               <Button
@@ -160,15 +168,17 @@ export default function AdminTasksScreen() {
         }}
       />
       <View className="flex-1 bg-background">
-        {/* Active Filter Chips */}
-        <ActiveFilterChips
-          filters={filterState}
-          onClearAll={handleClearAllFilters}
-          onRemoveAssignee={handleRemoveAssignee}
-          onRemoveDateFilter={handleRemoveDateFilter}
-          onRemoveStatus={handleRemoveStatus}
-          userNames={userNames}
-        />
+        {/* Active Filter Chips - Controlled by feature flag */}
+        {isFilterEnabled && (
+          <ActiveFilterChips
+            filters={filterState}
+            onClearAll={handleClearAllFilters}
+            onRemoveAssignee={handleRemoveAssignee}
+            onRemoveDateFilter={handleRemoveDateFilter}
+            onRemoveStatus={handleRemoveStatus}
+            userNames={userNames}
+          />
+        )}
 
         {/* Task List */}
         <AdminTaskList
@@ -178,13 +188,15 @@ export default function AdminTasksScreen() {
         />
       </View>
 
-      {/* Filter Bottom Sheet */}
-      <TaskFilterBottomSheet
-        initialFilters={filterState}
-        onApplyFilters={handleApplyFilters}
-        ref={filterSheetRef}
-        showAssigneeFilter // Admin can filter by assignees
-      />
+      {/* Filter Bottom Sheet - Controlled by feature flag */}
+      {isFilterEnabled && (
+        <TaskFilterBottomSheet
+          initialFilters={filterState}
+          onApplyFilters={handleApplyFilters}
+          ref={filterSheetRef}
+          showAssigneeFilter // Admin can filter by assignees
+        />
+      )}
     </>
   )
 }

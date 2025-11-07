@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/style/useNamingConvention: <Font names are different> */
 import '@/global.css'
 
-import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
+import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo'
 import { tokenCache } from '@clerk/clerk-expo/token-cache'
 import {
   BeVietnamPro_200ExtraLight as Sans_200ExtraLight,
@@ -16,16 +16,23 @@ import { ThemeProvider } from '@react-navigation/native'
 import { PortalHost } from '@rn-primitives/portal'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { Stack, usePathname } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
+import { PostHogProvider, usePostHog } from 'posthog-react-native'
 import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { Toasts } from '@/components/ui/toasts'
 import { queryClient } from '@/lib/api-client'
 import { getClerkPublishableKey } from '@/lib/env'
+import {
+  getPostHogConfig,
+  identifyUser,
+  resetPostHog,
+  trackScreen,
+} from '@/lib/posthog'
 import { FONT_FAMILY, NAV_THEME } from '@/lib/theme'
 
 export {
@@ -35,27 +42,46 @@ export {
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme()
+  const posthogConfig = getPostHogConfig()
 
   return (
     <ClerkProvider
       publishableKey={getClerkPublishableKey()}
       tokenCache={tokenCache}
     >
-      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <QueryClientProvider client={queryClient}>
-          <KeyboardProvider>
-            <GestureHandlerRootView className="flex-1 font-gilroy">
-              <BottomSheetModalProvider>
-                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-                <Routes />
-                <Toasts />
-                <PortalHost />
-              </BottomSheetModalProvider>
-            </GestureHandlerRootView>
-          </KeyboardProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      {/* Wrap with PostHogProvider if enabled and configured */}
+      {posthogConfig ? (
+        <PostHogProvider
+          apiKey={posthogConfig.apiKey}
+          autocapture={posthogConfig.autocapture}
+          debug={posthogConfig.debug}
+          options={posthogConfig.options}
+        >
+          <AppContent colorScheme={colorScheme ?? 'light'} />
+        </PostHogProvider>
+      ) : (
+        <AppContent colorScheme={colorScheme ?? 'light'} />
+      )}
     </ClerkProvider>
+  )
+}
+
+function AppContent({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
+  return (
+    <ThemeProvider value={NAV_THEME[colorScheme]}>
+      <QueryClientProvider client={queryClient}>
+        <KeyboardProvider>
+          <GestureHandlerRootView className="flex-1 font-gilroy">
+            <BottomSheetModalProvider>
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              <Routes />
+              <Toasts />
+              <PortalHost />
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
+        </KeyboardProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }
 
@@ -63,6 +89,9 @@ SplashScreen.preventAutoHideAsync()
 
 function Routes() {
   const { isSignedIn, isLoaded } = useAuth()
+  const { user } = useUser()
+  const pathname = usePathname()
+  const posthog = usePostHog()
   const [fontsLoaded] = useFonts({
     'Gilroy-Regular': require('@/assets/fonts/SVN-Gilroy Regular.otf'),
     'Gilroy-Bold': require('@/assets/fonts/SVN-Gilroy Bold.otf'),
@@ -76,6 +105,34 @@ function Routes() {
     Sans_700Bold,
     Sans_800ExtraBold,
   })
+
+  // User identification in PostHog
+  React.useEffect(() => {
+    if (isLoaded && user) {
+      identifyUser(posthog, user.id, {
+        email: user.primaryEmailAddress?.emailAddress,
+        name: user.fullName,
+        role: user.publicMetadata?.role as string,
+        created_at: user.createdAt,
+      })
+    } else if (isLoaded && !user) {
+      resetPostHog(posthog)
+    }
+  }, [user, isLoaded, posthog])
+
+  // Screen tracking
+  React.useEffect(() => {
+    const screenName =
+      pathname
+        .split('/')
+        .filter(Boolean)
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(' ') || 'Home'
+
+    trackScreen(posthog, screenName, {
+      path: pathname,
+    })
+  }, [pathname, posthog])
 
   React.useEffect(() => {
     if (isLoaded && fontsLoaded) {

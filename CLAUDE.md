@@ -275,8 +275,21 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[SearchableText](./docs/architecture/patterns/searchable-text.md)** - Pre-computed search fields for performance
 - **[OTA Updates](./docs/architecture/patterns/ota-updates.md)** - Hook-Only pattern for Expo Updates with graceful degradation
 - **[Mobile Accessibility](./docs/architecture/patterns/mobile-accessibility.md)** - Required accessibility properties for all interactive elements (MobileMCP compatibility)
+- **[Feature Flags](./docs/feature-flags-guide.md)** - PostHog feature flags for controlled rollouts and A/B testing
 
 ### Recently Established Patterns
+
+#### Feature Flags Pattern (2025-11-07)
+
+**PostHog Feature Flags**: Implemented controlled feature rollout system with first production flag.
+- **Problem**: No mechanism for gradual feature rollouts or quick rollbacks
+- **Solution**: PostHog feature flags with custom hook and naming convention
+- **Naming Convention**: `feature-name-role` format (dash-case with role postfix)
+- **First Flag**: `task-list-filter-enabled-admin` controlling task filtering UI
+- **Pattern**: useFeatureFlag hook with FEATURE_FLAGS constants
+- **Impact**: Instant feature control without app deployments
+- **Implementation Task**: `.claude/tasks/20251107-043354-first-feature-flag-task-list-filter-admin.md`
+- **Documentation**: `.claude/docs/feature-flags-guide.md`
 
 #### Mobile Accessibility Pattern (2025-11-06)
 
@@ -758,23 +771,28 @@ When creating task files for v1 features:
 
 See `.claude/enhancements/` for detailed specifications and `.claude/enhancements/20251024-120300-enhancement-priorities.md` for priority roadmap.
 
-## Observability Strategy (Ready for Implementation) ✅ UPDATED
+## Observability Strategy (Partially Implemented) ✅ UPDATED
 
-**Status**: 📋 High priority - Expert review complete, ready to implement
+**Status**: 🚧 Feature flags implemented, error tracking pending
 
 ### PostHog Integration
 
-The project will use **PostHog** for comprehensive observability, replacing Sentry and providing unified analytics, feature flags, and error tracking.
+The project uses **PostHog** for comprehensive observability, providing unified analytics, feature flags, and error tracking.
 
-**Architecture Decision**:
-- **Mobile**: Feature flags + analytics + error tracking (✅ Expo Go compatible!)
-- **API**: Error tracking with root-level handler (serverless-optimized)
+**Implementation Status**:
+- ✅ **Feature Flags**: Implemented and working in production (2025-11-07)
+  - First flag: `task-list-filter-enabled-admin`
+  - Naming convention established: `feature-name-role` format
+  - Hook and patterns documented
+- ⏳ **Analytics**: SDK installed, basic events ready
+- ⏳ **Error Tracking**: Planned, replacing Sentry
 - **Cost**: $0/month (free tier: 1M events, project uses ~30k events/month)
-- **Implementation**: 2-3 days effort
 - **Risk**: LOW (with rollback plan via feature flag)
 
 **Documentation**:
-- Implementation Plan: `.claude/enhancements/20251031-posthog-observability-implementation.md`
+- Feature Flags Guide: `.claude/docs/feature-flags-guide.md`
+- First Flag Implementation: `.claude/tasks/20251107-043354-first-feature-flag-task-list-filter-admin.md`
+- Full Implementation Plan: `.claude/enhancements/20251031-posthog-observability-implementation.md`
 - Error Tracking Guide: `.claude/docs/error-tracking-guide.md`
 
 **Key Implementation Patterns**:
@@ -851,6 +869,7 @@ A comprehensive backend refactoring plan has been created to improve code qualit
   - Test Plans: `.claude/qa/test-plans/` (feature test specifications)
   - Test Scenarios: `.claude/qa/test-scenarios/` (detailed test cases)
   - Test Results: `.claude/qa/test-results/` (execution results and bugs)
+- **Feature Flags**: `.claude/docs/feature-flags-guide.md` (PostHog feature flag patterns and conventions)
 - **Task Documentation**: `.claude/tasks/` (implementation tracking)
 - **V1 Feature Plans**: `.claude/plans/v1/` (detailed feature specifications & roadmap)
 - **Enhancement Ideas**: `.claude/enhancements/` (future features & optimizations)
