@@ -39,10 +39,7 @@
       "env": {
         "EXPO_PUBLIC_ENV": "staging",
         "EXPO_PUBLIC_API_URL": "https://nv-internal-staging.vercel.app",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_staging_clerk_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_google_maps_ios_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_google_maps_android_key_here",
-        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_your_posthog_project_key_here",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://app.posthog.com",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     },
@@ -60,10 +57,7 @@
       "env": {
         "EXPO_PUBLIC_ENV": "staging",
         "EXPO_PUBLIC_API_URL": "https://nv-internal-staging.vercel.app",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_preview_clerk_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_google_maps_ios_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_google_maps_android_key_here",
-        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_your_posthog_project_key_here",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://app.posthog.com",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     },
@@ -81,16 +75,18 @@
       "env": {
         "EXPO_PUBLIC_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://nv-internal-api.vercel.app",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_your_production_clerk_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_google_maps_ios_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_google_maps_android_key_here",
-        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_your_posthog_project_key_here",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://app.posthog.com",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     }
   },
   "submit": {
     "production": {
+      "ios": {
+        "appleId": "dustin.do95@gmail.com",
+        "ascAppId": "6738967467",
+        "appleTeamId": "9F77J83SKT"
+      },
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",
         "track": "internal"

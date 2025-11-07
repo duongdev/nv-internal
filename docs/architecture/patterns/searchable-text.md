@@ -1,5 +1,9 @@
 # SearchableText Pattern
 
+**Established**: 2025-10-30
+**Last Updated**: 2025-10-30
+**Reference**: `.claude/tasks/20251030-094500-implement-searchable-text-field.md`
+
 ## Problem Statement
 
 Multi-field search in database applications presents several challenges:

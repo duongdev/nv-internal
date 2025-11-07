@@ -1,0 +1,14 @@
+git_url("git@github.com:duongdev/nv-internal-certificates.git")
+
+storage_mode("git")
+
+type("appstore")
+
+app_identifier(["vn.dienlanhnamviet.internal"])
+
+username("dustin.do95@gmail.com")
+
+team_id("9F77J83SKT")
+
+# For CI/CD
+readonly(ENV['CI'] == 'true')

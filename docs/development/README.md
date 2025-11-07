@@ -5,8 +5,10 @@ Complete guide for developing on the NV Internal project.
 ## Getting Started
 
 - **[Environment Setup](./setup.md)** - Complete setup guide for local development
+- **[Environment Variables](./environment-setup.md)** - Environment variable management (API & Mobile)
 - **[Development Commands](./commands.md)** - Quick reference for common commands
 - **[Code Quality & Commit Workflow](./quality-workflow.md)** - Standards and processes
+- **[Agent Workflows](../../.claude/docs/agent-workflows.md)** - Specialized agent coordination patterns
 
 ## Quick Links
 

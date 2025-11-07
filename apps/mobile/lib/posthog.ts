@@ -1,38 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Constants, { ExecutionEnvironment } from 'expo-constants'
-import type {
-  PostHog,
-  PostHogAutocaptureOptions,
-  PostHogOptions,
-} from 'posthog-react-native'
+import PostHog from 'posthog-react-native'
 import { Platform } from 'react-native'
 import { getPostHogApiKey, getPostHogHost, isPostHogEnabled } from '@/lib/env'
 
 // Check if running in Expo Go
 const IS_EXPO_GO =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient
-const IS_DEV = __DEV__
 
 /**
- * Get PostHog configuration options for PostHogProvider.
+ * Create PostHog client instance for PostHogProvider.
  * Returns null if PostHog is disabled or API key is missing.
  *
- * @returns Configuration object or null
+ * @returns PostHog instance or null
  *
  * @example
  * ```typescript
- * const config = getPostHogConfig()
- * if (config) {
- *   return <PostHogProvider {...config}>...</PostHogProvider>
- * }
+ * const posthogClient = useMemo(() => createPostHogClient(), [])
+ *
+ * return posthogClient ? (
+ *   <PostHogProvider client={posthogClient}>...</PostHogProvider>
+ * ) : (
+ *   <AppContent />
+ * )
  * ```
  */
-export function getPostHogConfig(): {
-  apiKey: string
-  options: PostHogOptions
-  autocapture: PostHogAutocaptureOptions
-  debug: boolean
-} | null {
+export function createPostHogClient(): PostHog | null {
   // Check if PostHog is enabled
   if (!isPostHogEnabled()) {
     // biome-ignore lint/suspicious/noConsole: Intentional debug logging for PostHog initialization
@@ -46,43 +39,34 @@ export function getPostHogConfig(): {
     return null
   }
 
-  return {
-    apiKey,
-    options: {
-      host: getPostHogHost(),
+  // Create PostHog instance (Pattern 3: Direct instantiation)
+  return new PostHog(apiKey, {
+    host: getPostHogHost(),
 
-      // Persistence via AsyncStorage
-      customStorage: AsyncStorage,
-      persistence: 'file',
+    // Persistence via AsyncStorage
+    customStorage: AsyncStorage,
+    persistence: 'file',
 
-      // Lifecycle events (correct property name in v4.x)
-      captureAppLifecycleEvents: true,
+    // Lifecycle events
+    captureAppLifecycleEvents: true,
 
-      // Feature flags
-      sendFeatureFlagEvent: true,
-      preloadFeatureFlags: true,
+    // Feature flags
+    sendFeatureFlagEvent: true,
+    preloadFeatureFlags: true,
 
-      // Performance
-      flushAt: 20, // Batch 20 events
-      flushInterval: 30000, // Flush every 30 seconds
+    // Performance
+    flushAt: 20, // Batch 20 events
+    flushInterval: 30000, // Flush every 30 seconds
 
-      // Default properties for all events
-      customAppProperties: (props) => ({
-        ...props,
-        platform: Platform.OS,
-        platform_version: String(Platform.Version),
-        is_expo_go: IS_EXPO_GO,
-        app_version: Constants.expoConfig?.version || 'unknown',
-      }),
-    },
-    autocapture: {
-      // Manual screen tracking for better control with Expo Router
-      captureScreens: false,
-      captureTouches: true,
-    },
-    // Debug in development (but not in Expo Go - too noisy)
-    debug: IS_DEV && !IS_EXPO_GO,
-  }
+    // Default properties for all events
+    customAppProperties: (props) => ({
+      ...props,
+      platform: Platform.OS,
+      platform_version: String(Platform.Version),
+      is_expo_go: IS_EXPO_GO,
+      app_version: Constants.expoConfig?.version || 'unknown',
+    }),
+  })
 }
 
 /**

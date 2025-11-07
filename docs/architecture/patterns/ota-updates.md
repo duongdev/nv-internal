@@ -1,5 +1,9 @@
 # OTA Updates Pattern
 
+**Established**: 2025-11-06
+**Last Updated**: 2025-11-07 (PostHog Provider fix)
+**Reference**: `.claude/tasks/20251106-085928-app-version-tracking-ota-updates.md`
+
 ## Overview
 
 This pattern implements Over-The-Air (OTA) updates for React Native apps using Expo Updates. It provides automatic background update checks with user-controlled reload, ensuring updates are applied without disrupting user workflow.
