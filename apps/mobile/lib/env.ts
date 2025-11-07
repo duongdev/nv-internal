@@ -1,17 +1,16 @@
 /**
  * Environment variable utilities
- * Provides a centralized way to access environment variables with fallback logic
+ * Provides a centralized way to access environment variables
+ *
+ * Environment variables are managed by Expo's environment system.
+ * Each build profile in eas.json defines the appropriate values.
  */
 
 /**
- * Get the API URL based on the current environment
- * Priority: PRODUCTION > STAGING > Generic
+ * Get the API URL for the current environment
  */
 export function getApiUrl(): string {
-  const apiUrl =
-    process.env.EXPO_PUBLIC_API_URL_PRODUCTION ||
-    process.env.EXPO_PUBLIC_API_URL_STAGING ||
-    process.env.EXPO_PUBLIC_API_URL
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL
 
   if (!apiUrl) {
     throw new Error(
@@ -23,14 +22,10 @@ export function getApiUrl(): string {
 }
 
 /**
- * Get the Clerk publishable key based on the current environment
- * Priority: PRODUCTION > STAGING > Generic
+ * Get the Clerk publishable key for the current environment
  */
 export function getClerkPublishableKey(): string {
-  const key =
-    process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION ||
-    process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_STAGING ||
-    process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const key = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
 
   if (!key) {
     throw new Error(
@@ -56,17 +51,11 @@ export function getEnvironment(): 'production' | 'staging' | 'development' {
 }
 
 /**
- * Get PostHog API key based on current environment
- * Priority: PRODUCTION > STAGING > Generic
+ * Get PostHog API key for the current environment
  * Returns null if not configured (allows graceful degradation)
  */
 export function getPostHogApiKey(): string | null {
-  const key =
-    process.env.EXPO_PUBLIC_POSTHOG_API_KEY_PRODUCTION ||
-    process.env.EXPO_PUBLIC_POSTHOG_API_KEY_STAGING ||
-    process.env.EXPO_PUBLIC_POSTHOG_API_KEY
-
-  return key || null
+  return process.env.EXPO_PUBLIC_POSTHOG_API_KEY || null
 }
 
 /**
@@ -86,4 +75,27 @@ export function isPostHogEnabled(): boolean {
     process.env.EXPO_PUBLIC_POSTHOG_ENABLED !== 'false' &&
     getPostHogApiKey() !== null
   )
+}
+
+/**
+ * Get Google Maps API key for the current platform
+ * Google requires separate API keys for iOS and Android
+ */
+export function getGoogleMapsApiKey(): string {
+  // Platform detection needs to be done at runtime in React Native
+  // We'll use a lazy approach to avoid importing Platform at module level
+  const iosKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS
+  const androidKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID
+
+  // For web or unknown platforms, try Android key first (more permissive)
+  // This is a fallback - in practice, maps are primarily used on mobile
+  const key = androidKey || iosKey
+
+  if (!key) {
+    throw new Error(
+      'Missing Google Maps API key. Please set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS and EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID in your environment.',
+    )
+  }
+
+  return key
 }

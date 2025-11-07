@@ -58,9 +58,33 @@ Complete setup guide for the NV Internal development environment.
 - `STORAGE_PROVIDER` - `vercel-blob` or `local-disk`
 - `BLOB_READ_WRITE_TOKEN` - Vercel Blob token (if using Vercel Blob)
 
-### Mobile (.env)
-- `EXPO_PUBLIC_API_URL` - API endpoint URL
-- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
+### Mobile (.env.local for development)
+
+**Important**: The mobile app uses Expo's native environment management pattern. Environment variables are defined in `eas.json` for each build profile (development, staging, production).
+
+For local development, create `.env.local`:
+```env
+# Core configuration
+EXPO_PUBLIC_API_URL=http://localhost:3000
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
+
+# Platform-specific Google Maps keys
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=your_ios_key_here
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=your_android_key_here
+
+# Optional: PostHog analytics
+EXPO_PUBLIC_POSTHOG_API_KEY=your_key_here
+EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+EXPO_PUBLIC_POSTHOG_ENABLED=true
+```
+
+**Build Profiles**: Production and staging values are managed in `eas.json`:
+- `development` - Local development values
+- `staging` - Staging environment
+- `preview` - Internal testing
+- `production` - Production environment
+
+See `apps/mobile/eas.json` for complete environment definitions per build profile.
 
 ## Troubleshooting
 

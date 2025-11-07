@@ -1,7 +1,6 @@
 /** biome-ignore-all lint/style/useNamingConvention: <OSM standard> */
 import { useQuery } from '@tanstack/react-query'
-
-const { EXPO_PUBLIC_GOOGLE_MAPS_API_KEY } = process.env
+import { getGoogleMapsApiKey } from '@/lib/env'
 
 export type LocationSearchResultItem = {
   id: string
@@ -33,7 +32,7 @@ export const useLocationSearch = (searchText?: string) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'X-Goog-Api-Key': EXPO_PUBLIC_GOOGLE_MAPS_API_KEY!,
+              'X-Goog-Api-Key': getGoogleMapsApiKey(),
               'X-Goog-FieldMask':
                 'places.id,places.displayName,places.formattedAddress,places.googleMapsLinks,places.location',
             },

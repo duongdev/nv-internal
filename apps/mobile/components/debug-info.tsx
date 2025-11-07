@@ -93,21 +93,18 @@ export function DebugInfo() {
                 {JSON.stringify(
                   {
                     // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
-                    HAS_PROD_API: !!process.env.EXPO_PUBLIC_API_URL_PRODUCTION,
+                    HAS_API_URL: !!process.env.EXPO_PUBLIC_API_URL,
                     // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
-                    HAS_STAGING_API: !!process.env.EXPO_PUBLIC_API_URL_STAGING,
-                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
-                    HAS_GENERIC_API: !!process.env.EXPO_PUBLIC_API_URL,
-                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
-                    HAS_PROD_CLERK:
-                      !!process.env
-                        .EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION,
-                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
-                    HAS_STAGING_CLERK:
-                      !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_STAGING,
-                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
-                    HAS_GENERIC_CLERK:
+                    HAS_CLERK_KEY:
                       !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
+                    HAS_MAPS_IOS_KEY:
+                      !!process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
+                    HAS_MAPS_ANDROID_KEY:
+                      !!process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID,
+                    // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
+                    HAS_POSTHOG_KEY: !!process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
                     // biome-ignore lint/style/useNamingConvention: Debug object keys use CONSTANT_CASE intentionally
                     ENV: process.env.EXPO_PUBLIC_ENV,
                   },

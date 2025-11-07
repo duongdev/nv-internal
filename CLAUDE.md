@@ -673,6 +673,32 @@ Assistant: Let me check the latest Prisma documentation...
 - **File Size**: Keep files small and readable
 - **Language**: Support Vietnamese language where applicable
 
+### Environment Variables (Mobile)
+
+The mobile app uses **Expo's native environment management pattern** (as of 2025-11-07):
+
+- **Single Variable Names**: Each environment variable has one name (e.g., `EXPO_PUBLIC_API_URL`)
+- **Build Profile Management**: Values are defined per build profile in `eas.json`
+- **No Runtime Switching**: Environment is determined at build time, not runtime
+- **Platform Exception**: Only Google Maps keys remain platform-specific (iOS/Android)
+
+**Pattern**:
+```typescript
+// Access environment variables directly (no suffixes or fallbacks)
+const apiUrl = process.env.EXPO_PUBLIC_API_URL
+
+// Platform-specific exception (Google Maps only)
+const googleMapsKey = Platform.select({
+  ios: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
+  android: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID,
+})
+```
+
+**Build Profiles** (`eas.json`):
+- Each profile (`development`, `staging`, `production`) defines its own environment values
+- No need for suffixed variables or runtime selection
+- See `.claude/tasks/20251107-100000-environment-variable-refactoring.md` for migration details
+
 ### Security
 
 - **Authentication**: All API routes require authentication middleware

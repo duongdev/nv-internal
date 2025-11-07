@@ -158,11 +158,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'vn.dienlanhnamviet.internal',
     config: {
-      googleMapsApiKey: IS_PRODUCTION
-        ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY_PRODUCTION
-        : IS_STAGING
-          ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING
-          : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+      // Platform-specific Google Maps key (exception to single-variable pattern)
+      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
     },
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
@@ -196,11 +193,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     config: {
       googleMaps: {
-        apiKey: IS_PRODUCTION
-          ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY_PRODUCTION
-          : IS_STAGING
-            ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING
-            : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        // Platform-specific Google Maps key (exception to single-variable pattern)
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID,
       },
     },
   },
@@ -429,23 +423,28 @@ jobs:
 
 ### EAS Secrets (Mobile App)
 
-Set using `eas secret:create`:
+**UPDATED (2025-11-07)**: Environment variables are now managed via build profiles in `eas.json`. Only platform-specific Google Maps keys should be set as EAS secrets.
 
-| Variable Name | Environment | Example Value | Used In |
-|---------------|-------------|---------------|---------|
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_STAGING` | Staging | `pk_test_...` | Staging builds |
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION` | Production | `pk_live_...` | Production builds |
-| `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING` | Staging | `AIza...` | Staging builds |
-| `EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY_PRODUCTION` | Production | `AIza...` | iOS production |
-| `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY_PRODUCTION` | Production | `AIza...` | Android production |
-| `EXPO_PUBLIC_API_URL_STAGING` | Staging | `https://nv-internal-api.vercel.app` | Staging builds |
-| `EXPO_PUBLIC_API_URL_PRODUCTION` | Production | `https://nv-internal-api.vercel.app` | Production builds |
-| `EXPO_PUBLIC_SENTRY_DSN` | All | `https://...@sentry.io/...` | Error tracking |
+| Variable Name | Status | Example Value | Notes |
+|---------------|---------|---------------|-------|
+| `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS` | **Active** | `AIza...` | iOS Google Maps key |
+| `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID` | **Active** | `AIza...` | Android Google Maps key |
+| ~~`EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_STAGING`~~ | **Removed** | - | Use `eas.json` profiles |
+| ~~`EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY_PRODUCTION`~~ | **Removed** | - | Use `eas.json` profiles |
+| ~~`EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING`~~ | **Removed** | - | Use `eas.json` profiles |
+| ~~`EXPO_PUBLIC_API_URL_STAGING`~~ | **Removed** | - | Use `eas.json` profiles |
+| ~~`EXPO_PUBLIC_API_URL_PRODUCTION`~~ | **Removed** | - | Use `eas.json` profiles |
 
-**Set via CLI**:
+**Set platform-specific secrets via CLI**:
 ```bash
-eas secret:create --scope project --name VARIABLE_NAME --value "VALUE" --type string
+# Only needed for Google Maps platform keys
+eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS --value "AIza..." --type string
+eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID --value "AIza..." --type string
 ```
+
+**Environment-specific values**: Now defined in `apps/mobile/eas.json` under each build profile's `env` section.
+
+See `.claude/tasks/20251107-100000-environment-variable-refactoring.md` for migration details.
 
 ### Vercel Environment Variables (API)
 

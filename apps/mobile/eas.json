@@ -16,9 +16,12 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "development",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_...",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "YOUR_DEV_KEY",
-        "EXPO_PUBLIC_API_URL": "http://localhost:3000"
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_dev_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_dev_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_dev_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_dev_posthog_key_here",
+        "EXPO_PUBLIC_POSTHOG_ENABLED": "false"
       }
     },
     "staging": {
@@ -32,7 +35,13 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_ENV": "staging"
+        "EXPO_PUBLIC_ENV": "staging",
+        "EXPO_PUBLIC_API_URL": "https://staging-api.your-domain.com",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_staging_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_staging_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_staging_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_staging_posthog_key_here",
+        "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     },
     "preview": {
@@ -44,6 +53,15 @@
       },
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "staging",
+        "EXPO_PUBLIC_API_URL": "https://staging-api.your-domain.com",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_preview_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_preview_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_preview_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_preview_posthog_key_here",
+        "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     },
     "production": {
@@ -58,7 +76,13 @@
         "gradleCommand": ":app:bundleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_ENV": "production"
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://api.your-domain.com",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_your_production_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_production_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_production_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_production_posthog_key_here",
+        "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     }
   },

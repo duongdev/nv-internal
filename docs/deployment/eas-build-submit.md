@@ -316,23 +316,40 @@ The workflow builds iOS and Android in parallel for faster completion:
 
 ## Environment Variables
 
-Build-time environment variables are configured in `eas.json` per profile:
+The mobile app uses **Expo's native environment management pattern**. Each build profile in `eas.json` defines its complete environment configuration:
 
 ```json
 {
   "build": {
     "production": {
       "env": {
-        "EXPO_PUBLIC_ENV": "production"
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://api.your-domain.com",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_your_key",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "ios_key",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "android_key"
+      }
+    },
+    "staging": {
+      "env": {
+        "EXPO_PUBLIC_ENV": "staging",
+        "EXPO_PUBLIC_API_URL": "https://staging-api.your-domain.com",
+        // ... staging-specific values
       }
     }
   }
 }
 ```
 
-**Available in app**: `process.env.EXPO_PUBLIC_ENV`
+**Key Points**:
+- **No suffixed variables**: Each environment uses the same variable names
+- **Build-time configuration**: Environment is determined when building, not at runtime
+- **Platform-specific exception**: Only Google Maps keys use platform suffixes (iOS/Android)
+- **Local development**: Use `.env.local` for local development values
 
-**Other environment variables**: Set in `.env.local` and `app.config.ts`
+**Available in app**: Access directly via `process.env.EXPO_PUBLIC_*`
+
+See `.claude/tasks/20251107-100000-environment-variable-refactoring.md` for migration details.
 
 ## Cost Considerations
 

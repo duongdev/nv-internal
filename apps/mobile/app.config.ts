@@ -1,8 +1,5 @@
 import type { ConfigContext, ExpoConfig } from '@expo/config'
 
-const IS_PRODUCTION = process.env.EXPO_PUBLIC_ENV === 'production'
-const _IS_STAGING = process.env.EXPO_PUBLIC_ENV === 'staging'
-
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Nam Việt Internal',
@@ -23,10 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'vn.dienlanhnamviet.internal',
     config: {
-      googleMapsApiKey: IS_PRODUCTION
-        ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY_PRODUCTION
-        : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING ||
-          process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
     },
     infoPlist: {
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
@@ -61,10 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     config: {
       googleMaps: {
-        apiKey: IS_PRODUCTION
-          ? process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY_PRODUCTION
-          : process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_STAGING ||
-            process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID,
       },
     },
   },
