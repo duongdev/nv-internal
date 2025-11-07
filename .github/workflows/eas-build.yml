@@ -43,6 +43,11 @@ jobs:
     name: EAS Build
     runs-on: ubuntu-latest
 
+    # Expose secrets as env variables for conditional checks
+    env:
+      GOOGLE_PLAY_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+
     # Allow concurrent builds for different platforms
     strategy:
       fail-fast: false
@@ -99,7 +104,7 @@ jobs:
         working-directory: apps/mobile
         run: |
           # Create Google Play service account file (only needed for submission)
-          if [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}" ]; then
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT" ]; then
             echo "⚠️  Warning: GOOGLE_PLAY_SERVICE_ACCOUNT secret not configured"
             echo "Android submission will fail. Configure this secret to enable Play Store submission."
           else
@@ -119,7 +124,7 @@ jobs:
         if: matrix.platform == 'ios'
         run: |
           echo "✓ iOS builds use Expo managed credentials"
-          echo "Apple ID: ${{ secrets.APPLE_ID || 'dustin.do95@gmail.com' }}"
+          echo "Apple ID: ${APPLE_ID:-dustin.do95@gmail.com}"
 
       - name: Build on EAS
         working-directory: apps/mobile
@@ -148,6 +153,11 @@ jobs:
     name: Submit to Stores
     needs: build
     runs-on: ubuntu-latest
+
+    # Expose secrets as env variables for conditional checks
+    env:
+      GOOGLE_PLAY_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+
     if: |
       (github.event.inputs.submit == 'true' && github.event.inputs.auto_submit == 'false') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
@@ -191,7 +201,7 @@ jobs:
         working-directory: apps/mobile
         run: |
           # Create Google Play service account file
-          if [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}" ]; then
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT" ]; then
             echo "❌ Error: GOOGLE_PLAY_SERVICE_ACCOUNT secret not configured"
             echo "Cannot submit to Play Store without service account credentials."
             exit 1
