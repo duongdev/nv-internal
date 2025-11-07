@@ -54,12 +54,25 @@ platform :ios do
     increment_build_number_lane
     run_prebuild
 
-    # Get code signing
-    match(
-      type: 'appstore',
-      readonly: ENV['CI'] == 'true',
-      verbose: true
-    )
+    # Get code signing - try readonly first, generate if missing
+    begin
+      match(
+        type: 'appstore',
+        readonly: true,
+        verbose: true
+      )
+    rescue => ex
+      if ex.message.include?("No code signing identity found")
+        UI.important("No certificates found, generating new ones...")
+        match(
+          type: 'appstore',
+          readonly: false,
+          verbose: true
+        )
+      else
+        raise ex
+      end
+    end
 
     # Build app
     build_app(
@@ -93,11 +106,25 @@ platform :ios do
     increment_build_number_lane
     run_prebuild
 
-    match(
-      type: 'adhoc',
-      readonly: ENV['CI'] == 'true',
-      verbose: true
-    )
+    # Get code signing - try readonly first, generate if missing
+    begin
+      match(
+        type: 'adhoc',
+        readonly: true,
+        verbose: true
+      )
+    rescue => ex
+      if ex.message.include?("No code signing identity found")
+        UI.important("No certificates found, generating new ones...")
+        match(
+          type: 'adhoc',
+          readonly: false,
+          verbose: true
+        )
+      else
+        raise ex
+      end
+    end
 
     build_app(
       workspace: "ios/nvinternal.xcworkspace",
