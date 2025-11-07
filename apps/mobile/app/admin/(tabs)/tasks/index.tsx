@@ -32,6 +32,11 @@ export default function AdminTasksScreen() {
     FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_ADMIN,
   )
 
+  // Feature flag: Enable/disable task list search functionality
+  const { isEnabled: isSearchEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_SEARCH_ENABLED_ADMIN,
+  )
+
   // Fetch user list for displaying names in filter chips
   const { data: users } = useUserList()
   const userNames = useMemo(() => {
@@ -115,10 +120,13 @@ export default function AdminTasksScreen() {
         options={{
           headerShown: true,
           title: `Công việc`,
-          headerSearchBarOptions: {
-            placeholder: 'Tìm công việc...',
-            onChangeText: ({ nativeEvent }) => setSearchText(nativeEvent.text),
-          },
+          ...(isSearchEnabled && {
+            headerSearchBarOptions: {
+              placeholder: 'Tìm công việc...',
+              onChangeText: ({ nativeEvent }) =>
+                setSearchText(nativeEvent.text),
+            },
+          }),
           headerRight: () => (
             <View className="flex-row items-center gap-2">
               {/* Filter Button - Controlled by feature flag */}

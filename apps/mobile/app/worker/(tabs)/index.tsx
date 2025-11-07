@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
+import { FEATURE_FLAGS, useFeatureFlag } from '@/hooks/use-feature-flag'
 import { cn } from '@/lib/utils'
 
 type TaskFilter = 'active' | 'completed'
@@ -46,6 +47,16 @@ export default function WorkerIndex() {
   })
 
   const filterSheetRef = useRef<TaskFilterBottomSheetMethods>(null)
+
+  // Feature flag: Enable/disable task list filtering functionality
+  const { isEnabled: isFilterEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_WORKER,
+  )
+
+  // Feature flag: Enable/disable task list search functionality
+  const { isEnabled: isSearchEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_SEARCH_ENABLED_WORKER,
+  )
 
   // Determine if we're searching or filtering
   const hasAdditionalFilters =
@@ -253,11 +264,13 @@ export default function WorkerIndex() {
           options={{
             headerShown: true,
             title: 'Công việc',
-            headerSearchBarOptions: {
-              placeholder: 'Tìm công việc...',
-              onChangeText: ({ nativeEvent }) =>
-                setSearchText(nativeEvent.text),
-            },
+            ...(isSearchEnabled && {
+              headerSearchBarOptions: {
+                placeholder: 'Tìm công việc...',
+                onChangeText: ({ nativeEvent }) =>
+                  setSearchText(nativeEvent.text),
+              },
+            }),
           }}
         />
         <View className="flex-1 bg-background">
@@ -284,39 +297,43 @@ export default function WorkerIndex() {
         options={{
           headerShown: true,
           title: 'Công việc',
-          headerSearchBarOptions: {
-            placeholder: 'Tìm công việc...',
-            onChangeText: ({ nativeEvent }) => setSearchText(nativeEvent.text),
-          },
-          headerRight: () => (
-            <Button
-              accessibilityHint="Mở bộ lọc để tìm kiếm công việc theo ngày tháng"
-              accessibilityLabel="Bộ lọc công việc"
-              accessibilityRole="button"
-              className="relative w-10"
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light)
-                filterSheetRef.current?.present()
-              }}
-              size={null}
-              testID="worker-tasks-filter-button"
-              variant={null}
-            >
-              <Icon as={FilterIcon} className="size-6" />
-              {activeFilterCount > 0 && (
-                <View className="absolute top-0 right-0 size-5 items-center justify-center rounded-full bg-primary">
-                  <Text className="font-sans-bold text-[10px] text-primary-foreground">
-                    {activeFilterCount}
-                  </Text>
-                </View>
-              )}
-            </Button>
-          ),
+          ...(isSearchEnabled && {
+            headerSearchBarOptions: {
+              placeholder: 'Tìm công việc...',
+              onChangeText: ({ nativeEvent }) =>
+                setSearchText(nativeEvent.text),
+            },
+          }),
+          headerRight: () =>
+            isFilterEnabled ? (
+              <Button
+                accessibilityHint="Mở bộ lọc để tìm kiếm công việc theo ngày tháng"
+                accessibilityLabel="Bộ lọc công việc"
+                accessibilityRole="button"
+                className="relative w-10"
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light)
+                  filterSheetRef.current?.present()
+                }}
+                size={null}
+                testID="worker-tasks-filter-button"
+                variant={null}
+              >
+                <Icon as={FilterIcon} className="size-6" />
+                {activeFilterCount > 0 && (
+                  <View className="absolute top-0 right-0 size-5 items-center justify-center rounded-full bg-primary">
+                    <Text className="font-sans-bold text-[10px] text-primary-foreground">
+                      {activeFilterCount}
+                    </Text>
+                  </View>
+                )}
+              </Button>
+            ) : null,
         }}
       />
       <View className="flex-1 bg-background">
-        {/* Active Filter Chips */}
-        {activeFilterCount > 0 && (
+        {/* Active Filter Chips - Controlled by feature flag */}
+        {isFilterEnabled && activeFilterCount > 0 && (
           <ActiveFilterChips
             filters={filterState}
             onClearAll={handleClearAllFilters}
@@ -489,13 +506,15 @@ export default function WorkerIndex() {
         />
       </View>
 
-      {/* Filter Bottom Sheet - Workers cannot filter by assignees */}
-      <TaskFilterBottomSheet
-        initialFilters={filterState}
-        onApplyFilters={handleApplyFilters}
-        ref={filterSheetRef}
-        showAssigneeFilter={false} // Workers cannot filter by assignees
-      />
+      {/* Filter Bottom Sheet - Controlled by feature flag */}
+      {isFilterEnabled && (
+        <TaskFilterBottomSheet
+          initialFilters={filterState}
+          onApplyFilters={handleApplyFilters}
+          ref={filterSheetRef}
+          showAssigneeFilter={false} // Workers cannot filter by assignees
+        />
+      )}
     </>
   )
 }

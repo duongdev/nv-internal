@@ -124,9 +124,17 @@ export const FEATURE_FLAGS = {
   /** Enable/disable task list filtering functionality for admin users */
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
   TASK_LIST_FILTER_ENABLED_ADMIN: 'task-list-filter-enabled-admin',
+  /** Enable/disable task list search functionality for admin users */
+  // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
+  TASK_LIST_SEARCH_ENABLED_ADMIN: 'task-list-search-enabled-admin',
 
   // Worker Features
-  // (Add worker-specific flags here with -worker postfix)
+  /** Enable/disable task list filtering functionality for worker users */
+  // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
+  TASK_LIST_FILTER_ENABLED_WORKER: 'task-list-filter-enabled-worker',
+  /** Enable/disable task list search functionality for worker users */
+  // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
+  TASK_LIST_SEARCH_ENABLED_WORKER: 'task-list-search-enabled-worker',
 
   // Shared Features
   // (Add flags available to all users here)
