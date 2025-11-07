@@ -72,6 +72,15 @@ platform :ios do
       end
     end
 
+    # Update Xcode project settings to use manual signing
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "ios/NamVitInternal.xcodeproj",
+      team_id: "9F77J83SKT",
+      profile_name: "match AppStore vn.dienlanhnamviet.internal",
+      code_sign_identity: "Apple Distribution"
+    )
+
     # Build app
     build_app(
       workspace: "ios/NamVitInternal.xcworkspace",
@@ -135,6 +144,15 @@ platform :ios do
         raise ex
       end
     end
+
+    # Update Xcode project settings to use manual signing
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "ios/NamVitInternal.xcodeproj",
+      team_id: "9F77J83SKT",
+      profile_name: "match AdHoc vn.dienlanhnamviet.internal",
+      code_sign_identity: "Apple Distribution"
+    )
 
     build_app(
       workspace: "ios/NamVitInternal.xcworkspace",
