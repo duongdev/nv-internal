@@ -80,7 +80,7 @@ platform :ios do
       output_directory: "./build",
       output_name: "nvinternal.ipa",
       clean: true,
-      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT",
+      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='match AppStore vn.dienlanhnamviet.internal'",
       export_xcargs: "-allowProvisioningUpdates",
       export_options: {
         method: "app-store",
@@ -121,8 +121,8 @@ platform :ios do
         keychain_password: ""
       )
     rescue => ex
-      if ex.message.include?("No code signing identity found")
-        UI.important("No certificates found, generating new ones...")
+      if ex.message.include?("No code signing identity found") || ex.message.include?("No matching provisioning profiles found")
+        UI.important("No certificates or provisioning profiles found, generating new ones...")
         match(
           type: 'adhoc',
           readonly: false,
@@ -143,7 +143,7 @@ platform :ios do
       output_directory: "./build",
       output_name: "nvinternal-staging.ipa",
       clean: true,
-      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT",
+      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='match AdHoc vn.dienlanhnamviet.internal'",
       export_xcargs: "-allowProvisioningUpdates",
       export_options: {
         method: "ad-hoc",
