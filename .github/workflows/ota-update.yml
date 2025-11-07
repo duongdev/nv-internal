@@ -239,6 +239,10 @@ jobs:
       always() &&
       github.event.inputs.skip_ci != 'true'
 
+    env:
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
     steps:
       - name: Prepare notification
         id: notification
@@ -260,7 +264,7 @@ jobs:
           echo "message=OTA Update $STATUS_TEXT for $CHANNEL (v$VERSION)" >> $GITHUB_OUTPUT
 
       - name: Send to Slack
-        if: secrets.SLACK_WEBHOOK && needs.publish-ota.result == 'success'
+        if: env.SLACK_WEBHOOK != '' && needs.publish-ota.result == 'success'
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
@@ -302,7 +306,7 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Send to Discord
-        if: secrets.DISCORD_WEBHOOK && needs.publish-ota.result == 'success'
+        if: env.DISCORD_WEBHOOK != '' && needs.publish-ota.result == 'success'
         uses: sarisia/actions-status-discord@v1
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK }}
