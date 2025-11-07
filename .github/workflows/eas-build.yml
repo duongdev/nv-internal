@@ -135,7 +135,7 @@ jobs:
       - name: Sync and increment build number
         id: build_number
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BUILD_NUMBER_PAT }}
         run: |
           echo "📈 Syncing build number with EAS and incrementing..."
 
