@@ -54,3 +54,36 @@ export function getEnvironment(): 'production' | 'staging' | 'development' {
   }
   return 'development'
 }
+
+/**
+ * Get PostHog API key based on current environment
+ * Priority: PRODUCTION > STAGING > Generic
+ * Returns null if not configured (allows graceful degradation)
+ */
+export function getPostHogApiKey(): string | null {
+  const key =
+    process.env.EXPO_PUBLIC_POSTHOG_API_KEY_PRODUCTION ||
+    process.env.EXPO_PUBLIC_POSTHOG_API_KEY_STAGING ||
+    process.env.EXPO_PUBLIC_POSTHOG_API_KEY
+
+  return key || null
+}
+
+/**
+ * Get PostHog host URL
+ * Defaults to PostHog Cloud
+ */
+export function getPostHogHost(): string {
+  return process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com'
+}
+
+/**
+ * Check if PostHog is enabled
+ * Disabled if explicitly set to 'false' or if no API key is configured
+ */
+export function isPostHogEnabled(): boolean {
+  return (
+    process.env.EXPO_PUBLIC_POSTHOG_ENABLED !== 'false' &&
+    getPostHogApiKey() !== null
+  )
+}
