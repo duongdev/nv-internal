@@ -36,6 +36,20 @@ platform :ios do
   lane :run_prebuild do
     UI.message("Running expo prebuild for iOS...")
     sh("npx expo prebuild --clean --platform ios")
+
+    # Force manual code signing in Xcode project
+    # expo prebuild generates projects with automatic signing by default
+    # We need to explicitly set CODE_SIGN_STYLE=Manual to prevent Xcode
+    # from looking for Development provisioning profiles
+    UI.message("Setting CODE_SIGN_STYLE to Manual in Xcode project...")
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "ios/NamVitInternal.xcodeproj",
+      team_id: "9F77J83SKT",
+      targets: ["NamVitInternal"],
+      code_sign_identity: "iPhone Distribution",
+      profile_name: nil  # Will be set later based on build type
+    )
   end
 
   desc "Build and upload to TestFlight (Production)"
@@ -72,7 +86,7 @@ platform :ios do
       end
     end
 
-    # Update Xcode project settings to use manual signing
+    # Set provisioning profile for App Store build
     update_code_signing_settings(
       use_automatic_signing: false,
       path: "ios/NamVitInternal.xcodeproj",
@@ -148,7 +162,7 @@ platform :ios do
       end
     end
 
-    # Update Xcode project settings to use manual signing
+    # Set provisioning profile for Ad Hoc build
     update_code_signing_settings(
       use_automatic_signing: false,
       path: "ios/NamVitInternal.xcodeproj",

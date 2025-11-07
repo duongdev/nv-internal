@@ -27,6 +27,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     config: {
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
     },
+    // Configure manual code signing for local/GitHub Actions builds
+    // This prevents Xcode from defaulting to automatic signing
+    usesAppleSignIn: false,
     infoPlist: {
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSLocationWhenInUseUsageDescription:
