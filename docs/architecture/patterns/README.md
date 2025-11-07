@@ -2,6 +2,17 @@
 
 This directory contains detailed implementation patterns and best practices for the NV Internal codebase.
 
+## 🆕 Recent Additions
+
+See **[CHANGELOG.md](./CHANGELOG.md)** for recently established patterns and updates.
+
+**Latest patterns** (as of 2025-11-07):
+- Feature Flags Pattern (PostHog)
+- PostHog Provider Initialization Pattern
+- Mobile Accessibility Pattern
+- OTA Updates Pattern
+- SearchableText Pattern
+
 ## API Patterns
 
 ### Core Patterns

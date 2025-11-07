@@ -224,17 +224,31 @@ The NV Internal project uses a structured documentation system designed to track
 
 ### `.claude/agents/`
 
-**Purpose**: Agent configuration and instructions
+**Purpose**: Specialized agent documentation and configuration
+
+**Updated**: 2025-11-07 (Reorganization)
 
 **When to use**:
-- Defining specialized Claude agents
-- Documenting agent capabilities
-- Recording agent-specific patterns
+- Documenting specialized agent capabilities
+- Providing project-specific context to agents
+- Recording agent usage patterns and workflows
 
-**Files**:
-- `task-doc-tracker.md`
+**Files** (as of 2025-11-07):
+- `backend-engineer.md` - Backend development expert
+- `frontend-engineer.md` - Mobile/UI development expert
+- `code-quality-enforcer.md` - Quality validation expert
+- `qa-ui.md` - Mobile testing expert
+- `task-doc-tracker.md` - Documentation tracking expert
 
-**Note**: `backend-engineer` and `frontend-engineer` are now global agents (not project-specific files).
+**Structure**:
+Each agent file includes:
+- Agent capabilities and expertise
+- Project-specific context (tech stack, patterns, standards)
+- Common workflows and best practices
+- Related documentation links
+- When to invoke the agent
+
+**Cross-reference**: See `.claude/docs/agent-workflows.md` for detailed workflow coordination patterns.
 
 ---
 
@@ -511,3 +525,145 @@ Before committing documentation:
 **Document Version**: 1.0
 **Next Review**: 2025-01-30
 **Maintainer**: Task Documentation Tracker Agent
+---
+
+## New Documentation Structure (2025-11-07)
+
+### CLAUDE.md Reorganization
+
+The main CLAUDE.md file was reorganized from 969 lines to 290 lines (70% reduction) by extracting content to specialized files:
+
+**New Files Created**:
+- `.claude/agents/*.md` - Individual agent documentation (5 files)
+- `.claude/docs/agent-workflows.md` - Detailed workflow coordination patterns
+- `docs/architecture/patterns/CHANGELOG.md` - Recently established patterns timeline
+- `docs/architecture/database-patterns.md` - Consolidated database patterns
+- `docs/development/environment-setup.md` - Environment variable management
+
+**CLAUDE.md Now Serves As**:
+- Quick reference and navigation hub
+- Links to detailed documentation
+- Critical patterns summary only
+- Agent quick reference table
+
+**Benefits**:
+- Faster to navigate and understand
+- Easier to maintain and update
+- Clear separation of concerns
+- Better organization for growth
+
+### `.claude/docs/`
+
+**Purpose**: Project-wide documentation that doesn't fit in other directories
+
+**Files** (as of 2025-11-07):
+- `agent-workflows.md` - Detailed agent coordination patterns
+- `feature-flags-guide.md` - PostHog feature flag patterns
+- `error-tracking-guide.md` - Error tracking implementation
+
+**When to use**:
+- Guides that span multiple concerns
+- Project-wide practices
+- Integration patterns
+- Tool-specific guidance
+
+### `docs/architecture/`
+
+**Purpose**: Technical architecture documentation
+
+**Structure**:
+- `patterns/` - Implementation patterns with metadata
+- `patterns/CHANGELOG.md` - Recently established patterns
+- `patterns/README.md` - Pattern navigation and selection guide
+- `database-patterns.md` - Database design and optimization
+
+**Pattern File Format** (updated 2025-11-07):
+Each pattern file now includes metadata header:
+```markdown
+# Pattern Name
+
+**Established**: YYYY-MM-DD
+**Last Updated**: YYYY-MM-DD
+**Reference**: `.claude/tasks/YYYYMMDD-HHMMSS-task-name.md`
+
+[Pattern content...]
+```
+
+**CHANGELOG Format**:
+Organized by date (descending), each entry includes:
+- Pattern name and link
+- Problem solved
+- Solution approach
+- Key details
+- Impact
+- Implementation task references
+
+### `docs/development/`
+
+**Purpose**: Developer guides and setup documentation
+
+**Files** (as of 2025-11-07):
+- `setup.md` - Complete environment setup
+- `environment-setup.md` - Environment variable management
+- `commands.md` - Command reference
+- `quality-workflow.md` - Quality standards
+- `README.md` - Development guide navigation
+
+**When to add new files**:
+- Setup guides for new tools
+- Workflow documentation
+- Developer onboarding content
+
+---
+
+## Documentation Maintenance
+
+### Updating CHANGELOG.md
+
+When establishing a new pattern:
+
+1. Add entry to `docs/architecture/patterns/CHANGELOG.md`
+2. Update pattern file with metadata header
+3. Link implementation task
+4. Update `docs/architecture/patterns/README.md` "Recent Additions" section if needed
+
+### Updating Agent Documentation
+
+When agent context changes:
+
+1. Update relevant file in `.claude/agents/`
+2. Update `.claude/docs/agent-workflows.md` if workflows change
+3. Keep CLAUDE.md agent table up to date
+
+### Keeping CLAUDE.md Concise
+
+**Do NOT add to CLAUDE.md**:
+- Detailed implementation patterns (→ `docs/architecture/patterns/`)
+- Long workflow descriptions (→ `.claude/docs/agent-workflows.md`)
+- Database details (→ `docs/architecture/database-patterns.md`)
+- Environment details (→ `docs/development/environment-setup.md`)
+- Recently established patterns (→ `docs/architecture/patterns/CHANGELOG.md`)
+
+**DO add to CLAUDE.md**:
+- Critical must-know patterns (with link to details)
+- New specialized agents (in quick reference table)
+- New major documentation sections (in navigation)
+
+**Target**: Keep CLAUDE.md under 400 lines
+
+---
+
+## Version History
+
+- **v1.0** (2025-10-30): Initial documentation structure established
+- **v2.0** (2025-11-07): Major reorganization - extracted content from CLAUDE.md, created specialized documentation files, established agent documentation structure, added pattern CHANGELOG
+
+---
+
+## Related Documentation
+
+- Main project guide: `CLAUDE.md`
+- Agent documentation: `.claude/agents/*.md`
+- Agent workflows: `.claude/docs/agent-workflows.md`
+- Pattern catalog: `docs/architecture/patterns/README.md`
+- Recent patterns: `docs/architecture/patterns/CHANGELOG.md`

@@ -1,0 +1,6 @@
+app_identifier("vn.dienlanhnamviet.internal")
+apple_id("dustin.do95@gmail.com")
+team_id("9F77J83SKT")
+
+# For App Store Connect API
+itc_team_id("9F77J83SKT")

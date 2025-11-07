@@ -1,5 +1,9 @@
 # Tabs Navigation Pattern
 
+**Established**: 2025-10-30
+**Last Updated**: 2025-10-30
+**Reference**: `.claude/tasks/20251030-041902-migrate-nativetabs-to-stable-tabs.md`
+
 ## Overview
 
 This document describes the pattern for implementing tab navigation with Expo Router, including the critical migration from unstable NativeTabs to stable Tabs component, and best practices for avoiding UI responsiveness issues.

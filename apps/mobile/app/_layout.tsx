@@ -28,7 +28,7 @@ import { Toasts } from '@/components/ui/toasts'
 import { queryClient } from '@/lib/api-client'
 import { getClerkPublishableKey } from '@/lib/env'
 import {
-  getPostHogConfig,
+  createPostHogClient,
   identifyUser,
   resetPostHog,
   trackScreen,
@@ -42,26 +42,25 @@ export {
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme()
-  const posthogConfig = getPostHogConfig()
+
+  // Create PostHog client instance (memoized to prevent recreation)
+  const posthogClient = React.useMemo(() => createPostHogClient(), [])
 
   return (
     <ClerkProvider
       publishableKey={getClerkPublishableKey()}
       tokenCache={tokenCache}
     >
-      {/* Wrap with PostHogProvider if enabled and configured */}
-      {posthogConfig ? (
-        <PostHogProvider
-          apiKey={posthogConfig.apiKey}
-          autocapture={posthogConfig.autocapture}
-          debug={posthogConfig.debug}
-          options={posthogConfig.options}
-        >
-          <AppContent colorScheme={colorScheme ?? 'light'} />
-        </PostHogProvider>
-      ) : (
+      {/* ALWAYS wrap with PostHogProvider - it handles null client gracefully */}
+      <PostHogProvider
+        autocapture={{
+          captureScreens: false,
+          captureTouches: true,
+        }}
+        client={posthogClient}
+      >
         <AppContent colorScheme={colorScheme ?? 'light'} />
-      )}
+      </PostHogProvider>
     </ClerkProvider>
   )
 }

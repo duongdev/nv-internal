@@ -42,3 +42,13 @@ expo-env.d.ts
 
 ios/
 android/
+
+# Fastlane
+build/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+*.ipa
+*.apk
+*.aab

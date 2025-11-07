@@ -1,0 +1,258 @@
+name: Build & Deploy to TestFlight/Play Store
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+        default: 'ios'
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+        default: 'production'
+      submit:
+        description: 'Submit to stores'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  PNPM_VERSION: 10.15.0
+  NODE_VERSION: 22.x
+
+jobs:
+  # Increment build number before builds
+  increment-build-number:
+    name: Increment Build Number
+    runs-on: ubuntu-latest
+    outputs:
+      build_number: ${{ steps.increment.outputs.build_number }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync and increment build number
+        id: increment
+        env:
+          GH_TOKEN: ${{ secrets.BUILD_NUMBER_PAT }}
+        run: |
+          # Get current GitHub build number
+          GH_BUILD=$(gh variable get BUILD_NUMBER --repo ${{ github.repository }} 2>/dev/null || echo "0")
+
+          # Increment
+          NEW_BUILD=$((GH_BUILD + 1))
+          echo "New build number: $NEW_BUILD"
+
+          # Update GitHub variable
+          gh variable set BUILD_NUMBER --body "$NEW_BUILD" --repo ${{ github.repository }}
+
+          # Export for next jobs
+          echo "build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-14
+    needs: increment-build-number
+    if: |
+      github.event.inputs.platform == 'ios' ||
+      github.event.inputs.platform == 'all' ||
+      github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: |
+          pnpm --filter @nv-internal/prisma-client build
+          pnpm --filter @nv-internal/validation build
+
+      - name: Setup SSH for Match
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: apps/mobile/ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('apps/mobile/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Build and upload to TestFlight
+        working-directory: apps/mobile
+        env:
+          BUILD_NUMBER: ${{ needs.increment-build-number.outputs.build_number }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          # Environment variables for app.config.ts
+          EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://nv-internal-api.vercel.app' }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
+          EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
+          EXPO_PUBLIC_POSTHOG_HOST: https://app.posthog.com
+          EXPO_PUBLIC_POSTHOG_ENABLED: true
+        run: |
+          if [ "${{ github.event.inputs.submit }}" = "true" ] || [ "${{ github.event_name }}" = "push" ]; then
+            bundle exec fastlane ios build_upload_testflight
+          else
+            bundle exec fastlane ios build_staging
+          fi
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs-${{ needs.increment-build-number.outputs.build_number }}
+          path: |
+            apps/mobile/build/
+            apps/mobile/fastlane/report.xml
+          retention-days: 30
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    needs: increment-build-number
+    if: |
+      github.event.inputs.platform == 'android' ||
+      github.event.inputs.platform == 'all'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: |
+          pnpm --filter @nv-internal/prisma-client build
+          pnpm --filter @nv-internal/validation build
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Create Google Play service account JSON
+        working-directory: apps/mobile
+        run: |
+          echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
+
+      - name: Build and upload to Play Store
+        working-directory: apps/mobile
+        env:
+          BUILD_NUMBER: ${{ needs.increment-build-number.outputs.build_number }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Environment variables for app.config.ts
+          EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://nv-internal-api.vercel.app' }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
+          EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
+          EXPO_PUBLIC_POSTHOG_HOST: https://app.posthog.com
+          EXPO_PUBLIC_POSTHOG_ENABLED: true
+        run: |
+          if [ "${{ github.event.inputs.submit }}" = "true" ]; then
+            bundle exec fastlane android build_upload_playstore
+          else
+            bundle exec fastlane android build_apk
+          fi
+
+      - name: Cleanup secrets
+        if: always()
+        run: |
+          rm -f apps/mobile/google-play-service-account.json
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-logs-${{ needs.increment-build-number.outputs.build_number }}
+          path: |
+            apps/mobile/android/app/build/outputs/
+            apps/mobile/fastlane/report.xml
+          retention-days: 30

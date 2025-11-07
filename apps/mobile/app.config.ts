@@ -103,8 +103,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
   },
   owner: 'duongdev',
+  // Expo Updates configuration for local builds
+  // See migration task: .claude/tasks/YYYYMMDD-HHMMSS-migrate-eas-build-to-local-builds.md
   updates: {
+    enabled: true,
     url: 'https://u.expo.dev/efc85258-12ce-4f6a-826a-ab5765d18ebc',
+    // Explicitly set channel for local builds to prevent ErrorRecovery crash
+    // Channel should match EAS Update channel: production, staging, preview
+    requestHeaders: {
+      'expo-channel-name': process.env.EXPO_PUBLIC_ENV || 'production',
+    },
+    // Disable automatic error recovery to prevent tryRelaunchFromCache() crash
+    // This was causing production crashes during app startup
+    checkAutomatically: 'ON_LOAD',
+    fallbackToCacheTimeout: 0,
   },
   runtimeVersion: {
     policy: 'appVersion', // OTA updates only work for same app version
