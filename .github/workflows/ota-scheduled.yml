@@ -85,21 +85,63 @@ jobs:
           echo "Running quality checks..."
           pnpm biome check apps/mobile/ --write
 
+      - name: Sync and increment build number
+        id: increment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📈 Syncing build number with EAS and incrementing..."
+
+          # Get current GitHub build number
+          GH_BUILD=$(gh variable get BUILD_NUMBER --repo ${{ github.repository }} 2>/dev/null || echo "0")
+          echo "GitHub BUILD_NUMBER: $GH_BUILD"
+
+          # Get EAS build numbers
+          cd apps/mobile
+          EAS_IOS=$(eas build:version:get -p ios 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+          EAS_ANDROID=$(eas build:version:get -p android 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+          cd ..
+          echo "EAS iOS buildNumber: $EAS_IOS"
+          echo "EAS Android versionCode: $EAS_ANDROID"
+
+          # Find the maximum build number across all sources (never decrease)
+          MAX_BUILD=$GH_BUILD
+          if [ "$EAS_IOS" -gt "$MAX_BUILD" ]; then MAX_BUILD=$EAS_IOS; fi
+          if [ "$EAS_ANDROID" -gt "$MAX_BUILD" ]; then MAX_BUILD=$EAS_ANDROID; fi
+
+          # Increment from the maximum
+          NEW_BUILD=$((MAX_BUILD + 1))
+          echo "Maximum existing build: $MAX_BUILD"
+          echo "New unified build number: $NEW_BUILD"
+
+          # Update GitHub variable
+          gh variable set BUILD_NUMBER --body "$NEW_BUILD" --repo ${{ github.repository }}
+
+          echo "build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+          echo "✅ Build number synchronized and incremented to $NEW_BUILD"
+
       - name: Publish OTA to staging
         working-directory: apps/mobile
+        env:
+          BUILD_NUMBER: ${{ steps.increment.outputs.build_number }}
         run: |
           echo "Publishing nightly OTA to staging..."
           VERSION=$(grep -m1 '"version"' app.config.ts | cut -d'"' -f4)
-          eas update --channel staging --message "Nightly build v$VERSION $(date -u +'%Y-%m-%d')" --non-interactive
+          BUILD="${{ steps.increment.outputs.build_number }}"
+
+          eas update --channel staging --message "Nightly build v$VERSION ($BUILD) $(date -u +'%Y-%m-%d')" --non-interactive
           echo "✅ Staging OTA published"
 
       - name: Create summary
         run: |
           VERSION=$(grep -m1 '"version"' apps/mobile/app.config.ts | cut -d'"' -f4)
+          BUILD="${{ steps.increment.outputs.build_number }}"
+
           echo "## 🌙 Nightly OTA Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Channel**: staging" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Number**: $BUILD" >> $GITHUB_STEP_SUMMARY
           echo "**Time**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "QA team will receive nightly build on next app launch." >> $GITHUB_STEP_SUMMARY

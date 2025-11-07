@@ -126,13 +126,51 @@ jobs:
           echo "✓ iOS builds use Expo managed credentials"
           echo "Apple ID: ${APPLE_ID:-dustin.do95@gmail.com}"
 
+      - name: Sync and increment build number
+        id: build_number
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📈 Syncing build number with EAS and incrementing..."
+
+          # Get current GitHub build number
+          GH_BUILD=$(gh variable get BUILD_NUMBER --repo ${{ github.repository }} 2>/dev/null || echo "0")
+          echo "GitHub BUILD_NUMBER: $GH_BUILD"
+
+          # Get EAS build numbers
+          cd apps/mobile
+          EAS_IOS=$(eas build:version:get -p ios 2>/dev/null | grep -o '[0-9]*' || echo "0")
+          EAS_ANDROID=$(eas build:version:get -p android 2>/dev/null | grep -o '[0-9]*' || echo "0")
+          echo "EAS iOS buildNumber: $EAS_IOS"
+          echo "EAS Android versionCode: $EAS_ANDROID"
+
+          # Find the maximum build number across all sources
+          MAX_BUILD=$GH_BUILD
+          if [ "$EAS_IOS" -gt "$MAX_BUILD" ]; then MAX_BUILD=$EAS_IOS; fi
+          if [ "$EAS_ANDROID" -gt "$MAX_BUILD" ]; then MAX_BUILD=$EAS_ANDROID; fi
+
+          # Increment
+          NEW_BUILD=$((MAX_BUILD + 1))
+          echo "New unified build number: $NEW_BUILD"
+
+          # Update GitHub variable
+          gh variable set BUILD_NUMBER --body "$NEW_BUILD" --repo ${{ github.repository }}
+
+          # Export for use in build
+          echo "BUILD_NUMBER=$NEW_BUILD" >> $GITHUB_ENV
+          echo "build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+
       - name: Build on EAS
         working-directory: apps/mobile
+        env:
+          BUILD_NUMBER: ${{ steps.build_number.outputs.build_number }}
         run: |
           PLATFORM="${{ matrix.platform }}"
           PROFILE="${{ steps.check-trigger.outputs.profile }}"
+          BUILD="${{ steps.build_number.outputs.build_number }}"
 
           echo "🔨 Building for platform: $PLATFORM with profile: $PROFILE"
+          echo "📊 Build number: $BUILD"
 
           # Build command with auto-submit if enabled
           if [ "${{ steps.check-trigger.outputs.submit }}" == "true" ] && [ "${{ steps.check-trigger.outputs.auto_submit }}" == "true" ]; then

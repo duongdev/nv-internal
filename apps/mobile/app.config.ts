@@ -1,5 +1,9 @@
 import type { ConfigContext, ExpoConfig } from '@expo/config'
 
+// Read build number from environment variable (set by GitHub Actions or local .env)
+// Falls back to '1' if not set
+const buildNumber = process.env.BUILD_NUMBER || '1'
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Nam Việt Internal',
@@ -19,6 +23,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'vn.dienlanhnamviet.internal',
+    buildNumber: buildNumber,
     config: {
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
     },
@@ -41,6 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'vn.dienlanhnamviet.internal',
+    versionCode: Number.parseInt(buildNumber),
     edgeToEdgeEnabled: true,
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',

@@ -163,6 +163,42 @@ jobs:
       - name: Build workspace packages
         run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
 
+      - name: Sync and increment build number
+        id: increment
+        if: github.event.inputs.rollback != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📈 Syncing build number with EAS and incrementing..."
+
+          # Get current GitHub build number
+          GH_BUILD=$(gh variable get BUILD_NUMBER --repo ${{ github.repository }} 2>/dev/null || echo "0")
+          echo "GitHub BUILD_NUMBER: $GH_BUILD"
+
+          # Get EAS build numbers
+          cd apps/mobile
+          EAS_IOS=$(eas build:version:get -p ios 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+          EAS_ANDROID=$(eas build:version:get -p android 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+          cd ..
+          echo "EAS iOS buildNumber: $EAS_IOS"
+          echo "EAS Android versionCode: $EAS_ANDROID"
+
+          # Find the maximum build number across all sources (never decrease)
+          MAX_BUILD=$GH_BUILD
+          if [ "$EAS_IOS" -gt "$MAX_BUILD" ]; then MAX_BUILD=$EAS_IOS; fi
+          if [ "$EAS_ANDROID" -gt "$MAX_BUILD" ]; then MAX_BUILD=$EAS_ANDROID; fi
+
+          # Increment from the maximum
+          NEW_BUILD=$((MAX_BUILD + 1))
+          echo "Maximum existing build: $MAX_BUILD"
+          echo "New unified build number: $NEW_BUILD"
+
+          # Update GitHub variable
+          gh variable set BUILD_NUMBER --body "$NEW_BUILD" --repo ${{ github.repository }}
+
+          echo "build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+          echo "✅ Build number synchronized and incremented to $NEW_BUILD"
+
       - name: Handle rollback
         id: rollback
         working-directory: apps/mobile
@@ -187,19 +223,24 @@ jobs:
         id: publish
         working-directory: apps/mobile
         if: github.event.inputs.rollback != 'true'
+        env:
+          BUILD_NUMBER: ${{ steps.increment.outputs.build_number }}
         run: |
           CHANNEL="${{ needs.preflight.outputs.channel }}"
           VERSION="${{ needs.preflight.outputs.version }}"
+          BUILD="${{ steps.increment.outputs.build_number }}"
 
           echo "Publishing OTA to channel: $CHANNEL"
           echo "App version: $VERSION"
+          echo "Build number: $BUILD"
 
           # Publish to the specified channel using EAS Update
-          eas update --channel "$CHANNEL" --message "Deploy v$VERSION to $CHANNEL" --non-interactive
+          eas update --channel "$CHANNEL" --message "Deploy v$VERSION ($BUILD) to $CHANNEL" --non-interactive
 
           echo "✅ OTA published successfully"
           echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD" >> $GITHUB_OUTPUT
 
       - name: Display rollback info
         if: github.event.inputs.rollback == 'true'
@@ -223,6 +264,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Channel**: ${{ needs.preflight.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
           echo "**App Version**: ${{ needs.preflight.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Number**: ${{ steps.publish.outputs.build_number }}" >> $GITHUB_STEP_SUMMARY
           echo "**Published At**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Next Steps**:" >> $GITHUB_STEP_SUMMARY
