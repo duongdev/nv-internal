@@ -57,8 +57,8 @@ platform :ios do
         keychain_password: ""
       )
     rescue => ex
-      if ex.message.include?("No code signing identity found")
-        UI.important("No certificates found, generating new ones...")
+      if ex.message.include?("No code signing identity found") || ex.message.include?("No matching provisioning profiles found")
+        UI.important("No certificates or provisioning profiles found, generating new ones...")
         match(
           type: 'appstore',
           readonly: false,
