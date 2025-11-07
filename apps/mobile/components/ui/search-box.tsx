@@ -47,6 +47,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
 
   return (
     <Pressable
+      accessible={false}
       className={cn(
         'flex-row items-center gap-2 rounded-md bg-muted p-3',
         className,
@@ -64,7 +65,14 @@ export const SearchBox: FC<SearchBoxProps> = ({
         {...(props as TextInputProps)}
       />
       {val && (
-        <Button onPress={handleClear} size={null} variant={null}>
+        <Button
+          accessibilityLabel="Xóa tìm kiếm"
+          accessibilityRole="button"
+          onPress={handleClear}
+          size={null}
+          testID={props.testID ? `${props.testID}-clear` : undefined}
+          variant={null}
+        >
           <Icon as={XIcon} className="size-5 shrink-0 text-muted-foreground" />
         </Button>
       )}

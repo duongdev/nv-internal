@@ -117,12 +117,16 @@ export default function AdminTasksScreen() {
             <View className="flex-row items-center gap-2">
               {/* Filter Button */}
               <Button
+                accessibilityHint="Mở bộ lọc để tìm kiếm công việc theo trạng thái, người thực hiện, và ngày tháng"
+                accessibilityLabel="Bộ lọc công việc"
+                accessibilityRole="button"
                 className="relative w-10"
                 onPress={() => {
                   impactAsync(ImpactFeedbackStyle.Light)
                   filterSheetRef.current?.present()
                 }}
                 size={null}
+                testID="tasks-filter-button"
                 variant={null}
               >
                 <Icon as={FilterIcon} className="size-6" />
@@ -137,12 +141,16 @@ export default function AdminTasksScreen() {
 
               {/* Create Button */}
               <Button
+                accessibilityHint="Điều hướng đến màn hình tạo công việc"
+                accessibilityLabel="Tạo công việc mới"
+                accessibilityRole="button"
                 className="w-10"
                 onPress={() => {
                   impactAsync(ImpactFeedbackStyle.Light)
                   router.push('/admin/tasks/create')
                 }}
                 size={null}
+                testID="tasks-create-button"
                 variant={null}
               >
                 <Icon as={PlusIcon} className="size-7" />

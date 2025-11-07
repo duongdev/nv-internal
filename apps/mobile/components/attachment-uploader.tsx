@@ -30,8 +30,12 @@ export function AttachmentUploader({
   return (
     <>
       <Button
+        accessibilityHint="Mở menu để chọn cách thêm tệp đính kèm"
+        accessibilityLabel="Thêm tệp đính kèm"
+        accessibilityRole="button"
         className="dark:border-white/20"
         onPress={() => sheetRef.current?.present()}
+        testID="task-add-attachment-button"
         variant="outline"
       >
         <Icon as={PlusIcon} />

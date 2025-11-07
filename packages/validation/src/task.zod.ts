@@ -8,15 +8,17 @@ export const zCreateTask = z.object({
     .min(2, 'Tiêu đề quá ngắn')
     .max(100, 'Tiêu đề quá dài'),
   description: z.string().trim(),
-  customerPhone: z.union([
-    z.literal(''),
-    z
-      .string()
-      .trim()
-      .length(10, 'Số điện thoại phải có 10 chữ số')
-      .regex(/^0\d+$/, 'Số điện thoại không hợp lệ')
-      .optional(),
-  ]),
+  customerPhone: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (val) => !val || val === '' || (val.length === 10 && /^0\d+$/.test(val)),
+      {
+        message:
+          'Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0 hoặc để trống',
+      },
+    ),
   customerName: z.string().trim().optional(),
   geoLocation: z
     .object({

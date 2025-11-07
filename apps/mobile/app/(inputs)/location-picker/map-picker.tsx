@@ -78,8 +78,8 @@ export default function App() {
       // biome-ignore lint/suspicious/noExplicitAny: <ignore>
       pathname: (params.redirectTo as string as any) || '/',
       params: {
-        latitude: camera?.center.latitude,
-        longitude: camera?.center.longitude,
+        latitude: String(camera?.center.latitude || ''),
+        longitude: String(camera?.center.longitude || ''),
         address: addressText,
         name: params.name as string,
       },

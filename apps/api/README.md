@@ -104,6 +104,32 @@ beforeEach(() => {
 })
 ```
 
+## Database Management Scripts
+
+Utility scripts for database maintenance are located in `scripts/`. See [scripts/README.md](./scripts/README.md) for full documentation.
+
+### Quick Reference
+
+**Clean all task-related data** (for screenshot preparation):
+```bash
+# Review what will be deleted
+npx tsx scripts/clean-task-data.ts --dry-run
+
+# Actually delete (preserves Users, Customers, GeoLocations)
+npx tsx scripts/clean-task-data.ts --confirm
+```
+
+**Clean only test data** (selective cleanup):
+```bash
+npx tsx scripts/clean-test-data.ts --dry-run
+npx tsx scripts/clean-test-data.ts --confirm
+```
+
+**Backfill search fields** (after schema changes):
+```bash
+npx tsx scripts/backfill-searchable-text.ts
+```
+
 ## Deployment
 
 To deploy:

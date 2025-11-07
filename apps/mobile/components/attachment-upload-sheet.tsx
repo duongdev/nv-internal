@@ -190,22 +190,34 @@ export const AttachmentUploadSheet = forwardRef<
           <Text className="font-sans-semibold text-lg">Thêm tệp đính kèm</Text>
           <View className="flex-row justify-around gap-4 py-2">
             <Pressable
+              accessibilityHint="Mở camera để chụp ảnh"
+              accessibilityLabel="Chụp ảnh"
+              accessibilityRole="button"
               className="flex-1 items-center gap-2 rounded-lg border border-border bg-muted p-4 active:bg-muted/80"
               onPress={handleCamera}
+              testID="attachment-camera-button"
             >
               <Icon as={CameraIcon} className="text-foreground" size={24} />
               <Text className="text-sm">Chụp ảnh</Text>
             </Pressable>
             <Pressable
+              accessibilityHint="Chọn ảnh từ thư viện"
+              accessibilityLabel="Thư viện ảnh"
+              accessibilityRole="button"
               className="flex-1 items-center gap-2 rounded-lg border border-border bg-muted p-4 active:bg-muted/80"
               onPress={handleGallery}
+              testID="attachment-gallery-button"
             >
               <Icon as={ImageIcon} className="text-foreground" size={24} />
               <Text className="text-sm">Thư viện</Text>
             </Pressable>
             <Pressable
+              accessibilityHint="Chọn tệp từ bộ nhớ"
+              accessibilityLabel="Chọn tệp tin"
+              accessibilityRole="button"
               className="flex-1 items-center gap-2 rounded-lg border border-border bg-muted p-4 active:bg-muted/80"
               onPress={handleFiles}
+              testID="attachment-files-button"
             >
               <Icon as={FolderIcon} className="text-foreground" size={24} />
               <Text className="text-sm">Tệp tin</Text>
@@ -248,8 +260,12 @@ export const AttachmentUploadSheet = forwardRef<
                   </Text>
                 </View>
                 <Pressable
+                  accessibilityHint="Xóa ảnh này"
+                  accessibilityLabel={`Xóa ảnh ${index + 1}`}
+                  accessibilityRole="button"
                   className="rounded-full bg-destructive p-2"
                   onPress={() => removePhoto(index)}
+                  testID={`attachment-remove-photo-${index}`}
                 >
                   <Icon
                     as={XIcon}
@@ -264,9 +280,13 @@ export const AttachmentUploadSheet = forwardRef<
           {/* Action Buttons */}
           <View className="gap-2">
             <Button
+              accessibilityHint="Chụp thêm ảnh"
+              accessibilityLabel="Chụp thêm"
+              accessibilityRole="button"
               disabled={uploadMutation.isPending || capturedPhotos.length >= 10}
               onPress={addMorePhotos}
               size="default"
+              testID="attachment-add-more-button"
               variant="outline"
             >
               <Icon as={CameraIcon} className="text-foreground" />
@@ -274,9 +294,17 @@ export const AttachmentUploadSheet = forwardRef<
             </Button>
 
             <Button
+              accessibilityHint={`Tải lên ${capturedPhotos.length} ảnh đã chụp`}
+              accessibilityLabel={
+                uploadMutation.isPending
+                  ? 'Đang tải lên'
+                  : `Tải lên ${capturedPhotos.length} ảnh`
+              }
+              accessibilityRole="button"
               disabled={uploadMutation.isPending}
               onPress={handleCameraUpload}
               size="default"
+              testID="attachment-upload-button"
             >
               <Icon as={CheckIcon} className="text-primary-foreground" />
               <Text className="text-primary-foreground">

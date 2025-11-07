@@ -55,6 +55,8 @@ export const MenuItem: FC<MenuItemProps> = ({
 
   return (
     <Component
+      accessibilityLabel={label}
+      accessibilityRole="button"
       className={cn(
         'justify-start px-3 active:bg-card dark:active:bg-card',
         className,

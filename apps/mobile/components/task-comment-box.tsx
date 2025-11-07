@@ -166,11 +166,14 @@ export const TaskCommentBox: FC<TaskCommentBoxProps> = ({
   return (
     <View className="gap-2">
       <Textarea
+        accessibilityLabel="Nội dung bình luận"
+        accessibilityRole="text"
         className="!rounded-md !bg-background dark:!border-white/20"
         multiline
         numberOfLines={3}
         onChangeText={setCommentText}
         placeholder="Viết bình luận..."
+        testID="comment-input"
         value={commentText}
       />
 
@@ -202,8 +205,12 @@ export const TaskCommentBox: FC<TaskCommentBoxProps> = ({
                   source={{ uri: photo.uri }}
                 />
                 <Pressable
+                  accessibilityHint="Xóa ảnh này khỏi bình luận"
+                  accessibilityLabel={`Xóa ảnh ${index + 1}`}
+                  accessibilityRole="button"
                   className="absolute top-0 right-0 h-6 w-6 items-center justify-center rounded-full border border-border bg-muted"
                   onPress={() => removePhoto(index)}
+                  testID={`comment-remove-photo-${index}`}
                 >
                   <Icon as={XIcon} className="text-destructive" size={14} />
                 </Pressable>
@@ -217,10 +224,14 @@ export const TaskCommentBox: FC<TaskCommentBoxProps> = ({
       <View className="flex-row justify-end gap-2">
         {/* Camera Button */}
         <Button
+          accessibilityHint="Chụp ảnh để đính kèm vào bình luận"
+          accessibilityLabel="Chụp ảnh"
+          accessibilityRole="button"
           className="dark:border-white/20"
           disabled={addComment.isPending || selectedPhotos.length >= MAX_PHOTOS}
           onPress={handleCamera}
           size="sm"
+          testID="comment-camera-button"
           variant="outline"
         >
           <Icon as={CameraIcon} />
@@ -229,10 +240,14 @@ export const TaskCommentBox: FC<TaskCommentBoxProps> = ({
 
         {/* Gallery Button */}
         <Button
+          accessibilityHint="Chọn ảnh từ thư viện để đính kèm"
+          accessibilityLabel="Thư viện ảnh"
+          accessibilityRole="button"
           className="dark:border-white/20"
           disabled={addComment.isPending || selectedPhotos.length >= MAX_PHOTOS}
           onPress={handleGallery}
           size="sm"
+          testID="comment-gallery-button"
           variant="outline"
         >
           <Icon as={ImageIcon} />
@@ -241,9 +256,15 @@ export const TaskCommentBox: FC<TaskCommentBoxProps> = ({
 
         {/* Send Button */}
         <Button
+          accessibilityHint="Gửi bình luận"
+          accessibilityLabel={
+            addComment.isPending ? 'Đang gửi bình luận' : 'Gửi bình luận'
+          }
+          accessibilityRole="button"
           disabled={!commentText.trim() || addComment.isPending}
           onPress={handleSendComment}
           size="sm"
+          testID="comment-send-button"
         >
           <Icon as={ArrowUpIcon} className="text-primary-foreground" />
           <Text>{addComment.isPending ? 'Đang gửi...' : 'Gửi'}</Text>

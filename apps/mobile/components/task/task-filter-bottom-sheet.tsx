@@ -444,7 +444,14 @@ export const TaskFilterBottomSheet = forwardRef<
             </View>
             <View className="mt-4 bg-background pb-safe">
               <View className="gap-2">
-                <Button onPress={handleApply} size="lg">
+                <Button
+                  accessibilityHint="Áp dụng các bộ lọc đã chọn"
+                  accessibilityLabel={`Áp dụng${activeFilterCount > 0 ? ` ${activeFilterCount} bộ lọc` : ''}`}
+                  accessibilityRole="button"
+                  onPress={handleApply}
+                  size="lg"
+                  testID="filter-apply-button"
+                >
                   <Text>
                     Áp dụng{activeFilterCount > 0 && ` (${activeFilterCount})`}
                   </Text>
@@ -452,16 +459,24 @@ export const TaskFilterBottomSheet = forwardRef<
 
                 <View className="flex-row gap-2">
                   <Button
+                    accessibilityHint="Xóa tất cả bộ lọc"
+                    accessibilityLabel="Đặt lại bộ lọc"
+                    accessibilityRole="button"
                     className="flex-1"
                     onPress={handleReset}
+                    testID="filter-reset-button"
                     variant="outline"
                   >
                     <Text>Đặt lại</Text>
                   </Button>
 
                   <Button
+                    accessibilityHint="Đóng bộ lọc mà không áp dụng"
+                    accessibilityLabel="Hủy"
+                    accessibilityRole="button"
                     className="flex-1"
                     onPress={handleCancel}
+                    testID="filter-cancel-button"
                     variant="outline"
                   >
                     <Text>Hủy</Text>

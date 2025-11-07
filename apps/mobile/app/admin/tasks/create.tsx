@@ -34,6 +34,12 @@ export default function AdminTaskCreateScreen() {
 
   const geoLocation = form.watch('geoLocation')
 
+  const handleGoBack = () => {
+    Keyboard.dismiss()
+    impactAsync(ImpactFeedbackStyle.Light)
+    router.back()
+  }
+
   const onSubmit = async (values: CreateTaskValues) => {
     Keyboard.dismiss()
     impactAsync(ImpactFeedbackStyle.Light)
@@ -44,25 +50,34 @@ export default function AdminTaskCreateScreen() {
       expectedRevenue,
     }
 
-    const task = await createTask(taskData)
-    if (!task) {
-      return
+    try {
+      const task = await createTask(taskData)
+      if (!task) {
+        return
+      }
+      router.replace({
+        pathname: '/admin/tasks/[taskId]/view',
+        params: { taskId: task.id },
+      })
+    } catch (error) {
+      console.error('Failed to create task:', error)
+      // Form will show validation errors automatically
     }
-    router.replace({
-      pathname: '/admin/tasks/[taskId]/view',
-      params: { taskId: task.id },
-    })
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <no need form.setValue>
   useEffect(() => {
     if (params.address && params.latitude && params.longitude) {
-      form.setValue('geoLocation', {
-        address: params.address as string,
-        lat: parseFloat(params.latitude as string),
-        lng: parseFloat(params.longitude as string),
-        name: params.name as string,
-      })
+      form.setValue(
+        'geoLocation',
+        {
+          address: params.address as string,
+          lat: parseFloat(params.latitude as string),
+          lng: parseFloat(params.longitude as string),
+          name: params.name as string,
+        },
+        { shouldValidate: true, shouldDirty: true, shouldTouch: true },
+      )
     }
   }, [params.address, params.latitude, params.longitude, params.name])
 
@@ -73,26 +88,35 @@ export default function AdminTaskCreateScreen() {
           options={{
             headerShown: true,
             title: 'Thêm công việc mới',
-            headerBackButtonDisplayMode: 'minimal',
-
-            // headerLeft: () => (
-            //   <Button
-            //     disabled={form.formState.isSubmitting}
-            //     onPress={() => router.dismiss()}
-            //     size="sm"
-            //     variant="outline"
-            //   >
-            //     <Text className="">Huỷ</Text>
-            //   </Button>
-            // ),
+            gestureEnabled: !form.formState.isSubmitting,
+            headerLeft: () => (
+              <Button
+                accessibilityHint="Quay lại danh sách công việc"
+                accessibilityLabel="Quay lại"
+                accessibilityRole="button"
+                disabled={form.formState.isSubmitting}
+                onPress={handleGoBack}
+                size="sm"
+                testID="create-task-back-button"
+                variant="ghost"
+              >
+                <Text className="text-base">Huỷ</Text>
+              </Button>
+            ),
             headerRight: () => (
               <Button
+                accessibilityHint="Lưu công việc và tiếp tục"
+                accessibilityLabel={
+                  form.formState.isSubmitting ? 'Đang lưu' : 'Tiếp tục'
+                }
+                accessibilityRole="button"
                 disabled={form.formState.isSubmitting}
                 onPress={form.handleSubmit(onSubmit)}
                 size="sm"
-                variant={null}
+                testID="create-task-continue-button"
+                variant="ghost"
               >
-                <Text className="font-sans-bold">Tiếp tục</Text>
+                <Text className="font-sans-bold text-primary">Tiếp tục</Text>
               </Button>
             ),
           }}
@@ -131,6 +155,9 @@ export default function AdminTaskCreateScreen() {
           />
 
           <Pressable
+            accessibilityHint="Mở màn hình chọn địa chỉ"
+            accessibilityLabel="Chọn địa chỉ làm việc"
+            accessibilityRole="button"
             className="-mx-1 rounded px-1 active:bg-muted"
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light)
@@ -144,6 +171,7 @@ export default function AdminTaskCreateScreen() {
                 },
               })
             }}
+            testID="create-task-location-button"
           >
             <Label className="mb-1">Địa chỉ làm việc</Label>
             <Text

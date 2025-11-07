@@ -290,12 +290,16 @@ export default function WorkerIndex() {
           },
           headerRight: () => (
             <Button
+              accessibilityHint="Mở bộ lọc để tìm kiếm công việc theo ngày tháng"
+              accessibilityLabel="Bộ lọc công việc"
+              accessibilityRole="button"
               className="relative w-10"
               onPress={() => {
                 impactAsync(ImpactFeedbackStyle.Light)
                 filterSheetRef.current?.present()
               }}
               size={null}
+              testID="worker-tasks-filter-button"
               variant={null}
             >
               <Icon as={FilterIcon} className="size-6" />
@@ -459,6 +463,7 @@ export default function WorkerIndex() {
           refreshControl={
             <RefreshControl
               accessibilityLabel="Làm mới danh sách công việc"
+              accessibilityRole="none"
               onRefresh={handleRefetch}
               refreshing={isRefetching}
             />

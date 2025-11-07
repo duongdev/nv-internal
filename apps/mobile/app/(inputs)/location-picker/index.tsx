@@ -62,8 +62,8 @@ export default function LocationPicker() {
                   pathname: '/(inputs)/location-picker/map-picker',
                   params: {
                     redirectTo: params.redirectTo as string,
-                    latitude: location.location.latitude,
-                    longitude: location.location.longitude,
+                    latitude: String(location.location.latitude),
+                    longitude: String(location.location.longitude),
                     address: location.formattedAddress,
                     name: location.displayName.text,
                   },

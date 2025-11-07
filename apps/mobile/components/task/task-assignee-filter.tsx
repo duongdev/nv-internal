@@ -61,9 +61,12 @@ export const TaskAssigneeFilter: FC<TaskAssigneeFilterProps> = ({
       </Text>
 
       <SearchBox
+        accessibilityHint="Tìm kiếm nhân viên theo tên hoặc số điện thoại"
+        accessibilityLabel="Tìm kiếm nhân viên"
         isInBottomSheet
         onChangeTextDebounced={setSearchText}
         placeholder="Tìm nhân viên..."
+        testID="assignee-filter-search-input"
       />
 
       {isLoading && <ActivityIndicator className="my-1" />}
@@ -90,6 +93,7 @@ export const TaskAssigneeFilter: FC<TaskAssigneeFilterProps> = ({
               accessibilityState={{ checked: isSelected }}
               className="flex-row items-center justify-between gap-2 rounded-lg border-muted border-b px-2 active:bg-muted"
               onPress={() => toggleUser(item.id)}
+              testID={`assignee-filter-user-${item.id}-item`}
             >
               <View className="py-2">
                 <View className="flex-row items-center gap-2">

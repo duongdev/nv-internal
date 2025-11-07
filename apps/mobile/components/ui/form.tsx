@@ -194,7 +194,7 @@ function FormInput({
   label,
   description,
   onChange,
-  value = '',
+  value,
   withAsterisk,
   ...props
 }: FormItemProps<typeof Input, string | undefined>) {
@@ -243,7 +243,7 @@ function FormInput({
         aria-labelledby={formItemNativeID}
         onChangeText={onChange}
         ref={inputRef}
-        value={value}
+        value={value ?? ''}
         {...props}
       />
       {!!description && <FormDescription>{description}</FormDescription>}

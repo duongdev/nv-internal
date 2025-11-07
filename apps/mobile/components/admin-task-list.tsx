@@ -137,6 +137,7 @@ export function AdminTaskList({
       refreshControl={
         <RefreshControl
           accessibilityLabel="Làm mới danh sách công việc"
+          accessibilityRole="none"
           onRefresh={handleRefetch}
           refreshing={isRefetching}
         />
@@ -144,6 +145,7 @@ export function AdminTaskList({
       removeClippedSubviews
       renderItem={({ item }) => (
         <EnhancedTaskCard
+          key={`task-${item.id}`}
           onPress={() => {
             router.push({
               pathname: '/admin/tasks/[taskId]/view',
