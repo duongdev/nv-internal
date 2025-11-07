@@ -77,7 +77,7 @@ GitHub Push/Dispatch
     ↓
 CI/Quality Checks Pass
     ↓
-Build OTA Bundle (expo publish)
+Build OTA Bundle (eas update)
     ↓
 Publish to Channel
     ↓
@@ -207,7 +207,7 @@ See `.github/workflows/ota-update.yml` for the complete implementation.
 1. Checkout code
 2. Setup Node.js and Expo
 3. Run CI checks (optional skip)
-4. Build OTA bundle (`expo publish`)
+4. Build OTA bundle (`eas update`)
 5. Publish to channel
 6. Optional: Slack/Discord notification
 
@@ -627,7 +627,7 @@ echo "📦 Building OTA for v$VERSION on channel: $CHANNEL"
 
 # Build OTA bundle
 cd apps/mobile
-npx expo publish --channel "$CHANNEL"
+npx eas update --channel "$CHANNEL"
 
 echo "✅ OTA published successfully"
 echo "Channel: $CHANNEL"

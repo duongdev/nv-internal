@@ -320,13 +320,13 @@ Create multiple workflows that publish to different channels:
 
 ```bash
 # .github/workflows/ota-staging.yml
-npx expo publish --channel staging
+eas update --channel staging
 
 # .github/workflows/ota-preview.yml
-npx expo publish --channel preview
+eas update --channel preview
 
 # .github/workflows/ota-production.yml
-npx expo publish --channel production
+eas update --channel production
 ```
 
 ### Progressive Rollout
