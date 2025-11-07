@@ -52,7 +52,9 @@ platform :ios do
         type: 'appstore',
         readonly: true,
         verbose: true,
-        api_key: api_key
+        api_key: api_key,
+        keychain_name: ENV['CI'] ? "fastlane_tmp_keychain" : nil,
+        keychain_password: ""
       )
     rescue => ex
       if ex.message.include?("No code signing identity found")
@@ -61,7 +63,9 @@ platform :ios do
           type: 'appstore',
           readonly: false,
           verbose: true,
-          api_key: api_key
+          api_key: api_key,
+          keychain_name: ENV['CI'] ? "fastlane_tmp_keychain" : nil,
+          keychain_password: ""
         )
       else
         raise ex
@@ -111,7 +115,9 @@ platform :ios do
         type: 'adhoc',
         readonly: true,
         verbose: true,
-        api_key: api_key
+        api_key: api_key,
+        keychain_name: ENV['CI'] ? "fastlane_tmp_keychain" : nil,
+        keychain_password: ""
       )
     rescue => ex
       if ex.message.include?("No code signing identity found")
@@ -120,7 +126,9 @@ platform :ios do
           type: 'adhoc',
           readonly: false,
           verbose: true,
-          api_key: api_key
+          api_key: api_key,
+          keychain_name: ENV['CI'] ? "fastlane_tmp_keychain" : nil,
+          keychain_password: ""
         )
       else
         raise ex
