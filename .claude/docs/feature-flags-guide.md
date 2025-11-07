@@ -343,17 +343,18 @@ Add flags to `FEATURE_FLAGS` constant for discoverability:
 ```typescript
 // hooks/use-feature-flag.ts
 export const FEATURE_FLAGS = {
-  // UI Features
-  NEW_TASK_UI: 'new_task_ui',
-  ENHANCED_SEARCH: 'enhanced_search',
+  // Admin Features
+  TASK_LIST_FILTER_ENABLED_ADMIN: 'task-list-filter-enabled-admin',
+  TASK_LIST_SEARCH_ENABLED_ADMIN: 'task-list-search-enabled-admin',
 
-  // Payment Features
+  // Worker Features
+  TASK_LIST_FILTER_ENABLED_WORKER: 'task-list-filter-enabled-worker',
+  TASK_LIST_SEARCH_ENABLED_WORKER: 'task-list-search-enabled-worker',
+
+  // Future Features (examples)
   PAYMENT_V2: 'payment_v2',
-  STRIPE_INTEGRATION: 'stripe_integration',
-
-  // Experimental
-  BETA_FEATURES: 'beta_features',
   DARK_MODE: 'dark_mode',
+  BETA_FEATURES: 'beta_features',
 } as const
 ```
 
@@ -361,16 +362,62 @@ export const FEATURE_FLAGS = {
 
 ## Common Patterns
 
-### 1. Feature Toggle
+### 1. Feature Toggle (Production Example: Task List Features)
 
 **Use Case**: Enable/disable entire features
 
-```typescript
-function PaymentScreen() {
-  const { isEnabled } = useFeatureFlag(FEATURE_FLAGS.PAYMENT_V2)
+**Production Implementation**: Task List Filtering and Search
 
-  return isEnabled ? <PaymentV2 /> : <PaymentV1 />
+```typescript
+// Admin Tasks Screen - Independent control of filter and search
+function AdminTasksScreen() {
+  const { isEnabled: isFilterEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_ADMIN
+  )
+  const { isEnabled: isSearchEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_SEARCH_ENABLED_ADMIN
+  )
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      // Search bar only shows if search flag is enabled
+      headerSearchBarOptions: isSearchEnabled ? {
+        placeholder: 'Tìm kiếm theo tên, khách hàng...',
+        onChangeText: (event) => setSearchText(event.text),
+      } : undefined,
+
+      // Filter button only shows if filter flag is enabled
+      headerRight: () => isFilterEnabled ? (
+        <Pressable onPress={openFilterModal}>
+          <Ionicons name="funnel" size={20} />
+        </Pressable>
+      ) : null,
+    })
+  }, [isFilterEnabled, isSearchEnabled])
+
+  return (
+    <View>
+      {/* Filter chips controlled by filter flag */}
+      {isFilterEnabled && hasActiveFilters && <FilterChips />}
+
+      {/* Task list always renders */}
+      <TaskList searchText={isSearchEnabled ? searchText : ''} />
+
+      {/* Filter modal controlled by filter flag */}
+      {isFilterEnabled && <FilterBottomSheet />}
+    </View>
+  )
 }
+```
+
+**Key Pattern**: No loading states for instant graceful degradation
+```typescript
+// ✅ GOOD - Instant render, features gracefully absent if disabled
+const { isEnabled } = useFeatureFlag(FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_ADMIN)
+
+// ❌ AVOID - Loading states cause UI flicker
+const { isEnabled, isLoading } = useFeatureFlag(FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_ADMIN)
+if (isLoading) return <Spinner />
 ```
 
 ### 2. Gradual Rollout
@@ -471,7 +518,64 @@ function ExpensiveFeature() {
 // In PostHog: Set to 0% rollout to instantly disable for all users
 ```
 
-### 6. Beta Features
+### 6. Flag Combinations (Production Example: Task List Matrix)
+
+**Use Case**: Independent control of multiple related features
+
+**Production Implementation**: 4 Task List Flags Working Together
+
+```typescript
+// Define all 4 flags for task list functionality
+export const FEATURE_FLAGS = {
+  TASK_LIST_FILTER_ENABLED_ADMIN: 'task-list-filter-enabled-admin',
+  TASK_LIST_SEARCH_ENABLED_ADMIN: 'task-list-search-enabled-admin',
+  TASK_LIST_FILTER_ENABLED_WORKER: 'task-list-filter-enabled-worker',
+  TASK_LIST_SEARCH_ENABLED_WORKER: 'task-list-search-enabled-worker',
+} as const
+```
+
+**Testing Matrix**: All 16 combinations work correctly
+
+| Admin Filter | Admin Search | Worker Filter | Worker Search | Behavior |
+|--------------|--------------|---------------|---------------|----------|
+| OFF | OFF | OFF | OFF | Baseline: Only tabs |
+| ON | OFF | OFF | OFF | Admin filter only |
+| OFF | ON | OFF | OFF | Admin search only |
+| ON | ON | OFF | OFF | Admin has both |
+| OFF | OFF | ON | OFF | Worker filter only |
+| ON | ON | ON | ON | All features enabled |
+
+**Implementation Pattern**:
+```typescript
+// Each screen independently checks its own flags
+function WorkerTasksScreen() {
+  // Worker-specific flags
+  const { isEnabled: isFilterEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_FILTER_ENABLED_WORKER
+  )
+  const { isEnabled: isSearchEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.TASK_LIST_SEARCH_ENABLED_WORKER
+  )
+
+  // Features work independently
+  return (
+    <View>
+      {isSearchEnabled && <SearchBar />}
+      {isFilterEnabled && <FilterButton />}
+      <TaskList />
+    </View>
+  )
+}
+```
+
+**Benefits of Independent Flags**:
+- Test search without filter (or vice versa)
+- Different rollout schedules per feature
+- Role-based feature availability
+- Measure impact of each feature separately
+- Instant kill switch per feature
+
+### 7. Beta Features
 
 **Use Case**: Show features only to beta testers
 
@@ -686,5 +790,14 @@ EXPO_PUBLIC_POSTHOG_ENABLED=true
 ---
 
 **Last Updated**: 2025-11-07
-**Version**: 1.0
+**Version**: 1.1
 **Maintainer**: NV Internal Team
+
+## Changelog
+
+### Version 1.1 (2025-11-07)
+- Added production examples with 4 implemented task list flags
+- Added Flag Combinations pattern showing independent feature control
+- Updated FEATURE_FLAGS constant with production flags
+- Added testing matrix for 16 flag combinations
+- Documented graceful degradation pattern (no loading states)

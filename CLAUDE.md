@@ -275,21 +275,29 @@ For detailed patterns, see [Architecture Patterns](./docs/architecture/patterns/
 - **[SearchableText](./docs/architecture/patterns/searchable-text.md)** - Pre-computed search fields for performance
 - **[OTA Updates](./docs/architecture/patterns/ota-updates.md)** - Hook-Only pattern for Expo Updates with graceful degradation
 - **[Mobile Accessibility](./docs/architecture/patterns/mobile-accessibility.md)** - Required accessibility properties for all interactive elements (MobileMCP compatibility)
-- **[Feature Flags](./docs/feature-flags-guide.md)** - PostHog feature flags for controlled rollouts and A/B testing
+- **[Feature Flags](./docs/feature-flags-guide.md)** - PostHog feature flags with graceful degradation pattern for controlled rollouts and instant kill switches
 
 ### Recently Established Patterns
 
 #### Feature Flags Pattern (2025-11-07)
 
-**PostHog Feature Flags**: Implemented controlled feature rollout system with first production flag.
-- **Problem**: No mechanism for gradual feature rollouts or quick rollbacks
-- **Solution**: PostHog feature flags with custom hook and naming convention
-- **Naming Convention**: `feature-name-role` format (dash-case with role postfix)
-- **First Flag**: `task-list-filter-enabled-admin` controlling task filtering UI
-- **Pattern**: useFeatureFlag hook with FEATURE_FLAGS constants
-- **Impact**: Instant feature control without app deployments
-- **Implementation Task**: `.claude/tasks/20251107-043354-first-feature-flag-task-list-filter-admin.md`
-- **Documentation**: `.claude/docs/feature-flags-guide.md`
+**PostHog Feature Flags**: Implemented controlled feature rollout system with 4 production flags demonstrating independent feature control.
+- **Problem**: No mechanism for gradual feature rollouts, A/B testing, or instant kill switches
+- **Solution**: PostHog feature flags with custom hooks, type-safe constants, and graceful degradation
+- **Naming Convention**: `task-list-[feature]-enabled-[role]` format for consistency
+- **Production Flags Implemented**:
+  - `task-list-filter-enabled-admin` - Admin task list filtering UI
+  - `task-list-search-enabled-admin` - Admin task list search functionality
+  - `task-list-filter-enabled-worker` - Worker task list filtering UI
+  - `task-list-search-enabled-worker` - Worker task list search functionality
+- **Key Pattern**: No loading states for instant graceful degradation (features absent if disabled)
+- **Flag Independence**: All 16 combinations tested - filter and search work independently
+- **Impact**: Instant feature control without app deployments, role-based rollouts, A/B testing ready
+- **Implementation Tasks**:
+  - Initial: `.claude/tasks/20251107-043354-first-feature-flag-task-list-filter-admin.md`
+  - Additional: `.claude/tasks/20251107-050000-implement-additional-task-list-feature-flags.md`
+- **Documentation**: `.claude/docs/feature-flags-guide.md` (v1.1 with production examples)
+- **Commits**: `b0d2576` (first flag), `9323b53` (three additional flags)
 
 #### Mobile Accessibility Pattern (2025-11-06)
 
