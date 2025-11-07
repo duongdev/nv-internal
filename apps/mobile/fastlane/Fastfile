@@ -76,10 +76,14 @@ platform :ios do
       output_directory: "./build",
       output_name: "nvinternal.ipa",
       clean: true,
+      export_xcargs: "-allowProvisioningUpdates",
       export_options: {
+        method: "app-store",
         provisioningProfiles: {
           "vn.dienlanhnamviet.internal" => "match AppStore vn.dienlanhnamviet.internal"
-        }
+        },
+        signingStyle: "manual",
+        teamID: "9F77J83SKT"
       }
     )
 
@@ -130,10 +134,14 @@ platform :ios do
       output_directory: "./build",
       output_name: "nvinternal-staging.ipa",
       clean: true,
+      export_xcargs: "-allowProvisioningUpdates",
       export_options: {
+        method: "ad-hoc",
         provisioningProfiles: {
           "vn.dienlanhnamviet.internal" => "match AdHoc vn.dienlanhnamviet.internal"
-        }
+        },
+        signingStyle: "manual",
+        teamID: "9F77J83SKT"
       }
     )
 
