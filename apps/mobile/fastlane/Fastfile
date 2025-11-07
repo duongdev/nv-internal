@@ -38,14 +38,6 @@ platform :ios do
     sh("npx expo prebuild --clean --platform ios")
   end
 
-  desc "Install CocoaPods dependencies"
-  lane :install_pods do
-    cocoapods(
-      clean_install: true,
-      podfile: "./ios/Podfile"
-    )
-  end
-
   desc "Build and upload to TestFlight (Production)"
   lane :build_upload_testflight do
     load_asc_api_key
