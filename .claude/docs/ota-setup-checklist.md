@@ -8,6 +8,7 @@ Step-by-step guide to configure OTA updates in your GitHub Actions pipeline.
 - GitHub repository access
 - EXPO_TOKEN authentication
 - App built and deployed (at least one version in stores)
+- Understanding of build number vs OTA versioning (see [Build Number Versioning Guide](./build-number-versioning.md))
 
 ---
 
@@ -401,6 +402,7 @@ return isEnabled ? <NewFeature /> : <OldFeature />
 - **GitHub Actions Documentation**: https://docs.github.com/en/actions
 - **EAS Dashboard**: https://expo.dev
 - **OTA Updates Guide**: `.claude/docs/ota-updates-guide.md`
+- **Build Number Versioning Guide**: `.claude/docs/build-number-versioning.md`
 
 ---
 
