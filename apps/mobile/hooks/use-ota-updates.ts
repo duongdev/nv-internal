@@ -147,8 +147,9 @@ export function useOTAUpdates(): OTAUpdateHook {
   /**
    * Reload the app to apply downloaded update.
    * Skips in Expo Go and development environments.
+   * Note: reloadAsync() will terminate the app and restart it - this is expected behavior.
    */
-  const reloadApp = async (): Promise<void> => {
+  const reloadApp = useCallback(async (): Promise<void> => {
     if (IS_EXPO_GO || IS_DEV) {
       // biome-ignore lint/suspicious/noConsole: Intentional for OTA monitoring
       console.log('[OTA] Skipping reload (Expo Go or dev mode)')
@@ -156,15 +157,19 @@ export function useOTAUpdates(): OTAUpdateHook {
     }
 
     try {
+      // Updates.reloadAsync() will terminate and restart the app immediately.
+      // This is expected behavior and NOT a crash - the app will restart with the new update.
       await Updates.reloadAsync()
     } catch (error) {
+      // This catch block will rarely execute because reloadAsync() terminates the app.
+      // It's here for completeness in case reloadAsync fails before termination.
       console.error('[OTA] Reload failed:', error)
       setState((prev) => ({
         ...prev,
         error: error instanceof Error ? error : new Error('Reload failed'),
       }))
     }
-  }
+  }, [])
 
   /**
    * Load persisted state and auto-check for updates on mount.

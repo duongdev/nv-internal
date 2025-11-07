@@ -1,7 +1,8 @@
 import * as Application from 'expo-application'
-import Constants from 'expo-constants'
+import Constants, { ExecutionEnvironment } from 'expo-constants'
 
-const IS_EXPO_GO = Constants.appOwnership === 'expo'
+const IS_EXPO_GO =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient
 
 export interface VersionInfo {
   version: string
@@ -26,6 +27,7 @@ export function getAppVersion(): string {
  * Get the build number.
  * In Expo Go, returns 'Expo Go' identifier.
  * In production builds, returns native build version.
+ * Format: Build number as string (e.g., "123")
  */
 export function getBuildNumber(): string {
   if (IS_EXPO_GO) {
@@ -52,7 +54,7 @@ export function getUpdateChannel(): string {
 
 /**
  * Get a formatted version string.
- * Format: v{version} ({buildNumber})
+ * Format: vX.Y.Z (N)
  */
 export function getVersionString(): string {
   const version = getAppVersion()
@@ -63,12 +65,13 @@ export function getVersionString(): string {
 /**
  * Get complete version information.
  * Returns all version details including formatted full string.
+ * Format: vX.Y.Z (N)
  */
 export function getVersionInfo(): VersionInfo {
   const version = getAppVersion()
   const buildNumber = getBuildNumber()
   const channel = getUpdateChannel()
-  const fullString = `v${version} (${buildNumber}) • ${channel}`
+  const fullString = `v${version} (${buildNumber})`
 
   return { version, buildNumber, channel, fullString }
 }
