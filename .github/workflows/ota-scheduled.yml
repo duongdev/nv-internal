@@ -16,6 +16,10 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   check-changes:
     name: Check for Changes
@@ -68,6 +72,18 @@ jobs:
           node-version: 22.x
           cache: 'pnpm'
 
+      - name: Get pnpm store directory
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
       - name: Setup Expo
         uses: expo/expo-github-action@v8
         with:
@@ -95,15 +111,36 @@ jobs:
 
           # Get current GitHub build number
           GH_BUILD=$(gh variable get BUILD_NUMBER --repo ${{ github.repository }} 2>/dev/null || echo "0")
-          echo "GitHub BUILD_NUMBER: $GH_BUILD"
+          echo "GitHub BUILD_NUMBER: '$GH_BUILD'"
 
-          # Get EAS build numbers
+          # Get EAS build numbers - improved extraction
           cd apps/mobile
-          EAS_IOS=$(eas build:version:get -p ios 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
-          EAS_ANDROID=$(eas build:version:get -p android 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+
+          # Extract iOS buildNumber (format: "buildNumber: X" or similar)
+          EAS_IOS_RAW=$(eas build:version:get -p ios 2>/dev/null || echo "")
+          echo "Raw EAS iOS output: '$EAS_IOS_RAW'"
+
+          # Try to extract the last number from the output (most likely to be version)
+          EAS_IOS=$(echo "$EAS_IOS_RAW" | grep -o '[0-9]\+' | tail -1)
+          EAS_IOS=${EAS_IOS:-0}
+
+          # Extract Android versionCode (format: "versionCode: X" or similar)
+          EAS_ANDROID_RAW=$(eas build:version:get -p android 2>/dev/null || echo "")
+          echo "Raw EAS Android output: '$EAS_ANDROID_RAW'"
+
+          # Try to extract the last number from the output (most likely to be version)
+          EAS_ANDROID=$(echo "$EAS_ANDROID_RAW" | grep -o '[0-9]\+' | tail -1)
+          EAS_ANDROID=${EAS_ANDROID:-0}
+
           cd ..
-          echo "EAS iOS buildNumber: $EAS_IOS"
-          echo "EAS Android versionCode: $EAS_ANDROID"
+
+          echo "EAS iOS buildNumber: '$EAS_IOS'"
+          echo "EAS Android versionCode: '$EAS_ANDROID'"
+
+          # Ensure all variables are numeric, default to 0 if not
+          if ! [[ "$GH_BUILD" =~ ^[0-9]+$ ]]; then GH_BUILD=0; fi
+          if ! [[ "$EAS_IOS" =~ ^[0-9]+$ ]]; then EAS_IOS=0; fi
+          if ! [[ "$EAS_ANDROID" =~ ^[0-9]+$ ]]; then EAS_ANDROID=0; fi
 
           # Find the maximum build number across all sources (never decrease)
           MAX_BUILD=$GH_BUILD

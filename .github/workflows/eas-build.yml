@@ -38,6 +38,10 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   build:
     name: EAS Build
@@ -135,14 +139,36 @@ jobs:
 
           # Get current GitHub build number
           GH_BUILD=$(gh variable get BUILD_NUMBER --repo ${{ github.repository }} 2>/dev/null || echo "0")
-          echo "GitHub BUILD_NUMBER: $GH_BUILD"
+          echo "GitHub BUILD_NUMBER: '$GH_BUILD'"
 
-          # Get EAS build numbers
+          # Get EAS build numbers - improved extraction
           cd apps/mobile
-          EAS_IOS=$(eas build:version:get -p ios 2>/dev/null | grep -o '[0-9]*' || echo "0")
-          EAS_ANDROID=$(eas build:version:get -p android 2>/dev/null | grep -o '[0-9]*' || echo "0")
-          echo "EAS iOS buildNumber: $EAS_IOS"
-          echo "EAS Android versionCode: $EAS_ANDROID"
+
+          # Extract iOS buildNumber (format: "buildNumber: X" or similar)
+          EAS_IOS_RAW=$(eas build:version:get -p ios 2>/dev/null || echo "")
+          echo "Raw EAS iOS output: '$EAS_IOS_RAW'"
+
+          # Try to extract the last number from the output (most likely to be version)
+          EAS_IOS=$(echo "$EAS_IOS_RAW" | grep -o '[0-9]\+' | tail -1)
+          EAS_IOS=${EAS_IOS:-0}
+
+          # Extract Android versionCode (format: "versionCode: X" or similar)
+          EAS_ANDROID_RAW=$(eas build:version:get -p android 2>/dev/null || echo "")
+          echo "Raw EAS Android output: '$EAS_ANDROID_RAW'"
+
+          # Try to extract the last number from the output (most likely to be version)
+          EAS_ANDROID=$(echo "$EAS_ANDROID_RAW" | grep -o '[0-9]\+' | tail -1)
+          EAS_ANDROID=${EAS_ANDROID:-0}
+
+          cd ..
+
+          echo "EAS iOS buildNumber: '$EAS_IOS'"
+          echo "EAS Android versionCode: '$EAS_ANDROID'"
+
+          # Ensure all variables are numeric, default to 0 if not
+          if ! [[ "$GH_BUILD" =~ ^[0-9]+$ ]]; then GH_BUILD=0; fi
+          if ! [[ "$EAS_IOS" =~ ^[0-9]+$ ]]; then EAS_IOS=0; fi
+          if ! [[ "$EAS_ANDROID" =~ ^[0-9]+$ ]]; then EAS_ANDROID=0; fi
 
           # Find the maximum build number across all sources
           MAX_BUILD=$GH_BUILD
@@ -151,6 +177,7 @@ jobs:
 
           # Increment
           NEW_BUILD=$((MAX_BUILD + 1))
+          echo "Maximum existing build: $MAX_BUILD"
           echo "New unified build number: $NEW_BUILD"
 
           # Update GitHub variable
@@ -159,6 +186,7 @@ jobs:
           # Export for use in build
           echo "BUILD_NUMBER=$NEW_BUILD" >> $GITHUB_ENV
           echo "build_number=$NEW_BUILD" >> $GITHUB_OUTPUT
+          echo "✅ Build number synchronized and incremented to $NEW_BUILD"
 
       - name: Build on EAS
         working-directory: apps/mobile
