@@ -1,0 +1,344 @@
+name: OTA Update
+
+on:
+  # Manual trigger via GitHub UI and CLI
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Update channel'
+        required: true
+        type: choice
+        options:
+          - staging
+          - preview
+          - production
+        default: 'staging'
+      skip_ci:
+        description: 'Skip CI checks (emergency only)'
+        required: false
+        type: boolean
+        default: false
+      rollback:
+        description: 'Rollback to previous version'
+        required: false
+        type: boolean
+        default: false
+      rollback_id:
+        description: 'Specific deployment ID to rollback to (if not latest)'
+        required: false
+        type: string
+
+  # Automatic trigger on push to main (production)
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/ota-update.yml'
+      - '!apps/mobile/README.md'
+      - '!apps/mobile/.gitignore'
+
+jobs:
+  # Pre-flight checks before publishing
+  preflight:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.should-publish.outputs.result }}
+      channel: ${{ steps.determine-channel.outputs.channel }}
+      version: ${{ steps.get-version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Determine channel based on trigger
+        id: determine-channel
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "channel=production" >> $GITHUB_OUTPUT
+          else
+            echo "channel=${{ github.event.inputs.channel }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get app version
+        id: get-version
+        run: |
+          VERSION=$(grep -m1 '"version"' apps/mobile/app.config.ts | cut -d'"' -f4)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "App version: $VERSION"
+
+      - name: Check if should publish
+        id: should-publish
+        run: |
+          CHANNEL="${{ steps.determine-channel.outputs.channel }}"
+          SKIP_CI="${{ github.event.inputs.skip_ci }}"
+
+          echo "Channel: $CHANNEL"
+          echo "Skip CI: ${SKIP_CI:-false}"
+
+          # Always publish (CI checks happen in next job if not skipped)
+          echo "result=true" >> $GITHUB_OUTPUT
+
+  # Quality checks (can be skipped with skip_ci input)
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_ci != 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
+      - name: TypeScript check
+        run: pnpm -w tsc -b apps/mobile/tsconfig.json --pretty false
+
+      - name: Biome lint
+        run: pnpm biome lint apps/mobile/
+
+      - name: Biome check
+        run: pnpm biome check apps/mobile/
+
+      - name: Run mobile tests (if any)
+        run: |
+          if [ -d "apps/mobile/__tests__" ]; then
+            pnpm --filter @nv-internal/mobile test --passWithNoTests
+          fi
+        continue-on-error: true
+
+  # Publish OTA update
+  publish-ota:
+    name: Publish OTA Update
+    runs-on: ubuntu-latest
+    needs: [preflight, quality-checks]
+    if: |
+      needs.preflight.outputs.should_publish == 'true' &&
+      (github.event.inputs.skip_ci == 'true' || success())
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
+      - name: Handle rollback
+        id: rollback
+        working-directory: apps/mobile
+        if: github.event.inputs.rollback == 'true'
+        run: |
+          CHANNEL="${{ needs.preflight.outputs.channel }}"
+          ROLLBACK_ID="${{ github.event.inputs.rollback_id }}"
+
+          echo "Rolling back channel: $CHANNEL"
+
+          if [ -n "$ROLLBACK_ID" ]; then
+            echo "Rolling back to specific deployment: $ROLLBACK_ID"
+            # Note: This would require EAS CLI support or manual API call
+            # For now, log the rollback request for manual handling
+            echo "rollback_id=$ROLLBACK_ID" >> $GITHUB_OUTPUT
+          else
+            echo "Rolling back to latest stable version"
+            echo "rollback_id=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish OTA update
+        id: publish
+        working-directory: apps/mobile
+        if: github.event.inputs.rollback != 'true'
+        run: |
+          CHANNEL="${{ needs.preflight.outputs.channel }}"
+          VERSION="${{ needs.preflight.outputs.version }}"
+
+          echo "Publishing OTA to channel: $CHANNEL"
+          echo "App version: $VERSION"
+
+          # Publish to the specified channel
+          npx expo publish --channel "$CHANNEL" --non-interactive
+
+          echo "✅ OTA published successfully"
+          echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Display rollback info
+        if: github.event.inputs.rollback == 'true'
+        run: |
+          echo "## ⚠️ Rollback Info" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel**: ${{ needs.preflight.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+          echo "**App Version**: ${{ needs.preflight.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To complete manual rollback:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to https://expo.dev" >> $GITHUB_STEP_SUMMARY
+          echo "2. Select your project" >> $GITHUB_STEP_SUMMARY
+          echo "3. Click 'Updates' tab" >> $GITHUB_STEP_SUMMARY
+          echo "4. Find the bad deployment" >> $GITHUB_STEP_SUMMARY
+          echo "5. Click 'Rollback' → Select previous version" >> $GITHUB_STEP_SUMMARY
+
+      - name: Display OTA info
+        if: github.event.inputs.rollback != 'true'
+        run: |
+          echo "## ✅ OTA Update Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel**: ${{ needs.preflight.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+          echo "**App Version**: ${{ needs.preflight.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Published At**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next Steps**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor deployment: https://expo.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- Check PostHog for errors: https://us.posthog.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Users will receive update on next app launch" >> $GITHUB_STEP_SUMMARY
+
+  # Notification (optional)
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [preflight, publish-ota]
+    if: |
+      always() &&
+      github.event.inputs.skip_ci != 'true'
+
+    steps:
+      - name: Prepare notification
+        id: notification
+        run: |
+          CHANNEL="${{ needs.preflight.outputs.channel }}"
+          VERSION="${{ needs.preflight.outputs.version }}"
+          STATUS="${{ needs.publish-ota.result }}"
+
+          if [ "$STATUS" == "success" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="succeeded"
+          else
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="failed"
+          fi
+
+          echo "emoji=$STATUS_EMOJI" >> $GITHUB_OUTPUT
+          echo "status=$STATUS_TEXT" >> $GITHUB_OUTPUT
+          echo "message=OTA Update $STATUS_TEXT for $CHANNEL (v$VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Send to Slack
+        if: secrets.SLACK_WEBHOOK && needs.publish-ota.result == 'success'
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "${{ steps.notification.outputs.emoji }} ${{ steps.notification.outputs.message }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*${{ steps.notification.outputs.emoji }} OTA Update Published*\n\nChannel: `${{ needs.preflight.outputs.channel }}`\nVersion: `${{ needs.preflight.outputs.version }}`\nTime: <!date^${{ job.created_at }}^{date_num} {time_secs}|${{ job.created_at }}>"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View on EAS"
+                      },
+                      "url": "https://expo.dev"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Send to Discord
+        if: secrets.DISCORD_WEBHOOK && needs.publish-ota.result == 'success'
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK }}
+          description: |
+            Channel: ${{ needs.preflight.outputs.channel }}
+            Version: ${{ needs.preflight.outputs.version }}
+          title: ${{ steps.notification.outputs.emoji }} OTA Update Published
+          color: ${{ needs.publish-ota.result == 'success' && 0x28a745 || 0xdc3545 }}
+
+  # Post-publish steps
+  post-publish:
+    name: Post-Publish Steps
+    runs-on: ubuntu-latest
+    needs: [preflight, publish-ota]
+    if: needs.publish-ota.result == 'success'
+    continue-on-error: true
+
+    steps:
+      - name: Create deployment record
+        run: |
+          echo "## 📋 OTA Deployment Record" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel**: ${{ needs.preflight.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ needs.preflight.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Monitoring**:" >> $GITHUB_STEP_SUMMARY
+          echo "- [EAS Dashboard](https://expo.dev)" >> $GITHUB_STEP_SUMMARY
+          echo "- [PostHog Analytics](https://us.posthog.com)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Log deployment
+        run: |
+          echo "OTA Deployment Summary:"
+          echo "  Channel: ${{ needs.preflight.outputs.channel }}"
+          echo "  Version: ${{ needs.preflight.outputs.version }}"
+          echo "  Timestamp: $(date)"
+          echo "  URL: https://expo.dev"

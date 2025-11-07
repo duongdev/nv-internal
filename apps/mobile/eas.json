@@ -36,11 +36,11 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "staging",
-        "EXPO_PUBLIC_API_URL": "https://staging-api.your-domain.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_staging_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_staging_ios_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_staging_android_key_here",
-        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_staging_posthog_key_here",
+        "EXPO_PUBLIC_API_URL": "https://nv-internal-staging.vercel.app",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_staging_clerk_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_google_maps_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_google_maps_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_your_posthog_project_key_here",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     },
@@ -56,11 +56,11 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "staging",
-        "EXPO_PUBLIC_API_URL": "https://staging-api.your-domain.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_preview_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_preview_ios_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_preview_android_key_here",
-        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_preview_posthog_key_here",
+        "EXPO_PUBLIC_API_URL": "https://nv-internal-staging.vercel.app",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_your_preview_clerk_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_google_maps_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_google_maps_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_your_posthog_project_key_here",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     },
@@ -77,11 +77,11 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.your-domain.com",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_your_production_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_production_ios_key_here",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_production_android_key_here",
-        "EXPO_PUBLIC_POSTHOG_API_KEY": "your_production_posthog_key_here",
+        "EXPO_PUBLIC_API_URL": "https://nv-internal-api.vercel.app",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_your_production_clerk_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS": "your_google_maps_ios_key_here",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID": "your_google_maps_android_key_here",
+        "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_your_posthog_project_key_here",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
     }
@@ -89,9 +89,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "dustin.do95@gmail.com",
-        "ascAppId": "6754835683",
-        "appleTeamId": "9F77J83SKT"
+        "appleId": "your_apple_id@example.com",
+        "ascAppId": "your_asc_app_id_here",
+        "appleTeamId": "YOUR_TEAM_ID"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",

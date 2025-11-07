@@ -1,0 +1,104 @@
+name: Scheduled OTA Update
+
+# Publish OTA updates on a schedule (optional - useful for nightly releases)
+on:
+  schedule:
+    # Every weekday at 2 AM UTC (9 AM UTC+7 Vietnam time)
+    - cron: '0 2 * * 1-5'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      skip_if_no_changes:
+        description: 'Skip if no code changes since last OTA'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  check-changes:
+    name: Check for Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Check for changes in mobile app
+        id: check
+        run: |
+          # Get the latest successful OTA deployment from git history
+          # For now, always publish (can be improved with deployment tracking)
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+
+          # In production, you might:
+          # 1. Store last deployment commit in a file
+          # 2. Compare current HEAD with that commit
+          # 3. Only publish if mobile/ directory changed
+          #
+          # Example:
+          # git log --oneline --all -- apps/mobile/ | head -1
+          # git diff HEAD~1 -- apps/mobile/ | wc -l
+
+  publish:
+    name: Publish Scheduled OTA
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
+      - name: Run quality checks
+        run: |
+          echo "Running quality checks..."
+          pnpm biome check apps/mobile/ --write
+
+      - name: Publish OTA to staging
+        working-directory: apps/mobile
+        run: |
+          echo "Publishing nightly OTA to staging..."
+          npx expo publish --channel staging --non-interactive
+          echo "✅ Staging OTA published"
+
+      - name: Create summary
+        run: |
+          VERSION=$(grep -m1 '"version"' apps/mobile/app.config.ts | cut -d'"' -f4)
+          echo "## 🌙 Nightly OTA Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel**: staging" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "**Time**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "QA team will receive nightly build on next app launch." >> $GITHUB_STEP_SUMMARY

@@ -47,7 +47,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: ${{ github.event.inputs.platform == 'all' && fromJSON('["ios", "android"]') || fromJSON(format('["{0}"]', github.event.inputs.platform || 'all')) }}
+        # For manual trigger: use selected platform. For tag push: build all platforms.
+        platform: ${{ github.event_name == 'push' && fromJSON('["ios", "android"]') || (github.event.inputs.platform == 'all' && fromJSON('["ios", "android"]') || fromJSON(format('["{0}"]', github.event.inputs.platform))) }}
 
     steps:
       - name: Check for tag or manual dispatch
@@ -94,23 +95,30 @@ jobs:
 
       # Android-specific secrets setup
       - name: Setup Android secrets
-        if: matrix.platform == 'android' || steps.check-trigger.outputs.platform == 'all'
+        if: matrix.platform == 'android' && github.event.inputs.submit == 'true'
         working-directory: apps/mobile
         run: |
-          # Create Google Play service account file
-          echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
+          # Create Google Play service account file (only needed for submission)
+          if [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}" ]; then
+            echo "⚠️  Warning: GOOGLE_PLAY_SERVICE_ACCOUNT secret not configured"
+            echo "Android submission will fail. Configure this secret to enable Play Store submission."
+          else
+            echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
+            echo "✓ Google Play service account file created"
+          fi
 
           # Verify keystore exists (should be checked in as per app.config.ts)
           if [ ! -f "@duongdev__nv-internal.jks" ]; then
-            echo "Error: Android keystore not found"
+            echo "Error: Android keystore not found at @duongdev__nv-internal.jks"
             exit 1
           fi
+          echo "✓ Android keystore verified"
 
       # iOS-specific setup
       - name: Setup iOS secrets
-        if: matrix.platform == 'ios' || steps.check-trigger.outputs.platform == 'all'
+        if: matrix.platform == 'ios'
         run: |
-          echo "iOS builds use Expo managed credentials"
+          echo "✓ iOS builds use Expo managed credentials"
           echo "Apple ID: ${{ secrets.APPLE_ID || 'dustin.do95@gmail.com' }}"
 
       - name: Build on EAS
@@ -119,17 +127,14 @@ jobs:
           PLATFORM="${{ matrix.platform }}"
           PROFILE="${{ steps.check-trigger.outputs.profile }}"
 
-          # Handle 'all' platform case
-          if [ "${{ steps.check-trigger.outputs.platform }}" == "all" ]; then
-            PLATFORM="${{ matrix.platform }}"
-          fi
-
-          echo "Building for platform: $PLATFORM with profile: $PROFILE"
+          echo "🔨 Building for platform: $PLATFORM with profile: $PROFILE"
 
           # Build command with auto-submit if enabled
           if [ "${{ steps.check-trigger.outputs.submit }}" == "true" ] && [ "${{ steps.check-trigger.outputs.auto_submit }}" == "true" ]; then
+            echo "📤 Auto-submitting to store after build completes"
             eas build --platform $PLATFORM --profile $PROFILE --non-interactive --auto-submit
           else
+            echo "📦 Building without submission (manual submission will be required)"
             eas build --platform $PLATFORM --profile $PROFILE --non-interactive
           fi
 
@@ -148,8 +153,10 @@ jobs:
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
 
     strategy:
+      fail-fast: false
       matrix:
-        platform: ${{ github.event.inputs.platform == 'all' && fromJSON('["ios", "android"]') || fromJSON(format('["{0}"]', github.event.inputs.platform || 'all')) }}
+        # For tag push: build all platforms. For manual trigger: use selected platform.
+        platform: ${{ github.event_name == 'push' && fromJSON('["ios", "android"]') || (github.event.inputs.platform == 'all' && fromJSON('["ios", "android"]') || fromJSON(format('["{0}"]', github.event.inputs.platform))) }}
 
     steps:
       - name: Checkout repository
@@ -173,19 +180,40 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm -w --filter @nv-internal/prisma-client --filter @nv-internal/validation run build
+
+      - name: Setup Android secrets for submission
+        if: matrix.platform == 'android'
+        working-directory: apps/mobile
+        run: |
+          # Create Google Play service account file
+          if [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}" ]; then
+            echo "❌ Error: GOOGLE_PLAY_SERVICE_ACCOUNT secret not configured"
+            echo "Cannot submit to Play Store without service account credentials."
+            exit 1
+          else
+            echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
+            echo "✓ Google Play service account file created"
+          fi
+
       - name: Submit to stores
         working-directory: apps/mobile
         run: |
           PLATFORM="${{ matrix.platform }}"
           PROFILE="${{ github.event.inputs.profile || 'production' }}"
 
-          # Handle 'all' platform case
-          if [ "${{ github.event.inputs.platform }}" == "all" ] || [ "${{ github.event_name }}" == "push" ]; then
-            PLATFORM="${{ matrix.platform }}"
-          fi
-
-          echo "Submitting $PLATFORM build with profile: $PROFILE"
+          echo "📤 Submitting $PLATFORM build with profile: $PROFILE to app stores"
           eas submit --platform $PLATFORM --profile $PROFILE --non-interactive --latest
+
+      - name: Cleanup secrets
+        if: always() && matrix.platform == 'android'
+        working-directory: apps/mobile
+        run: |
+          rm -f google-play-service-account.json
 
       - name: Notify on success
         if: success()

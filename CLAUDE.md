@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL SECURITY WARNING
+
+**THIS IS A PUBLIC REPOSITORY - NEVER COMMIT SECRETS OR API KEYS**
+
+- ❌ **NEVER** push API keys, credentials, or secrets to this repository
+- ❌ **NEVER** include real environment variable values in code or documentation
+- ❌ **NEVER** commit `.env` files or files containing sensitive data
+- ✅ **ALWAYS** use placeholder values in examples (e.g., `"your-api-key-here"`, `"pk_live_xxxxx"`)
+- ✅ **ALWAYS** remind users to add secrets via GitHub Secrets UI or environment variables
+- ✅ **ALWAYS** use `.env.example` files with placeholder values only
+- ✅ **ALWAYS** verify that committed files don't contain real credentials before pushing
+
+**If you discover committed secrets**:
+1. Immediately alert the user
+2. Remove the secrets from the code
+3. Recommend rotating the compromised credentials
+4. Use `git filter-branch` or BFG Repo-Cleaner to remove from history if needed
+
 ## Project Overview
 
 NV Internal is a task management application for an air conditioning service company in Vietnam. This is a monorepo with pnpm workspaces containing a REST API and React Native mobile app.
