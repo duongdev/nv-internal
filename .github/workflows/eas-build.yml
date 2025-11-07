@@ -95,6 +95,8 @@ jobs:
           expo-version: latest
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+          expo-cache: true
+          eas-cache: true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -255,6 +257,8 @@ jobs:
           expo-version: latest
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+          expo-cache: true
+          eas-cache: true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
