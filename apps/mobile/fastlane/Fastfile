@@ -70,8 +70,8 @@ platform :ios do
 
     # Build app
     build_app(
-      workspace: "ios/nvinternal.xcworkspace",
-      scheme: "nvinternal",
+      workspace: "ios/NamVitInternal.xcworkspace",
+      scheme: "NamVitInternal",
       export_method: "app-store",
       output_directory: "./build",
       output_name: "nvinternal.ipa",
@@ -124,8 +124,8 @@ platform :ios do
     end
 
     build_app(
-      workspace: "ios/nvinternal.xcworkspace",
-      scheme: "nvinternal",
+      workspace: "ios/NamVitInternal.xcworkspace",
+      scheme: "NamVitInternal",
       export_method: "ad-hoc",
       output_directory: "./build",
       output_name: "nvinternal-staging.ipa",
