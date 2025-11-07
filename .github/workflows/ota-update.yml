@@ -28,15 +28,6 @@ on:
         required: false
         type: string
 
-  # Automatic trigger on push to main (production)
-  push:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/ota-update.yml'
-      - '!apps/mobile/README.md'
-      - '!apps/mobile/.gitignore'
-
 jobs:
   # Pre-flight checks before publishing
   preflight:
