@@ -80,6 +80,7 @@ platform :ios do
       output_directory: "./build",
       output_name: "nvinternal.ipa",
       clean: true,
+      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT",
       export_xcargs: "-allowProvisioningUpdates",
       export_options: {
         method: "app-store",
@@ -142,6 +143,7 @@ platform :ios do
       output_directory: "./build",
       output_name: "nvinternal-staging.ipa",
       clean: true,
+      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT",
       export_xcargs: "-allowProvisioningUpdates",
       export_options: {
         method: "ad-hoc",
