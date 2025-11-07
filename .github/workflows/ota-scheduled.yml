@@ -89,7 +89,8 @@ jobs:
         working-directory: apps/mobile
         run: |
           echo "Publishing nightly OTA to staging..."
-          npx expo publish --channel staging --non-interactive
+          VERSION=$(grep -m1 '"version"' app.config.ts | cut -d'"' -f4)
+          eas update --channel staging --message "Nightly build v$VERSION $(date -u +'%Y-%m-%d')" --non-interactive
           echo "✅ Staging OTA published"
 
       - name: Create summary

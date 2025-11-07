@@ -147,7 +147,7 @@ publish_ota() {
 
   if [ "$DRY_RUN" = true ]; then
     log_warning "DRY RUN - would execute:"
-    log_info "cd apps/mobile && npx expo publish --channel $CHANNEL --non-interactive"
+    log_info "cd apps/mobile && eas update --channel $CHANNEL --message \"Deploy v$version to $CHANNEL\" --non-interactive"
     return
   fi
 
@@ -155,7 +155,7 @@ publish_ota() {
 
   cd apps/mobile
 
-  if npx expo publish --channel "$CHANNEL" --non-interactive; then
+  if eas update --channel "$CHANNEL" --message "Deploy v$version to $CHANNEL" --non-interactive; then
     log_success "OTA published successfully"
     cd - > /dev/null
     return 0

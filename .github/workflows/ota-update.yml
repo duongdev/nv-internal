@@ -194,8 +194,8 @@ jobs:
           echo "Publishing OTA to channel: $CHANNEL"
           echo "App version: $VERSION"
 
-          # Publish to the specified channel
-          npx expo publish --channel "$CHANNEL" --non-interactive
+          # Publish to the specified channel using EAS Update
+          eas update --channel "$CHANNEL" --message "Deploy v$VERSION to $CHANNEL" --non-interactive
 
           echo "✅ OTA published successfully"
           echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
