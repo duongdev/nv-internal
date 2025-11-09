@@ -131,6 +131,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          UPLOAD_TO_TESTFLIGHT: ${{ (github.event.inputs.submit == 'true' || github.event_name == 'push') && 'true' || 'false' }}
           # Environment variables for app.config.ts
           EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
           EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://nv-internal-api.vercel.app' }}
@@ -141,10 +142,12 @@ jobs:
           EXPO_PUBLIC_POSTHOG_HOST: https://app.posthog.com
           EXPO_PUBLIC_POSTHOG_ENABLED: true
         run: |
-          if [ "${{ github.event.inputs.submit }}" = "true" ] || [ "${{ github.event_name }}" = "push" ]; then
-            bundle exec fastlane ios build_upload_testflight
-          else
+          # Use build_staging for staging environment, build_upload_testflight for production
+          # The UPLOAD_TO_TESTFLIGHT env var controls whether build_staging uploads to TestFlight
+          if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
             bundle exec fastlane ios build_staging
+          else
+            bundle exec fastlane ios build_upload_testflight
           fi
 
       - name: Upload build artifacts

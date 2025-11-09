@@ -128,18 +128,29 @@ platform :ios do
     UI.success("✅ Successfully uploaded build to TestFlight!")
   end
 
-  desc "Build for staging/preview (Ad Hoc)"
-  lane :build_staging do
+  desc "Build for staging/preview and optionally upload to TestFlight"
+  lane :build_staging do |options|
     api_key = load_asc_api_key
     setup_ci if ENV['CI']
 
     increment_build_number_lane
     run_prebuild
 
+    # Determine if we should upload to TestFlight
+    should_upload = options[:upload] || ENV['UPLOAD_TO_TESTFLIGHT'] == 'true'
+
+    # Use App Store provisioning if uploading to TestFlight, otherwise Ad Hoc
+    provisioning_type = should_upload ? 'appstore' : 'adhoc'
+    profile_name = should_upload ? "match AppStore vn.dienlanhnamviet.internal" : "match AdHoc vn.dienlanhnamviet.internal"
+    export_method = should_upload ? 'app-store' : 'ad-hoc'
+
+    UI.message("📦 Building staging with #{provisioning_type} provisioning")
+    UI.message("📤 Upload to TestFlight: #{should_upload}")
+
     # Get code signing - try readonly first, generate if missing
     begin
       match(
-        type: 'adhoc',
+        type: provisioning_type,
         readonly: true,
         verbose: true,
         api_key: api_key,
@@ -150,7 +161,7 @@ platform :ios do
       if ex.message.include?("No code signing identity found") || ex.message.include?("No matching provisioning profiles found")
         UI.important("No certificates or provisioning profiles found, generating new ones...")
         match(
-          type: 'adhoc',
+          type: provisioning_type,
           readonly: false,
           verbose: true,
           api_key: api_key,
@@ -162,14 +173,14 @@ platform :ios do
       end
     end
 
-    # Set provisioning profile for Ad Hoc build
+    # Set provisioning profile
     update_code_signing_settings(
       use_automatic_signing: false,
       path: "ios/NamVitInternal.xcodeproj",
       team_id: "9F77J83SKT",
       targets: ["NamVitInternal"],
       build_configurations: ["Release"],
-      profile_name: "match AdHoc vn.dienlanhnamviet.internal",
+      profile_name: profile_name,
       code_sign_identity: "Apple Distribution"
     )
 
@@ -177,16 +188,16 @@ platform :ios do
       workspace: "ios/NamVitInternal.xcworkspace",
       scheme: "NamVitInternal",
       configuration: "Release",
-      export_method: "ad-hoc",
+      export_method: export_method,
       output_directory: "./build",
       output_name: "nvinternal-staging.ipa",
       clean: true,
-      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='match AdHoc vn.dienlanhnamviet.internal'",
+      xcargs: "DEVELOPMENT_TEAM=9F77J83SKT CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'",
       export_xcargs: "-allowProvisioningUpdates",
       export_options: {
-        method: "ad-hoc",
+        method: export_method,
         provisioningProfiles: {
-          "vn.dienlanhnamviet.internal" => "match AdHoc vn.dienlanhnamviet.internal"
+          "vn.dienlanhnamviet.internal" => profile_name
         },
         signingStyle: "manual",
         teamID: "9F77J83SKT"
@@ -194,6 +205,20 @@ platform :ios do
     )
 
     UI.success("✅ Successfully built staging IPA!")
+
+    # Upload to TestFlight if requested
+    if should_upload
+      UI.message("📤 Uploading staging build to TestFlight...")
+      upload_to_testflight(
+        skip_waiting_for_build_processing: true,
+        skip_submission: true,
+        distribute_external: false,
+        api_key: api_key
+      )
+      UI.success("✅ Successfully uploaded staging build to TestFlight!")
+    else
+      UI.message("⏭️  Skipping TestFlight upload (use upload:true or UPLOAD_TO_TESTFLIGHT=true to upload)")
+    end
   end
 end
 
