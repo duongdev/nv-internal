@@ -1,6 +1,8 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants'
 import * as Updates from 'expo-updates'
+import { usePostHog } from 'posthog-react-native'
 import { useCallback, useEffect, useState } from 'react'
+import { captureException } from '@/lib/posthog'
 import { getUpdateState, saveUpdateState } from '@/lib/update-state'
 
 const IS_EXPO_GO =
@@ -33,6 +35,7 @@ export type OTAUpdateHook = OTAUpdateState & OTAUpdateActions
  * @returns OTA update state and actions
  */
 export function useOTAUpdates(): OTAUpdateHook {
+  const posthog = usePostHog()
   const [state, setState] = useState<OTAUpdateState>({
     isChecking: false,
     isDownloading: false,
@@ -157,19 +160,64 @@ export function useOTAUpdates(): OTAUpdateHook {
     }
 
     try {
+      // Validate update is still available before attempting reload
+      // biome-ignore lint/suspicious/noConsole: Intentional for OTA monitoring
+      console.log('[OTA] Validating update availability...')
+      const { isAvailable: stillAvailable } =
+        await Updates.checkForUpdateAsync()
+
+      if (!stillAvailable) {
+        const error = new Error('Update no longer available')
+
+        // Track validation failure to PostHog
+        captureException(posthog, error, {
+          action: 'ota_update_validation',
+          screen: 'version_info_footer',
+          metadata: {
+            update_id: Updates.updateId,
+            current_channel: Updates.channel,
+            reason: 'update_not_available',
+          },
+        })
+
+        console.warn('[OTA] Update no longer available')
+        setState((prev) => ({
+          ...prev,
+          isUpdateAvailable: false,
+          error,
+        }))
+        return
+      }
+
+      // Log reload attempt to PostHog
+      posthog?.capture('ota_update_reload_attempted', {
+        update_id: Updates.updateId,
+        current_channel: Updates.channel,
+      })
+
       // Updates.reloadAsync() will terminate and restart the app immediately.
       // This is expected behavior and NOT a crash - the app will restart with the new update.
       await Updates.reloadAsync()
     } catch (error) {
-      // This catch block will rarely execute because reloadAsync() terminates the app.
-      // It's here for completeness in case reloadAsync fails before termination.
+      // Track error to PostHog BEFORE setting state
+      // NOTE: This only catches JavaScript errors, not native crashes
+      captureException(posthog, error, {
+        action: 'ota_update_reload',
+        screen: 'version_info_footer',
+        metadata: {
+          update_id: Updates.updateId,
+          current_channel: Updates.channel,
+        },
+      })
+
       console.error('[OTA] Reload failed:', error)
       setState((prev) => ({
         ...prev,
+        isUpdateAvailable: false, // Hide reload button after failure
         error: error instanceof Error ? error : new Error('Reload failed'),
       }))
     }
-  }, [])
+  }, [posthog])
 
   /**
    * Load persisted state and auto-check for updates on mount.

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
@@ -49,6 +50,22 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
   } = useOTAUpdates()
 
   const { fullString } = getVersionInfo()
+  const [isReloading, setIsReloading] = useState(false)
+
+  /**
+   * Handle app reload with loading state.
+   * Note: reloadAsync() will terminate the app, so loading state cleanup rarely executes.
+   */
+  const handleReload = async () => {
+    setIsReloading(true)
+    try {
+      await reloadApp()
+    } finally {
+      // This rarely executes because reloadAsync() terminates the app
+      // But we set it for completeness in case of errors
+      setIsReloading(false)
+    }
+  }
 
   return (
     <View className={cn('items-center gap-2 py-4', className)}>
@@ -80,32 +97,58 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
       {/* Update available - show reload button */}
       {isUpdateAvailable && !isDownloading && (
         <Button
-          accessibilityHint="Khởi động lại ứng dụng với phiên bản mới nhất"
-          accessibilityLabel="Tải lại ứng dụng để cập nhật"
+          accessibilityHint={
+            isReloading
+              ? 'Đang khởi động lại ứng dụng'
+              : 'Khởi động lại ứng dụng với phiên bản mới nhất'
+          }
+          accessibilityLabel={
+            isReloading ? 'Đang khởi động lại' : 'Tải lại ứng dụng để cập nhật'
+          }
           accessible
           className="mt-2"
-          onPress={reloadApp}
+          disabled={isReloading}
+          onPress={handleReload}
           size="sm"
           variant="outline"
         >
-          <Text className="text-xs">Tải lại để cập nhật</Text>
+          {isReloading ? (
+            <View className="flex-row items-center gap-2">
+              <ActivityIndicator size="small" />
+              <Text className="text-xs">Đang khởi động lại...</Text>
+            </View>
+          ) : (
+            <Text className="text-xs">Tải lại để cập nhật</Text>
+          )}
         </Button>
       )}
 
-      {/* Error state - show retry button */}
-      {error && (
-        <View className="flex-row items-center gap-2">
-          <Text className="text-destructive text-xs">Kiểm tra thất bại</Text>
-          <Button
-            accessibilityHint="Kiểm tra lại để tìm bản cập nhật mới"
-            accessibilityLabel="Thử lại kiểm tra cập nhật"
-            accessible
-            onPress={checkForUpdates}
-            size="sm"
-            variant="ghost"
-          >
-            <Text className="text-xs">Thử lại</Text>
-          </Button>
+      {/* Error state - different UI for check vs reload errors */}
+      {error && !isUpdateAvailable && (
+        <View className="flex-col items-center gap-2">
+          {/* Vietnamese error message based on error type */}
+          <Text className="text-center text-destructive text-xs">
+            {error.message.includes('Update no longer available')
+              ? 'Bản cập nhật không còn khả dụng. Vui lòng kiểm tra lại sau.'
+              : error.message.includes('Reload failed')
+                ? 'Không thể khởi động lại ứng dụng. Vui lòng thử lại sau.'
+                : error.message.includes('Update check failed')
+                  ? 'Kiểm tra cập nhật thất bại'
+                  : 'Đã xảy ra lỗi. Vui lòng thử lại.'}
+          </Text>
+          {/* Show retry button only for check errors, not reload errors */}
+          {error.message.includes('Update check failed') && (
+            <Button
+              accessibilityHint="Kiểm tra lại để tìm bản cập nhật mới"
+              accessibilityLabel="Thử lại kiểm tra cập nhật"
+              accessible
+              onPress={checkForUpdates}
+              size="sm"
+              variant="ghost"
+            >
+              <Text className="text-xs">Thử lại</Text>
+            </Button>
+          )}
         </View>
       )}
 
