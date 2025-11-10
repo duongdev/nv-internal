@@ -1,7 +1,18 @@
 # Build & Deploy Runbook
 
-**Last Updated**: 2025-11-07
+**Last Updated**: 2025-11-10
 **For**: Local and GitHub Actions builds (post-EAS Build migration)
+**Current Configuration**: Production-only (staging channel planned for future)
+
+## ⚠️ Important: Production-Only Configuration
+
+**Current Status**: This build system is configured for **production-only** deployments to rush to production quickly. Staging and preview channels will be added later.
+
+**What this means**:
+- ✅ Only `environment=production` is supported
+- ✅ Only `production` EAS Update channel is active
+- ⏳ Staging/preview channels: See `.claude/plans/staging-channel-plan.md`
+- ⚠️ Test carefully before production releases (no staging safety net yet)
 
 ## Quick Reference
 
@@ -11,21 +22,23 @@
 # Install Fastlane dependencies
 cd apps/mobile && bundle install
 
-# Local iOS staging build
-BUILD_NUMBER=<number> bundle exec fastlane ios build_staging
-
 # Local iOS production build + TestFlight upload
 BUILD_NUMBER=<number> bundle exec fastlane ios build_upload_testflight
 
 # Local Android APK build
 BUILD_NUMBER=<number> bundle exec fastlane android build_apk
 
-# Trigger GitHub Actions build
+# Trigger GitHub Actions production build
 gh workflow run build-deploy.yml --ref main \
   -f platform=ios \
   -f environment=production \
   -f submit=true
+
+# Publish OTA update (production only)
+eas update --channel production --message "Your message"
 ```
+
+**Note**: Staging builds are not configured yet. All builds use production environment.
 
 ---
 
@@ -67,43 +80,44 @@ gh run watch
 ```bash
 cd apps/mobile
 
-# Publish to production channel
+# Publish to production channel (ONLY CHANNEL CURRENTLY CONFIGURED)
 eas update --channel production --message "Your update description"
-
-# Publish to staging channel
-eas update --channel staging --message "Your update description"
-
-# Publish to preview channel
-eas update --channel preview --message "Your update description"
 ```
 
 **⚠️ Important**:
 - OTA updates only work for same app version (1.0.0 → 1.0.0)
 - Native changes (new packages, native code) require full build
-- Test in staging first before production
+- **No staging channel yet** - Test thoroughly before publishing to production
+- Consider using TestFlight internal testing before wide release
 
-### 3. Testing Staging Build
+### 3. Testing Before Production Release
 
-**When**: Before production release, to test changes
+**Status**: ⏳ Staging channel not configured yet
 
-**Steps**:
+**Current Approach** (until staging is available):
 
-```bash
-# Trigger staging build via GitHub Actions
-gh workflow run build-deploy.yml --ref main \
-  -f platform=ios \
-  -f environment=staging \
-  -f submit=false
+1. **Use TestFlight Internal Testing**:
+   ```bash
+   # Build production version
+   gh workflow run build-deploy.yml --ref main \
+     -f platform=ios \
+     -f environment=production \
+     -f submit=true
 
-# Or build locally
-cd apps/mobile
-BUILD_NUMBER=999 \
-EXPO_PUBLIC_ENV=staging \
-EXPO_PUBLIC_API_URL=https://nv-internal-staging.vercel.app \
-bundle exec fastlane ios build_staging
+   # Distribute to internal testers only first
+   # Verify functionality before external release
+   ```
 
-# Install IPA on device (via Xcode or TestFlight)
-```
+2. **Local Development Testing**:
+   ```bash
+   # Run in Expo Go or development build
+   cd apps/mobile
+   pnpm dev
+
+   # Test with production API or local API
+   ```
+
+**Future**: Once staging channel is configured (see `.claude/plans/staging-channel-plan.md`), you'll be able to build and test staging builds separately from production.
 
 ### 4. Building Locally for Development
 
@@ -121,15 +135,17 @@ cd apps/mobile
 
 # Set environment variables (create .env.local)
 export BUILD_NUMBER=999
-export EXPO_PUBLIC_ENV=development
-export EXPO_PUBLIC_API_URL=http://localhost:3000
+export EXPO_PUBLIC_ENV=production
+export EXPO_PUBLIC_API_URL=https://nv-internal-api.vercel.app
 # ... other EXPO_PUBLIC_* vars
 
-# Build iOS staging
-bundle exec fastlane ios build_staging
+# Build iOS production (only option currently)
+bundle exec fastlane ios build_upload_testflight
 
-# Output: build/nvinternal-staging.ipa
+# Output: build/nvinternal.ipa
 ```
+
+**Note**: Local builds currently only support production configuration. For development testing, use `pnpm dev` with Expo Go instead.
 
 ---
 
@@ -155,11 +171,11 @@ gh workflow run build-deploy.yml --ref main \
   -f environment=production \
   -f submit=true
 
-# Android staging without Play Store upload
+# Android production with Play Store upload
 gh workflow run build-deploy.yml --ref main \
   -f platform=android \
-  -f environment=staging \
-  -f submit=false
+  -f environment=production \
+  -f submit=true
 
 # Both platforms production
 gh workflow run build-deploy.yml --ref main \
@@ -167,6 +183,8 @@ gh workflow run build-deploy.yml --ref main \
   -f environment=production \
   -f submit=true
 ```
+
+**Note**: The workflow still has a `staging` option in the UI, but it's not fully configured yet. Always use `environment=production` for now.
 
 ### Monitoring Builds
 
@@ -386,6 +404,50 @@ gh secret set MATCH_PASSWORD --repo duongdev/nv-internal
 # Then update provisioning profiles
 bundle exec fastlane match adhoc --force_for_new_devices=true
 ```
+
+---
+
+## 🚀 Future: Staging Channel Implementation
+
+**Status**: 📝 Planned but not yet implemented
+
+**What's Missing**:
+Currently, the build system only supports production. To add staging support, the following needs to be configured:
+
+### Required Changes
+
+1. **EAS Update Configuration**
+   - Create `staging` channel in EAS Update dashboard
+   - Update `app.config.ts` to map `EXPO_PUBLIC_ENV=staging` to staging channel
+
+2. **Environment Variables**
+   - Add `EXPO_PUBLIC_API_URL_STAGING` to GitHub Secrets
+   - Configure staging backend URL (e.g., `https://nv-internal-staging.vercel.app`)
+
+3. **Build Configuration**
+   - Ensure Fastlane `build_staging` lane works correctly
+   - Test staging provisioning profiles with Fastlane Match
+   - Configure TestFlight staging group (optional)
+
+4. **Testing Strategy**
+   - Staging → TestFlight internal → Validate
+   - Production → TestFlight external → Release
+   - Use staging for all pre-production testing
+
+### Implementation Plan
+
+See **`.claude/plans/staging-channel-plan.md`** for detailed implementation roadmap.
+
+### Benefits of Staging
+
+Once implemented:
+- ✅ Safe testing environment before production
+- ✅ Catch issues early without affecting users
+- ✅ OTA updates can be tested on staging channel first
+- ✅ Multiple team members can test simultaneously
+- ✅ Reduced production incidents
+
+**Timeline**: To be determined based on production stability and team capacity.
 
 ---
 

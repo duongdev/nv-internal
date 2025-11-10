@@ -1,9 +1,17 @@
 name: Build & Deploy to TestFlight/Play Store
 
+# CURRENT CONFIGURATION: Production-only
+# Staging channel is planned but not yet implemented
+# See: .claude/plans/staging-channel-plan.md for staging implementation roadmap
+#
+# Workflow triggers:
+# 1. Push tags (v*) - Automatic production builds
+# 2. Manual dispatch - Choose platform, environment, and submit options
+
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # Auto-trigger production builds on version tags
   workflow_dispatch:
     inputs:
       platform:
@@ -16,12 +24,12 @@ on:
           - all
         default: 'ios'
       environment:
-        description: 'Environment'
+        description: 'Environment (⚠️ staging not fully configured yet - use production)'
         required: true
         type: choice
         options:
           - production
-          - staging
+          - staging  # TODO: Not fully configured - see .claude/plans/staging-channel-plan.md
         default: 'production'
       submit:
         description: 'Submit to stores'
@@ -133,17 +141,23 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           UPLOAD_TO_TESTFLIGHT: ${{ (github.event.inputs.submit == 'true' || github.event_name == 'push') && 'true' || 'false' }}
           # Environment variables for app.config.ts
+          # NOTE: Currently only production is fully configured
+          # TODO: Add EXPO_PUBLIC_API_URL_STAGING to secrets for staging support
           EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
-          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://nv-internal-api.vercel.app' }}
+          # Match EAS production environment exactly
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://api.namviet.withdustin.com' }}
           EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
           EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
-          EXPO_PUBLIC_POSTHOG_HOST: https://app.posthog.com
           EXPO_PUBLIC_POSTHOG_ENABLED: true
         run: |
-          # Use build_staging for staging environment, build_upload_testflight for production
+          # CURRENT: Production-only configuration
+          # Use build_staging for staging environment (not fully tested yet)
+          # Use build_upload_testflight for production
           # The UPLOAD_TO_TESTFLIGHT env var controls whether build_staging uploads to TestFlight
+          # TODO: Validate staging configuration before regular use
           if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
             bundle exec fastlane ios build_staging
           else
@@ -230,15 +244,20 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           # Environment variables for app.config.ts
+          # NOTE: Currently only production is fully configured
+          # TODO: Add EXPO_PUBLIC_API_URL_STAGING to secrets for staging support
           EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
-          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://nv-internal-api.vercel.app' }}
+          # Match EAS production environment exactly
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://api.namviet.withdustin.com' }}
           EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
           EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
-          EXPO_PUBLIC_POSTHOG_HOST: https://app.posthog.com
           EXPO_PUBLIC_POSTHOG_ENABLED: true
         run: |
+          # CURRENT: Production-only configuration
+          # TODO: Add staging APK lane and validate before use
           if [ "${{ github.event.inputs.submit }}" = "true" ]; then
             bundle exec fastlane android build_upload_playstore
           else
