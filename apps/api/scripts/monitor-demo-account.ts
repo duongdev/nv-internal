@@ -19,8 +19,8 @@
  */
 
 import { clerkClient } from '@clerk/backend'
-import { getPrisma } from '../src/lib/prisma'
 import { getLogger } from '../src/lib/log'
+import { getPrisma } from '../src/lib/prisma'
 
 const logger = getLogger('monitor-demo-account')
 const prisma = getPrisma()
@@ -94,8 +94,9 @@ async function checkClerkAccount(): Promise<HealthCheckResult> {
     }
 
     const hasWorkerRole =
-      (user.publicMetadata?.roles as string[])?.includes('nv_internal_worker') ||
-      false
+      (user.publicMetadata?.roles as string[])?.includes(
+        'nv_internal_worker',
+      ) || false
     if (!hasWorkerRole) {
       return {
         status: 'warning',
@@ -215,7 +216,11 @@ async function checkActivityLogs(userId: string): Promise<HealthCheckResult> {
 
     // Check for variety of actions
     const actions = new Set(activities.map((a) => a.action))
-    const expectedActions = ['TASK_CREATED', 'TASK_CHECKED_IN', 'TASK_COMPLETED']
+    const expectedActions = [
+      'TASK_CREATED',
+      'TASK_CHECKED_IN',
+      'TASK_COMPLETED',
+    ]
     const hasExpectedActions = expectedActions.some((action) =>
       actions.has(action),
     )
@@ -283,10 +288,7 @@ async function checkPaymentRecords(userId: string): Promise<HealthCheckResult> {
       message: `✅ ${payments.length} payment records`,
       details: {
         totalPayments: payments.length,
-        totalAmount: payments.reduce(
-          (sum, p) => sum + Number(p.amount),
-          0,
-        ),
+        totalAmount: payments.reduce((sum, p) => sum + Number(p.amount), 0),
         currency: payments[0]?.currency || 'VND',
       },
     }
@@ -332,8 +334,7 @@ async function checkDataFreshness(userId: string): Promise<HealthCheckResult> {
 
     const newestTask = tasks[0]
     const daysSinceCreated = Math.floor(
-      (now.getTime() - newestTask.createdAt.getTime()) /
-        (24 * 60 * 60 * 1000),
+      (now.getTime() - newestTask.createdAt.getTime()) / (24 * 60 * 60 * 1000),
     )
 
     if (daysSinceCreated > 30) {
@@ -428,9 +429,7 @@ function generateRecommendations(report: MonitoringReport): string[] {
 
   // Check Clerk account
   if (report.checks.clerkAccount.status === 'error') {
-    recommendations.push(
-      '🔧 Run: npx tsx scripts/setup-demo-account.ts',
-    )
+    recommendations.push('🔧 Run: npx tsx scripts/setup-demo-account.ts')
   }
 
   // Check tasks
@@ -460,9 +459,7 @@ function generateRecommendations(report: MonitoringReport): string[] {
 
   // Check payments
   if (report.checks.paymentRecords.status === 'warning') {
-    recommendations.push(
-      '💰 Ensure all completed tasks have payment records',
-    )
+    recommendations.push('💰 Ensure all completed tasks have payment records')
   }
 
   if (recommendations.length === 0) {

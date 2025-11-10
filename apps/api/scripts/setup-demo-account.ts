@@ -25,9 +25,9 @@
 
 import { clerkClient } from '@clerk/backend'
 import { UserRole } from '@nv-internal/validation'
+import { getLogger } from '../src/lib/log'
 import { getPrisma } from '../src/lib/prisma'
 import { normalizeForSearch } from '../src/lib/text-utils'
-import { getLogger } from '../src/lib/log'
 
 const logger = getLogger('setup-demo-account')
 const prisma = getPrisma()
@@ -46,14 +46,14 @@ const DEMO_CONFIG = {
     isDemo: true,
     purpose: 'app-store-review',
     createdAt: new Date().toISOString(),
-  }
+  },
 } as const
 
 // Helper function to build searchable text
 function buildSearchableText(...parts: (string | null | undefined)[]): string {
   return parts
     .filter((part): part is string => Boolean(part))
-    .map(part => normalizeForSearch(part.trim().replace(/\s+/g, ' ')))
+    .map((part) => normalizeForSearch(part.trim().replace(/\s+/g, ' ')))
     .join(' ')
 }
 
@@ -145,7 +145,7 @@ async function createDemoCustomers() {
   for (const customerData of customers) {
     const searchableText = buildSearchableText(
       customerData.name,
-      customerData.phone
+      customerData.phone,
     )
 
     const customer = await prisma.customer.upsert({
@@ -182,7 +182,7 @@ async function createDemoLocations() {
       name: 'Công ty ABC - Quận 1',
       address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM',
       lat: 10.7731,
-      lng: 106.7020,
+      lng: 106.702,
     },
     {
       id: 'geo_demo_district_3',
@@ -203,13 +203,13 @@ async function createDemoLocations() {
       name: 'Chung cư - Bình Thạnh',
       address: '234 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM',
       lat: 10.8031,
-      lng: 106.7100,
+      lng: 106.71,
     },
     {
       id: 'geo_demo_phu_nhuan',
       name: 'Khách sạn - Phú Nhuận',
       address: '567 Phan Xích Long, Phường 2, Quận Phú Nhuận, TP.HCM',
-      lat: 10.7990,
+      lat: 10.799,
       lng: 106.6815,
     },
   ]
@@ -219,7 +219,7 @@ async function createDemoLocations() {
   for (const locationData of locations) {
     const searchableText = buildSearchableText(
       locationData.name,
-      locationData.address
+      locationData.address,
     )
 
     const location = await prisma.geoLocation.upsert({
@@ -251,7 +251,11 @@ async function createDemoLocations() {
 /**
  * Create demo tasks with various statuses
  */
-async function createDemoTasks(userId: string, customers: any[], locations: any[]) {
+async function createDemoTasks(
+  userId: string,
+  customers: any[],
+  locations: any[],
+) {
   logger.info('Creating demo tasks...')
 
   const now = new Date()
@@ -262,7 +266,8 @@ async function createDemoTasks(userId: string, customers: any[], locations: any[
   const tasks = [
     {
       title: 'Bảo trì điều hòa định kỳ - Công ty ABC',
-      description: 'Kiểm tra và vệ sinh hệ thống điều hòa tầng 2. Khách hàng yêu cầu làm việc trong giờ hành chính.',
+      description:
+        'Kiểm tra và vệ sinh hệ thống điều hòa tầng 2. Khách hàng yêu cầu làm việc trong giờ hành chính.',
       status: 'READY' as const,
       customerId: customers[0].id,
       geoLocationId: locations[0].id,
@@ -271,7 +276,8 @@ async function createDemoTasks(userId: string, customers: any[], locations: any[
     },
     {
       title: 'Sửa chữa điều hòa không lạnh',
-      description: 'Điều hòa phòng họp không lạnh, cần kiểm tra gas và kiểm tra máy nén.',
+      description:
+        'Điều hòa phòng họp không lạnh, cần kiểm tra gas và kiểm tra máy nén.',
       status: 'IN_PROGRESS' as const,
       customerId: customers[1].id,
       geoLocationId: locations[1].id,
@@ -281,7 +287,8 @@ async function createDemoTasks(userId: string, customers: any[], locations: any[
     },
     {
       title: 'Lắp đặt điều hòa 2 chiều 18000 BTU',
-      description: 'Lắp đặt điều hòa mới cho phòng khách. Khách đã mua máy, chỉ cần lắp đặt.',
+      description:
+        'Lắp đặt điều hòa mới cho phòng khách. Khách đã mua máy, chỉ cần lắp đặt.',
       status: 'COMPLETED' as const,
       customerId: customers[2].id,
       geoLocationId: locations[2].id,
@@ -292,7 +299,8 @@ async function createDemoTasks(userId: string, customers: any[], locations: any[
     },
     {
       title: 'Vệ sinh điều hòa - 3 cục',
-      description: 'Vệ sinh 3 cục điều hòa trong chung cư. Bao gồm vệ sinh lưới lọc và kiểm tra gas.',
+      description:
+        'Vệ sinh 3 cục điều hòa trong chung cư. Bao gồm vệ sinh lưới lọc và kiểm tra gas.',
       status: 'COMPLETED' as const,
       customerId: customers[3].id,
       geoLocationId: locations[3].id,
@@ -303,7 +311,8 @@ async function createDemoTasks(userId: string, customers: any[], locations: any[
     },
     {
       title: 'Kiểm tra hệ thống điều hòa trung tâm',
-      description: 'Kiểm tra và bảo trì hệ thống điều hòa trung tâm của khách sạn.',
+      description:
+        'Kiểm tra và bảo trì hệ thống điều hòa trung tâm của khách sạn.',
       status: 'PREPARING' as const,
       customerId: customers[4].id,
       geoLocationId: locations[4].id,
@@ -327,10 +336,10 @@ async function createDemoTasks(userId: string, customers: any[], locations: any[
     const searchableText = buildSearchableText(
       taskData.title,
       taskData.description,
-      customers.find(c => c.id === taskData.customerId)?.name,
-      customers.find(c => c.id === taskData.customerId)?.phone,
-      locations.find(l => l.id === taskData.geoLocationId)?.name,
-      locations.find(l => l.id === taskData.geoLocationId)?.address
+      customers.find((c) => c.id === taskData.customerId)?.name,
+      customers.find((c) => c.id === taskData.customerId)?.phone,
+      locations.find((l) => l.id === taskData.geoLocationId)?.name,
+      locations.find((l) => l.id === taskData.geoLocationId)?.address,
     )
 
     const task = await prisma.task.create({
@@ -426,7 +435,7 @@ async function createDemoActivities(userId: string, tasks: any[]) {
 async function createDemoPayments(userId: string, tasks: any[]) {
   logger.info('Creating demo payments...')
 
-  const completedTasks = tasks.filter(t => t.status === 'COMPLETED')
+  const completedTasks = tasks.filter((t) => t.status === 'COMPLETED')
 
   for (const task of completedTasks) {
     await prisma.payment.create({
@@ -511,7 +520,9 @@ async function setupDemoAccount() {
     console.log(`   - ${customers.length} customers`)
     console.log(`   - ${locations.length} locations`)
     console.log(`   - ${tasks.length} tasks`)
-    console.log(`   - ${tasks.filter(t => t.status === 'COMPLETED').length} completed tasks with payments`)
+    console.log(
+      `   - ${tasks.filter((t) => t.status === 'COMPLETED').length} completed tasks with payments`,
+    )
     console.log()
     console.log('🎉 Demo account is ready for Apple App Review!')
     console.log()
@@ -519,7 +530,6 @@ async function setupDemoAccount() {
     console.log(`   Email: ${DEMO_CONFIG.email}`)
     console.log(`   Password: ${DEMO_CONFIG.password}`)
     console.log()
-
   } catch (error) {
     logger.error('Failed to setup demo account', error)
     throw error
@@ -571,7 +581,6 @@ async function cleanupDemoAccount() {
     console.log()
     console.log('✅ Demo account and all data deleted successfully')
     console.log()
-
   } catch (error) {
     logger.error('Failed to cleanup demo account', error)
     throw error
