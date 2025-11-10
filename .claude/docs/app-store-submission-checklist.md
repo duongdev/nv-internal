@@ -120,11 +120,13 @@ This comprehensive checklist covers everything needed to publish the NV Internal
 ### 7. Privacy & Legal Requirements
 
 #### Privacy Policy (REQUIRED)
-- [ ] **Privacy Policy URL created and hosted**
-  - Must be publicly accessible
-  - Explains data collection and usage
-  - Required since October 3, 2018
-  - Should cover:
+- [x] **Privacy Policy URL created and hosted** ✅ Implemented
+  - **Endpoint**: `/privacy-policy`
+  - **Production URL**: `https://api.nv-internal.com/privacy-policy`
+  - **Implemented**: 2025-11-10 (PSN-15, PR #10)
+  - **Features**: Bilingual (EN/VI), mobile-responsive, no authentication required
+  - **Contact**: dienlanhnamviet.vn@gmail.com, 0947 548 561
+  - Covers all required topics:
     - Location data collection (GPS check-in/check-out)
     - Camera and photo library access
     - User information storage

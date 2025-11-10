@@ -13,7 +13,7 @@
 
 ### Blocking Issues
 1. ❌ **Screenshots** - 0 uploaded (iPhone 6.5" required)
-2. ❌ **Privacy Policy URL** - Not set
+2. ✅ **Privacy Policy URL** - Implemented at `/privacy-policy` (PSN-15, PR #10)
 3. ❌ **Privacy Questionnaire** - Not started
 4. ❌ **Demo Account** - Not configured
 5. ❌ **Pricing & Availability** - Not set

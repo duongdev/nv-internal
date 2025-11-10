@@ -146,7 +146,7 @@ Notes Field:
 □ Keywords filled
 □ Screenshots uploaded (6.5" iPhone minimum)
 □ Support URL: https://dienlanhnamviet.vn
-□ Privacy policy URL live
+☑ Privacy policy URL live: https://api.nv-internal.com/privacy-policy ✅ (PSN-15)
 □ Copyright: CÔNG TY TNHH THƯƠNG MẠI VÀ ĐIỆN LẠNH NAM VIỆT
 ```
 

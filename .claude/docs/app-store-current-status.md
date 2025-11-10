@@ -83,7 +83,10 @@
 - ⏳ **TestFlight**: Build processing/available for testing
 
 ### 3. CRITICAL: App Privacy Details (REQUIRED)
-- ❌ **Privacy Policy URL**: Not set (shows "–")
+- ✅ **Privacy Policy URL**: Implemented at `/privacy-policy`
+  - Production: `https://api.nv-internal.com/privacy-policy`
+  - Implemented: 2025-11-10 (PSN-15, PR #10)
+  - Features: Bilingual (EN/VI), mobile-responsive
 - ❌ **Privacy Questionnaire**: Not started
   - Button shows "Get Started" (not completed)
   - Must disclose:
@@ -141,7 +144,7 @@ Before you can submit, you MUST complete:
 
 1. **Upload Screenshots** (iPhone 6.5" display minimum)
 2. **Complete App Privacy Questionnaire**
-3. **Add Privacy Policy URL**
+3. ~~**Add Privacy Policy URL**~~ ✅ Implemented (PSN-15)
 4. ~~**Upload Production Build**~~ ✅ Already completed
 5. **Fill App Review Information**:
    - Demo account credentials (username/password)
@@ -170,24 +173,20 @@ Before you can submit, you MUST complete:
 - Clean UI (no lorem ipsum or test data)
 - Both light and dark mode if supported
 
-### Step 2: Create Privacy Policy (PRIORITY 1)
-**Must include:**
-- What data is collected:
-  - Precise location (GPS check-in/check-out)
-  - Photos (work documentation)
-  - User information (name, email, employee ID)
-  - Crash reports
-- How data is used:
-  - Work location verification
-  - Task documentation
-  - Employee management
-- How data is stored and protected
+### Step 2: ~~Create Privacy Policy~~ ✅ COMPLETED
+**Privacy Policy has been implemented:**
+- **Endpoint**: `/privacy-policy`
+- **Production URL**: `https://api.nv-internal.com/privacy-policy`
+- **Features**: Bilingual (English/Vietnamese), mobile-responsive
+- **Contact**: dienlanhnamviet.vn@gmail.com, 0947 548 561
+- **Implementation**: 2025-11-10 (PSN-15, PR #10)
+
+All required topics covered:
+- Data collection (location, photos, user info, crash reports)
+- Data usage (work verification, documentation, management)
+- Data storage and protection
 - Data retention policy
 - Contact information for privacy concerns
-
-**Where to host:**
-- Company website: https://dienlanhnamviet.vn/privacy-policy
-- OR create separate privacy page
 
 ### Step 3: ~~Upload Production Build~~ ✅ COMPLETED
 Production build has been successfully uploaded to App Store Connect.
@@ -325,7 +324,7 @@ Use this checklist before clicking "Submit for Review":
 
 - [ ] Screenshots uploaded (iPhone 6.5" minimum)
 - [ ] iPad screenshots uploaded (if app supports iPad)
-- [ ] Privacy Policy URL added
+- [x] Privacy Policy URL added ✅ (PSN-15, PR #10)
 - [ ] App Privacy questionnaire completed
 - [ ] Production build uploaded and selected
 - [ ] Demo account created and credentials filled

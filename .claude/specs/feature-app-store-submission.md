@@ -56,7 +56,7 @@
 ### Screenshots / Designs
 - App Store Connect screenshots (required: at least 2 per device size)
 - App icon (1024x1024)
-- Privacy policy URL
+- Privacy policy URL ✅ Implemented at `/privacy-policy` (PSN-15)
 - App description and metadata
 
 ---
@@ -254,7 +254,7 @@ Build number synced via GitHub variable (lines 135-191 in existing workflow).
 - **Key rotation**: Document process for rotating API keys annually
 
 ### App Store Guidelines Compliance
-- Privacy policy URL required
+- Privacy policy URL ✅ Implemented at `/privacy-policy` (PSN-15) required
 - App must follow Apple Human Interface Guidelines
 - No private APIs usage
 - Proper age rating configuration
