@@ -1,5 +1,6 @@
 import type { User } from '@clerk/backend'
-import type { Prisma, Task, TaskStatus } from '@nv-internal/prisma-client'
+import type { Prisma, Task } from '@nv-internal/prisma-client'
+import { TaskStatus } from '@nv-internal/prisma-client'
 import type {
   CreateTaskValues,
   TaskSearchFilterQuery,
@@ -53,42 +54,6 @@ function buildSearchableText(data: {
   // Normalize for Vietnamese accent-insensitive search
   // and collapse multiple spaces into single space
   return normalizeForSearch(parts.join(' ')).replace(/\s+/g, ' ').trim()
-}
-
-/**
- * Refresh searchableText for a specific task
- *
- * Fetches the task with all related data and updates its searchableText field.
- * Useful when customer or location data changes.
- *
- * @param taskId - ID of the task to refresh
- * @param tx - Prisma transaction client
- */
-async function _refreshTaskSearchableText(
-  taskId: number,
-  tx: Prisma.TransactionClient,
-): Promise<void> {
-  const task = await tx.task.findUnique({
-    where: { id: taskId },
-    include: { customer: true, geoLocation: true },
-  })
-
-  if (!task) {
-    return
-  }
-
-  await tx.task.update({
-    where: { id: taskId },
-    data: {
-      searchableText: buildSearchableText({
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        customer: task.customer,
-        geoLocation: task.geoLocation,
-      }),
-    },
-  })
 }
 
 export async function canUserCreateTask({ user }: { user: User }) {
@@ -303,6 +268,7 @@ export async function getTaskList({
   const prisma = getPrisma()
 
   const where: Prisma.TaskWhereInput = {
+    deletedAt: null,
     ...(assignedUserIds ? { assigneeIds: { hasSome: assignedUserIds } } : {}),
     ...(status ? { status: { in: status } } : {}),
   }
@@ -375,6 +341,9 @@ export async function searchAndFilterTasks(
 
   // Build WHERE clause
   const whereConditions: Prisma.TaskWhereInput[] = []
+
+  // Filter out soft-deleted tasks
+  whereConditions.push({ deletedAt: null })
 
   // Access control: Non-admins can ONLY see their assigned tasks
   // Admins can see all tasks UNLESS assignedOnly is explicitly set to 'true'
@@ -505,8 +474,8 @@ export async function searchAndFilterTasks(
 export async function getTaskById({ id }: { id: number }) {
   const prisma = getPrisma()
 
-  const task = await prisma.task.findUnique({
-    where: { id },
+  const task = await prisma.task.findFirst({
+    where: { id, deletedAt: null },
     include: DEFAULT_TASK_INCLUDE,
   })
 
@@ -1051,10 +1020,51 @@ export async function deleteTask({
   await prisma.$transaction(async (tx) => {
     const task = await tx.task.findFirst({
       where: { id: taskId, deletedAt: null },
+      include: {
+        payments: true,
+      },
     })
 
     if (!task) {
       throw new HTTPException(404, { message: 'Không tìm thấy công việc' })
+    }
+
+    // Authorization: Only admin can delete tasks
+    if (!isUserAdmin({ user })) {
+      throw new HTTPException(403, {
+        message: 'Không có quyền xóa công việc',
+      })
+    }
+
+    // Validation: Cannot delete tasks with status other than PREPARING or READY
+    if (
+      task.status !== TaskStatus.PREPARING &&
+      task.status !== TaskStatus.READY
+    ) {
+      throw new HTTPException(400, {
+        message: 'Chỉ có thể xóa công việc ở trạng thái Chuẩn bị hoặc Sẵn sàng',
+      })
+    }
+
+    // Validation: Cannot delete if task has payments
+    if (task.payments && task.payments.length > 0) {
+      throw new HTTPException(400, {
+        message: 'Không thể xóa công việc đã có thanh toán',
+      })
+    }
+
+    // Validation: Cannot delete if task has check-ins
+    const checkInActivity = await tx.activity.findFirst({
+      where: {
+        topic: `TASK_${taskId}`,
+        action: 'TASK_CHECKED_IN',
+      },
+    })
+
+    if (checkInActivity) {
+      throw new HTTPException(400, {
+        message: 'Không thể xóa công việc đã có check-in',
+      })
     }
 
     // Soft delete
