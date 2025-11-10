@@ -51,7 +51,7 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
     checkForUpdates,
   } = useOTAUpdates()
 
-  const { fullString } = getVersionInfo()
+  const { fullString, isEmbeddedLaunch, otaUpdateId } = getVersionInfo()
 
   return (
     <View className={cn('items-center gap-2 py-4', className)}>
@@ -59,6 +59,23 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
       <Text className="text-center text-xs" variant="muted">
         {fullString}
       </Text>
+
+      {/* OTA status indicator - show green dot when OTA update is active */}
+      {!isEmbeddedLaunch && otaUpdateId && (
+        <View
+          accessibilityHint="Ứng dụng đang chạy bản cập nhật OTA"
+          accessibilityLabel="Trạng thái cập nhật OTA"
+          accessibilityRole="text"
+          accessible
+          className="flex-row items-center gap-1.5"
+          testID="ota-active-indicator"
+        >
+          <View className="h-2 w-2 rounded-full bg-green-500" />
+          <Text className="text-muted-foreground text-xs">
+            Cập nhật OTA đang hoạt động
+          </Text>
+        </View>
+      )}
 
       {/* Checking state */}
       {isChecking && !isDownloading && (
