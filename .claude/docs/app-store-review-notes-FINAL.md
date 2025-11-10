@@ -765,7 +765,7 @@ Before submitting, verify:
 - [ ] Privacy concerns addressed proactively
 
 ### Privacy & Permissions
-- [ ] Privacy policy URL live
+- [x] Privacy policy URL live ✅ (https://api.nv-internal.com/privacy-policy - PSN-15)
 - [ ] Privacy questionnaire completed
 - [ ] All permissions have Vietnamese descriptions
 - [ ] Data collection properly disclosed
@@ -815,7 +815,7 @@ Before submitting, verify:
 ### For Future Updates:
 1. Keep demo account active and updated
 2. Reuse these review notes (update as needed)
-3. Maintain privacy policy URL
+3. Maintain privacy policy URL ✅ (https://api.nv-internal.com/privacy-policy)
 4. Test demo account before each submission
 
 ---

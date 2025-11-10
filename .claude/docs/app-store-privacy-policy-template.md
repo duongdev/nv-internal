@@ -1,5 +1,11 @@
 # Privacy Policy Template - Nam Việt Internal
 
+> **✅ IMPLEMENTATION STATUS**: Privacy Policy has been implemented and deployed
+> - **Endpoint**: `/privacy-policy`
+> - **Production URL**: `https://api.nv-internal.com/privacy-policy`
+> - **Implementation Date**: 2025-11-10 (PSN-15, PR #10)
+> - **Features**: Bilingual (EN/VI), mobile-responsive, no authentication required
+
 **Last Updated**: November 6, 2025
 **Purpose**: Template for App Store submission requirement
 **Languages**: Vietnamese (primary) and English

@@ -26,7 +26,7 @@ Preparing Nam Việt Internal iOS app for App Store submission. The app is alrea
 
 ### ❌ Blocking Issues for Submission
 1. **Screenshots**: No iPhone screenshots uploaded (0 uploaded)
-2. **Privacy Policy URL**: Not set
+2. ~~**Privacy Policy URL**: Not set~~ ✅ Implemented at `/privacy-policy` (PSN-15, PR #10)
 3. **Privacy Questionnaire**: Not started
 4. **App Review Information**: Demo credentials empty
 5. **Pricing & Availability**: Not configured
@@ -44,8 +44,8 @@ Preparing Nam Việt Internal iOS app for App Store submission. The app is alrea
 - [ ] Create Screenshot requirements guide
 
 ### Phase 2: Content Creation
-- [ ] Draft Privacy Policy in Vietnamese/English
-- [ ] Host Privacy Policy on company website
+- [x] Draft Privacy Policy in Vietnamese/English ✅ (PSN-15)
+- [x] Host Privacy Policy on API endpoint ✅ (`/privacy-policy`, PSN-15, PR #10)
 - [ ] Take iPhone 6.5" screenshots (minimum 3, max 10)
 - [ ] Take iPad screenshots (if supporting iPad)
 - [ ] Create demo account with sample data
