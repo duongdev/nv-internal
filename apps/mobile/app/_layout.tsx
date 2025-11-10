@@ -26,6 +26,7 @@ import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { Toasts } from '@/components/ui/toasts'
+import { FEATURE_FLAGS, useFeatureFlag } from '@/hooks/use-feature-flag'
 import { queryClient } from '@/lib/api-client'
 import { getClerkPublishableKey } from '@/lib/env'
 import {
@@ -105,8 +106,22 @@ export default function RootLayout() {
 }
 
 function AppContent({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
+  const { setColorScheme } = useColorScheme()
+
+  // Feature flag for dark mode
+  const { isEnabled: isDarkModeEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.DARK_MODE_ENABLED,
+  )
+
+  // Force light theme when dark mode is disabled
+  React.useEffect(() => {
+    if (!isDarkModeEnabled) {
+      setColorScheme('light')
+    }
+  }, [isDarkModeEnabled, setColorScheme])
+
   return (
-    <ThemeProvider value={NAV_THEME[colorScheme]}>
+    <ThemeProvider value={NAV_THEME[isDarkModeEnabled ? colorScheme : 'light']}>
       <QueryClientProvider client={queryClient}>
         <KeyboardProvider>
           <GestureHandlerRootView className="flex-1 font-gilroy">

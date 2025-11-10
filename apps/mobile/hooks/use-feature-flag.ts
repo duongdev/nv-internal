@@ -143,6 +143,11 @@ export const FEATURE_FLAGS = {
   /** Enable/disable account deletion feature (Apple App Store compliance) */
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
   ACCOUNT_DELETION_ENABLED: 'account-deletion-enabled',
+
+  // Theme Management
+  /** Enable/disable dark mode feature (theme switcher and dark theme) */
+  // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
+  DARK_MODE_ENABLED: 'dark-mode-enabled',
 } as const
 
 export type FeatureFlagKey = (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS]
