@@ -20,6 +20,7 @@ import { Stack, usePathname } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'nativewind'
+import type PostHog from 'posthog-react-native'
 import { PostHogProvider, usePostHog } from 'posthog-react-native'
 import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -28,8 +29,10 @@ import { Toasts } from '@/components/ui/toasts'
 import { queryClient } from '@/lib/api-client'
 import { getClerkPublishableKey } from '@/lib/env'
 import {
+  captureException,
   createPostHogClient,
   identifyUser,
+  processErrorQueue,
   resetPostHog,
   trackScreen,
 } from '@/lib/posthog'
@@ -40,11 +43,47 @@ export {
   ErrorBoundary,
 } from 'expo-router'
 
+/**
+ * Setup global error handler to catch unhandled exceptions.
+ * Must be called early in app initialization.
+ */
+function setupGlobalErrorHandler(posthog: PostHog | null | undefined) {
+  // @ts-ignore - ErrorUtils is a React Native global
+  const originalHandler = global.ErrorUtils?.getGlobalHandler()
+
+  // Set new handler
+  // @ts-ignore - ErrorUtils is a React Native global
+  // biome-ignore lint/suspicious/noExplicitAny: React Native error handler signature
+  global.ErrorUtils?.setGlobalHandler((error: any, isFatal: boolean) => {
+    // Capture to PostHog
+    captureException(posthog, error, {
+      fatal: isFatal,
+      mechanism: 'global_error_handler',
+    })
+
+    // Call original handler to preserve default behavior
+    originalHandler?.(error, isFatal)
+  })
+
+  // Handle unhandled promise rejections
+  const rejectionHandler = (event: PromiseRejectionEvent) => {
+    captureException(posthog, event.reason, {
+      fatal: false,
+      mechanism: 'unhandled_promise',
+    })
+  }
+
+  // @ts-ignore - addEventListener exists in React Native
+  global.addEventListener?.('unhandledrejection', rejectionHandler)
+}
+
 export default function RootLayout() {
   const { colorScheme } = useColorScheme()
 
   // Create PostHog client instance (memoized to prevent recreation)
-  const posthogClient = React.useMemo(() => createPostHogClient(), [])
+  const posthogClient = React.useMemo(() => createPostHogClient(), []) as
+    | PostHog
+    | undefined
 
   return (
     <ClerkProvider
@@ -132,6 +171,14 @@ function Routes() {
       path: pathname,
     })
   }, [pathname, posthog])
+
+  // Setup global error handler and process error queue
+  React.useEffect(() => {
+    if (posthog) {
+      setupGlobalErrorHandler(posthog)
+      processErrorQueue(posthog)
+    }
+  }, [posthog])
 
   React.useEffect(() => {
     if (isLoaded && fontsLoaded) {

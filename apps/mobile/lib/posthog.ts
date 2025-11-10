@@ -189,3 +189,109 @@ export function trackScreen(
     posthog.screen(screenName, properties)
   }
 }
+
+/**
+ * Error Tracking
+ */
+
+// Error queue for capturing errors before PostHog is ready
+// biome-ignore lint/suspicious/noExplicitAny: Context can have any shape
+const errorQueue: Array<{ error: Error; context: any }> = []
+
+/**
+ * Capture exception with context for error tracking.
+ * Queues errors if PostHog is not ready yet.
+ *
+ * @param posthog - PostHog instance from usePostHog() hook
+ * @param error - Error object or unknown value
+ * @param context - Optional context (screen, action, metadata, etc.)
+ *
+ * @example
+ * ```typescript
+ * import { usePostHog } from 'posthog-react-native'
+ * import { captureException } from '@/lib/posthog'
+ *
+ * const posthog = usePostHog()
+ * try {
+ *   // risky operation
+ * } catch (error) {
+ *   captureException(posthog, error, {
+ *     screen: 'TaskList',
+ *     action: 'load_tasks',
+ *     metadata: { filter: 'active' }
+ *   })
+ * }
+ * ```
+ */
+export function captureException(
+  posthog: PostHog | null | undefined,
+  error: Error | unknown,
+  context?: {
+    fatal?: boolean
+    mechanism?: string
+    screen?: string
+    action?: string
+    // biome-ignore lint/suspicious/noExplicitAny: PostHog accepts any property types
+    metadata?: Record<string, any>
+  },
+): void {
+  const errorObj = error instanceof Error ? error : new Error(String(error))
+
+  if (!posthog) {
+    // Queue error if PostHog not ready
+    errorQueue.push({ error: errorObj, context })
+    return
+  }
+
+  posthog.capture('$exception', {
+    // biome-ignore lint/style/useNamingConvention: PostHog API requires this format
+    $exception_message: errorObj.message,
+    // biome-ignore lint/style/useNamingConvention: PostHog API requires this format
+    $exception_stack: errorObj.stack || '',
+    // biome-ignore lint/style/useNamingConvention: PostHog API requires this format
+    $exception_type: errorObj.name,
+    // biome-ignore lint/style/useNamingConvention: PostHog API requires this format
+    $exception_fatal: context?.fatal || false,
+    // biome-ignore lint/style/useNamingConvention: PostHog API requires this format
+    $exception_mechanism: context?.mechanism || 'manual',
+    // Additional context
+    ...(context?.screen && { screen: context.screen }),
+    ...(context?.action && { action: context.action }),
+    ...(context?.metadata && { metadata: context.metadata }),
+    // Error fingerprinting for better grouping
+    // biome-ignore lint/style/useNamingConvention: PostHog API requires this format
+    $exception_fingerprint: generateErrorFingerprint(errorObj),
+  })
+}
+
+/**
+ * Process queued errors after PostHog is ready.
+ * Should be called after PostHog initialization.
+ *
+ * @param posthog - PostHog instance from usePostHog() hook
+ */
+export function processErrorQueue(posthog: PostHog | null | undefined): void {
+  if (!posthog) {
+    return
+  }
+
+  while (errorQueue.length > 0) {
+    const { error, context } = errorQueue.shift()
+    if (error) {
+      captureException(posthog, error, context)
+    }
+  }
+}
+
+/**
+ * Generate consistent fingerprint for error grouping.
+ * Normalizes dynamic values (numbers, IDs) for better grouping.
+ */
+function generateErrorFingerprint(error: Error): string {
+  const type = error.name || 'Error'
+  // Normalize numbers and IDs in message for better grouping
+  const message =
+    error.message?.replace(/\d+/g, 'N').replace(/[a-f0-9]{24,}/gi, 'ID') || ''
+  const stack = error.stack?.split('\n')[1] || '' // Use second line (first frame)
+  return `${type}-${message}-${stack}`.slice(0, 100)
+}
