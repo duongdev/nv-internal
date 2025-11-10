@@ -50,20 +50,39 @@ export const DeleteAccountFirstWarning: FC<DeleteAccountFirstWarningProps> = ({
             accessibilityLabel="Cảnh báo xóa tài khoản"
             accessibilityRole="text"
           >
-            <Text className="font-normal text-base text-muted-foreground leading-6">
-              Hành động này không thể hoàn tác. Bạn sẽ mất:
-            </Text>
-            {'\n\n'}
-            <View className="gap-2">
+            <View className="gap-3">
               <Text className="font-normal text-base text-muted-foreground leading-6">
-                • Quyền truy cập vào tài khoản
+                Hành động này không thể hoàn tác. Bạn sẽ mất:
               </Text>
-              <Text className="font-normal text-base text-muted-foreground leading-6">
-                • Tất cả dữ liệu cá nhân
-              </Text>
-              <Text className="font-normal text-base text-muted-foreground leading-6">
-                • Lịch sử công việc
-              </Text>
+
+              <View className="gap-2.5">
+                <View className="flex-row gap-2">
+                  <Text className="font-semibold text-base text-destructive leading-6">
+                    •
+                  </Text>
+                  <Text className="flex-1 font-medium text-base text-foreground leading-6">
+                    Quyền truy cập vào tài khoản
+                  </Text>
+                </View>
+
+                <View className="flex-row gap-2 pl-4">
+                  <Text className="text-muted-foreground text-sm leading-5">
+                    ◦
+                  </Text>
+                  <Text className="flex-1 text-muted-foreground text-sm leading-5">
+                    Tất cả dữ liệu cá nhân
+                  </Text>
+                </View>
+
+                <View className="flex-row gap-2 pl-4">
+                  <Text className="text-muted-foreground text-sm leading-5">
+                    ◦
+                  </Text>
+                  <Text className="flex-1 text-muted-foreground text-sm leading-5">
+                    Lịch sử công việc
+                  </Text>
+                </View>
+              </View>
             </View>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -81,11 +100,11 @@ export const DeleteAccountFirstWarning: FC<DeleteAccountFirstWarningProps> = ({
             accessibilityHint="Tiếp tục đến bước xác nhận cuối cùng"
             accessibilityLabel="Tiếp tục"
             accessibilityRole="button"
-            className="bg-destructive"
+            className="bg-destructive active:bg-destructive/80"
             onPress={onContinue}
             testID="delete-account-continue-button"
           >
-            <Text>Tiếp tục</Text>
+            <Text className="text-white">Tiếp tục</Text>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

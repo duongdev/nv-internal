@@ -119,7 +119,7 @@ export const DeleteAccountFinalConfirmation: FC<
             accessibilityHint="Xóa tài khoản vĩnh viễn"
             accessibilityLabel="Xóa tài khoản vĩnh viễn"
             accessibilityRole="button"
-            className="bg-destructive"
+            className="bg-destructive active:bg-destructive/80"
             disabled={!isValid || isDeleting}
             onPress={handleConfirm}
             testID="delete-account-final-confirm-button"
@@ -127,10 +127,10 @@ export const DeleteAccountFinalConfirmation: FC<
             {isDeleting ? (
               <View className="flex-row items-center gap-2">
                 <ActivityIndicator color="white" size="small" />
-                <Text>Đang xóa...</Text>
+                <Text className="text-white">Đang xóa...</Text>
               </View>
             ) : (
-              <Text>Xóa tài khoản vĩnh viễn</Text>
+              <Text className="text-white">Xóa tài khoản vĩnh viễn</Text>
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
