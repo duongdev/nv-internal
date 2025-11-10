@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
@@ -35,8 +34,12 @@ function formatRelativeTime(date: Date): string {
 
 /**
  * Version information footer component.
- * Displays app version and handles OTA update detection and application.
+ * Displays app version and handles OTA update detection.
+ * After successful download, instructs user to manually restart the app.
  * All UI text in Vietnamese.
+ *
+ * SAFETY NOTE: Does NOT call Updates.reloadAsync() to avoid native crashes.
+ * Users must force-quit and reopen the app to apply updates.
  */
 export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
   const {
@@ -46,26 +49,9 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
     lastChecked,
     error,
     checkForUpdates,
-    reloadApp,
   } = useOTAUpdates()
 
   const { fullString } = getVersionInfo()
-  const [isReloading, setIsReloading] = useState(false)
-
-  /**
-   * Handle app reload with loading state.
-   * Note: reloadAsync() will terminate the app, so loading state cleanup rarely executes.
-   */
-  const handleReload = async () => {
-    setIsReloading(true)
-    try {
-      await reloadApp()
-    } finally {
-      // This rarely executes because reloadAsync() terminates the app
-      // But we set it for completeness in case of errors
-      setIsReloading(false)
-    }
-  }
 
   return (
     <View className={cn('items-center gap-2 py-4', className)}>
@@ -94,61 +80,49 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
         </View>
       )}
 
-      {/* Update available - show reload button */}
+      {/* Update available - show manual restart instruction */}
       {isUpdateAvailable && !isDownloading && (
-        <Button
-          accessibilityHint={
-            isReloading
-              ? 'Đang khởi động lại ứng dụng'
-              : 'Khởi động lại ứng dụng với phiên bản mới nhất'
-          }
-          accessibilityLabel={
-            isReloading ? 'Đang khởi động lại' : 'Tải lại ứng dụng để cập nhật'
-          }
+        <View
+          accessibilityHint="Vui lòng thoát ứng dụng hoàn toàn và mở lại để áp dụng bản cập nhật mới nhất"
+          accessibilityLabel="Hướng dẫn khởi động lại ứng dụng"
+          accessibilityRole="text"
           accessible
-          className="mt-2"
-          disabled={isReloading}
-          onPress={handleReload}
-          size="sm"
-          variant="outline"
+          className="mt-2 max-w-sm rounded-md border border-primary/20 bg-primary/5 px-4 py-3"
+          testID="ota-restart-instruction"
         >
-          {isReloading ? (
-            <View className="flex-row items-center gap-2">
-              <ActivityIndicator size="small" />
-              <Text className="text-xs">Đang khởi động lại...</Text>
-            </View>
-          ) : (
-            <Text className="text-xs">Tải lại để cập nhật</Text>
-          )}
-        </Button>
+          <Text className="text-center font-medium text-primary text-xs">
+            Bản cập nhật đã tải xuống.
+          </Text>
+          <Text className="mt-1 text-center text-primary/80 text-xs">
+            Vui lòng khởi động lại ứng dụng để áp dụng bản cập nhật.
+          </Text>
+          <Text className="mt-2 text-center text-primary/60 text-xs">
+            ℹ️ Vuốt lên và mở lại ứng dụng
+          </Text>
+        </View>
       )}
 
-      {/* Error state - different UI for check vs reload errors */}
+      {/* Error state - show error message and retry button */}
       {error && !isUpdateAvailable && (
         <View className="flex-col items-center gap-2">
-          {/* Vietnamese error message based on error type */}
+          {/* Vietnamese error message */}
           <Text className="text-center text-destructive text-xs">
-            {error.message.includes('Update no longer available')
-              ? 'Bản cập nhật không còn khả dụng. Vui lòng kiểm tra lại sau.'
-              : error.message.includes('Reload failed')
-                ? 'Không thể khởi động lại ứng dụng. Vui lòng thử lại sau.'
-                : error.message.includes('Update check failed')
-                  ? 'Kiểm tra cập nhật thất bại'
-                  : 'Đã xảy ra lỗi. Vui lòng thử lại.'}
+            {error.message.includes('Update check failed')
+              ? 'Kiểm tra cập nhật thất bại'
+              : 'Đã xảy ra lỗi. Vui lòng thử lại.'}
           </Text>
-          {/* Show retry button only for check errors, not reload errors */}
-          {error.message.includes('Update check failed') && (
-            <Button
-              accessibilityHint="Kiểm tra lại để tìm bản cập nhật mới"
-              accessibilityLabel="Thử lại kiểm tra cập nhật"
-              accessible
-              onPress={checkForUpdates}
-              size="sm"
-              variant="ghost"
-            >
-              <Text className="text-xs">Thử lại</Text>
-            </Button>
-          )}
+          {/* Retry button for download errors */}
+          <Button
+            accessibilityHint="Kiểm tra lại để tìm bản cập nhật mới"
+            accessibilityLabel="Thử lại kiểm tra cập nhật"
+            accessible
+            onPress={checkForUpdates}
+            size="sm"
+            testID="retry-update-check-button"
+            variant="ghost"
+          >
+            <Text className="text-xs">Thử lại</Text>
+          </Button>
         </View>
       )}
 
