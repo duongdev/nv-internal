@@ -61,6 +61,12 @@ export const TaskAction: FC<TaskActionProps> = ({ task }) => {
     await mutateAsync({ taskId: task.id, status })
   }
 
+  // Don't render action buttons until role is determined
+  // This prevents flickering and ensures correct action based on user role
+  if (!appRole) {
+    return null
+  }
+
   // If task is completed, show disabled button
   if (task.status === TaskStatus.COMPLETED) {
     return (
