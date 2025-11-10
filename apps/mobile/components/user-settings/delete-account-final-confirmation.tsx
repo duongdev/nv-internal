@@ -23,11 +23,11 @@ export type DeleteAccountFinalConfirmationProps = {
   error: string | null
 }
 
-const CONFIRMATION_TEXT = 'XÓA TÀI KHOẢN'
+const CONFIRMATION_TEXT = 'XÁC NHẬN'
 
 /**
  * Final confirmation dialog for account deletion
- * Requires user to type "XÓA TÀI KHOẢN" to confirm
+ * Requires user to type "XÁC NHẬN" to confirm
  */
 export const DeleteAccountFinalConfirmation: FC<
   DeleteAccountFinalConfirmationProps
@@ -80,7 +80,7 @@ export const DeleteAccountFinalConfirmation: FC<
 
         <View className="gap-3">
           <Input
-            accessibilityHint="Nhập cụm từ XÓA TÀI KHOẢN để xác nhận"
+            accessibilityHint="Nhập cụm từ XÁC NHẬN để xác nhận"
             accessibilityLabel="Ô nhập xác nhận"
             accessibilityRole="none"
             autoCapitalize="characters"
