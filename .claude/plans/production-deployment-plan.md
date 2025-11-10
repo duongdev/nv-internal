@@ -253,7 +253,7 @@ Use this checklist to track your progress through the deployment process. Check 
 
 #### App Content Configuration (Week 3, Day 15-16)
 
-- [ ] Add privacy policy URL
+- [x] Add privacy policy URL ✅ Implemented at `/privacy-policy` (PSN-15, PR #10)
 - [ ] Configure app access (restricted + test credentials)
 - [ ] Complete content ratings questionnaire
 - [ ] Set target audience: 18+
@@ -1387,11 +1387,12 @@ quản lý công việc, điện lạnh, nam việt, nhiệm vụ, check-in
 
 **Support URL**: Your company website or support email
 
-**Privacy Policy URL**: Required by Apple
+**Privacy Policy URL**: ✅ Implemented (PSN-15, PR #10)
 
-- Create a simple privacy policy (can use template)
-- Host on GitHub Pages or company website
-- Example: `https://github.com/yourusername/nv-internal/blob/main/PRIVACY.md`
+- **Endpoint**: `/privacy-policy`
+- **Production URL**: `https://api.nv-internal.com/privacy-policy`
+- **Features**: Bilingual (EN/VI), mobile-responsive, no authentication required
+- **Implementation Date**: 2025-11-10
 
 #### Step 12.3: Submit Build to App Store Connect
 
@@ -1462,7 +1463,7 @@ After TestFlight testing:
 2. **Fill in all required fields**:
    - Screenshots (upload from simulator)
    - Description, keywords, support URL
-   - Privacy policy URL
+   - Privacy policy URL ✅ (implemented PSN-15)
    - Age rating
 3. **Select build** to submit
 4. **App Review Information**:
