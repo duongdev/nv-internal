@@ -116,9 +116,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     requestHeaders: {
       'expo-channel-name': process.env.EXPO_PUBLIC_ENV || 'production',
     },
-    // Disable automatic error recovery to prevent tryRelaunchFromCache() crash
-    // This was causing production crashes during app startup
-    checkAutomatically: 'ON_LOAD',
+    // CRITICAL: checkAutomatically set to 'NEVER' to prevent ErrorRecovery crash
+    // Root cause: expo-updates error recovery (tryRelaunchFromCache) was crashing
+    // on app launch when checkAutomatically was set to 'ON_LOAD'.
+    // 'NEVER' disables automatic checks and error recovery on launch, preventing crash.
+    // Updates can still be applied manually via Updates.checkForUpdateAsync()
+    // See: .claude/tasks/20251110-expo-updates-crash-fix.md
+    checkAutomatically: 'NEVER',
     fallbackToCacheTimeout: 0,
   },
   runtimeVersion: {
