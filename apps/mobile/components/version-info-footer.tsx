@@ -34,8 +34,12 @@ function formatRelativeTime(date: Date): string {
 
 /**
  * Version information footer component.
- * Displays app version and handles OTA update detection and application.
+ * Displays app version and handles OTA update detection.
+ * After successful download, instructs user to manually restart the app.
  * All UI text in Vietnamese.
+ *
+ * SAFETY NOTE: Does NOT call Updates.reloadAsync() to avoid native crashes.
+ * Users must force-quit and reopen the app to apply updates.
  */
 export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
   const {
@@ -45,10 +49,9 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
     lastChecked,
     error,
     checkForUpdates,
-    reloadApp,
   } = useOTAUpdates()
 
-  const { fullString } = getVersionInfo()
+  const { fullString, isEmbeddedLaunch, otaUpdateId } = getVersionInfo()
 
   return (
     <View className={cn('items-center gap-2 py-4', className)}>
@@ -56,6 +59,23 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
       <Text className="text-center text-xs" variant="muted">
         {fullString}
       </Text>
+
+      {/* OTA status indicator - show green dot when OTA update is active */}
+      {!isEmbeddedLaunch && otaUpdateId && (
+        <View
+          accessibilityHint="Ứng dụng đang chạy bản cập nhật OTA"
+          accessibilityLabel="Trạng thái cập nhật OTA"
+          accessibilityRole="text"
+          accessible
+          className="flex-row items-center gap-1.5"
+          testID="ota-active-indicator"
+        >
+          <View className="h-2 w-2 rounded-full bg-green-500" />
+          <Text className="text-muted-foreground text-xs">
+            Cập nhật OTA đang hoạt động
+          </Text>
+        </View>
+      )}
 
       {/* Checking state */}
       {isChecking && !isDownloading && (
@@ -77,31 +97,45 @@ export function VersionInfoFooter({ className }: VersionInfoFooterProps) {
         </View>
       )}
 
-      {/* Update available - show reload button */}
+      {/* Update available - show manual restart instruction */}
       {isUpdateAvailable && !isDownloading && (
-        <Button
-          accessibilityHint="Khởi động lại ứng dụng với phiên bản mới nhất"
-          accessibilityLabel="Tải lại ứng dụng để cập nhật"
+        <View
+          accessibilityHint="Vui lòng thoát ứng dụng hoàn toàn và mở lại để áp dụng bản cập nhật mới nhất"
+          accessibilityLabel="Hướng dẫn khởi động lại ứng dụng"
+          accessibilityRole="text"
           accessible
-          className="mt-2"
-          onPress={reloadApp}
-          size="sm"
-          variant="outline"
+          className="mt-2 max-w-sm rounded-md border border-primary/20 bg-primary/5 px-4 py-3"
+          testID="ota-restart-instruction"
         >
-          <Text className="text-xs">Tải lại để cập nhật</Text>
-        </Button>
+          <Text className="text-center font-medium text-primary text-xs">
+            Bản cập nhật đã tải xuống.
+          </Text>
+          <Text className="mt-1 text-center text-primary/80 text-xs">
+            Vui lòng khởi động lại ứng dụng để áp dụng bản cập nhật.
+          </Text>
+          <Text className="mt-2 text-center text-primary/60 text-xs">
+            ℹ️ Vuốt lên và mở lại ứng dụng
+          </Text>
+        </View>
       )}
 
-      {/* Error state - show retry button */}
-      {error && (
-        <View className="flex-row items-center gap-2">
-          <Text className="text-destructive text-xs">Kiểm tra thất bại</Text>
+      {/* Error state - show error message and retry button */}
+      {error && !isUpdateAvailable && (
+        <View className="flex-col items-center gap-2">
+          {/* Vietnamese error message */}
+          <Text className="text-center text-destructive text-xs">
+            {error.message.includes('Update check failed')
+              ? 'Kiểm tra cập nhật thất bại'
+              : 'Đã xảy ra lỗi. Vui lòng thử lại.'}
+          </Text>
+          {/* Retry button for download errors */}
           <Button
             accessibilityHint="Kiểm tra lại để tìm bản cập nhật mới"
             accessibilityLabel="Thử lại kiểm tra cập nhật"
             accessible
             onPress={checkForUpdates}
             size="sm"
+            testID="retry-update-check-button"
             variant="ghost"
           >
             <Text className="text-xs">Thử lại</Text>

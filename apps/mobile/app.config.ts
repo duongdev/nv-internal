@@ -116,9 +116,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     requestHeaders: {
       'expo-channel-name': process.env.EXPO_PUBLIC_ENV || 'production',
     },
-    // Disable automatic error recovery to prevent tryRelaunchFromCache() crash
-    // This was causing production crashes during app startup
-    checkAutomatically: 'ON_LOAD',
+    // CRITICAL: Set to 'NEVER' to prevent tryRelaunchFromCache() crash
+    // This disables automatic error recovery which causes native crashes when
+    // users tap "Tải lại để cập nhật" button to apply OTA updates manually.
+    // Manual updates via Updates.reloadAsync() will still work safely.
+    // See: PSN-14, Build #36 crash fix (.claude/tasks/20251110-001736-expo-updates-crash-fix.md)
+    checkAutomatically: 'NEVER',
     fallbackToCacheTimeout: 0,
   },
   runtimeVersion: {

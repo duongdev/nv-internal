@@ -103,6 +103,40 @@ get_app_version() {
   echo "$VERSION"
 }
 
+# Get and increment build number
+get_build_number() {
+  log_info "Getting build number from GitHub..."
+
+  # Check if gh CLI is installed
+  if ! command -v gh &> /dev/null; then
+    log_warning "GitHub CLI (gh) not found - using timestamp as build number"
+    echo "$(date +%s)"
+    return
+  fi
+
+  # Try to get build number from GitHub variable
+  if [ -n "$GH_TOKEN" ] || [ -n "$GITHUB_TOKEN" ]; then
+    BUILD=$(gh variable get BUILD_NUMBER --repo "${GITHUB_REPOSITORY:-duongdev/nv-internal}" 2>/dev/null || echo "")
+
+    if [ -n "$BUILD" ] && [[ "$BUILD" =~ ^[0-9]+$ ]]; then
+      NEW_BUILD=$((BUILD + 1))
+
+      # Try to update GitHub variable if not in CI
+      if [ -z "$CI" ]; then
+        gh variable set BUILD_NUMBER --body "$NEW_BUILD" --repo "${GITHUB_REPOSITORY:-duongdev/nv-internal}" 2>/dev/null || log_warning "Could not update BUILD_NUMBER in GitHub"
+      fi
+
+      log_success "Build number: $NEW_BUILD"
+      echo "$NEW_BUILD"
+      return
+    fi
+  fi
+
+  # Fallback to timestamp
+  log_warning "Could not get BUILD_NUMBER from GitHub - using timestamp"
+  echo "$(date +%s)"
+}
+
 # Run quality checks
 run_quality_checks() {
   if [ "$SKIP_CHECKS" = true ]; then
@@ -144,10 +178,11 @@ check_git_status() {
 # Publish OTA
 publish_ota() {
   local version=$1
+  local build=$2
 
   if [ "$DRY_RUN" = true ]; then
     log_warning "DRY RUN - would execute:"
-    log_info "cd apps/mobile && eas update --channel $CHANNEL --message \"Deploy v$version to $CHANNEL\" --non-interactive"
+    log_info "cd apps/mobile && eas update --channel $CHANNEL --message \"Deploy v$version ($build) to $CHANNEL\" --non-interactive"
     return
   fi
 
@@ -155,7 +190,7 @@ publish_ota() {
 
   cd apps/mobile
 
-  if eas update --channel "$CHANNEL" --message "Deploy v$version to $CHANNEL" --non-interactive; then
+  if eas update --channel "$CHANNEL" --message "Deploy v$version ($build) to $CHANNEL" --non-interactive; then
     log_success "OTA published successfully"
     cd - > /dev/null
     return 0
@@ -233,8 +268,9 @@ main() {
   check_git_status
   echo ""
 
-  # Get version
+  # Get version and build number
   VERSION=$(get_app_version)
+  BUILD=$(get_build_number)
   echo ""
 
   # Quality checks
@@ -245,6 +281,7 @@ main() {
   log_info "Ready to publish OTA:"
   log_info "  Channel: $CHANNEL"
   log_info "  Version: $VERSION"
+  log_info "  Build: $BUILD"
   log_info "  Dry Run: $DRY_RUN"
   log_info "  Notify: $NOTIFY"
   echo ""
@@ -261,7 +298,7 @@ main() {
   echo ""
 
   # Publish
-  publish_ota "$VERSION" || exit 1
+  publish_ota "$VERSION" "$BUILD" || exit 1
   echo ""
 
   # Post-publish
