@@ -138,6 +138,11 @@ export const FEATURE_FLAGS = {
 
   // Shared Features
   // (Add flags available to all users here)
+
+  // Account Management
+  /** Enable/disable account deletion feature (Apple App Store compliance) */
+  // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE for constants is intentional
+  ACCOUNT_DELETION_ENABLED: 'account-deletion-enabled',
 } as const
 
 export type FeatureFlagKey = (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS]
