@@ -65,21 +65,21 @@ pnpm biome:check --write .            # Format and lint
 
 **Complex Feature (Spec-First)**:
 ```
-/pm:spec:create → /pm:spec:write → /pm:spec:review → /pm:spec:break-down
-→ backend-engineer/frontend-engineer (implement) → /pm:verification:check
-→ code-quality-enforcer → qa-ui → /pm:complete:finalize
+/ccpm:pm:spec:create → /ccpm:pm:spec:write → /ccpm:pm:spec:review → /ccpm:pm:spec:break-down
+→ backend-engineer/frontend-engineer (implement) → /ccpm:pm:verification:check
+→ code-quality-enforcer → qa-ui → /ccpm:pm:complete:finalize
 ```
 
 **Quick Task (Task-First)**:
 ```
-/pm:planning:create → backend-engineer/frontend-engineer (implement)
-→ /pm:verification:check → code-quality-enforcer → /pm:complete:finalize
+/ccpm:pm:planning:create → backend-engineer/frontend-engineer (implement)
+→ /ccpm:pm:verification:check → code-quality-enforcer → /ccpm:pm:complete:finalize
 ```
 
 **Bug Fix**:
 ```
-/pm:planning:quick-plan → backend-engineer/frontend-engineer (fix)
-→ code-quality-enforcer → qa-ui (verify) → /pm:complete:finalize
+/ccpm:pm:planning:quick-plan → backend-engineer/frontend-engineer (fix)
+→ code-quality-enforcer → qa-ui (verify) → /ccpm:pm:complete:finalize
 ```
 
 **Detailed Workflows**: [.claude/docs/agent-workflows.md](./.claude/docs/agent-workflows.md)
@@ -107,9 +107,9 @@ pnpm biome:check --write .            # Format and lint
 
 ### Project Management
 
-- **PM Commands**: Use `/pm:utils:help` for full command reference
-- **Spec-First Workflow**: `/pm:spec:create` → `/pm:spec:write` → `/pm:spec:break-down` → `/pm:implementation:start`
-- **Task-First Workflow**: `/pm:planning:create` → `/pm:implementation:start` → `/pm:verification:check` → `/pm:complete:finalize`
+- **PM Commands**: Use `/ccpm:pm:utils:help` for full command reference
+- **Spec-First Workflow**: `/ccpm:pm:spec:create` → `/ccpm:pm:spec:write` → `/ccpm:pm:spec:break-down` → `/ccpm:pm:implementation:start`
+- **Task-First Workflow**: `/ccpm:pm:planning:create` → `/ccpm:pm:implementation:start` → `/ccpm:pm:verification:check` → `/ccpm:pm:complete:finalize`
 
 ### Project Knowledge
 
@@ -121,7 +121,7 @@ pnpm biome:check --write .            # Format and lint
 ### Legacy Reference (Read-Only)
 
 - **Legacy Task Files**: [.claude/tasks/](./.claude/tasks/) - Historical context only
-- **Legacy V1 Plans**: [.claude/plans/v1/README.md](./.claude/plans/v1/README.md) - Migrate to Linear via `/pm:spec:migrate`
+- **Legacy V1 Plans**: [.claude/plans/v1/README.md](./.claude/plans/v1/README.md) - Migrate to Linear via `/ccpm:pm:spec:migrate`
 - **Enhancement Ideas**: [.claude/enhancements/README.md](./.claude/enhancements/README.md) - Create Linear features instead
 
 ---
@@ -212,14 +212,14 @@ Before committing:
 
 ### Task Documentation
 
-**ALWAYS use Linear for task tracking** (via `/pm:*` commands):
-- Use `/pm:planning:create` for quick tasks
-- Use `/pm:spec:create` for complex features (epic/feature)
+**ALWAYS use Linear for task tracking** (via `/ccpm:pm:*` commands):
+- Use `/ccpm:pm:planning:create` for quick tasks
+- Use `/ccpm:pm:spec:create` for complex features (epic/feature)
 - Track progress with Linear comments and subtasks
 - Link to spec documents for planning
 - Extract learnings to patterns in CLAUDE.md
 
-**Legacy task files** (`.claude/tasks/`, `.claude/plans/v1/`): Read-only reference, use `/pm:spec:migrate` to import if needed
+**Legacy task files** (`.claude/tasks/`, `.claude/plans/v1/`): Read-only reference, use `/ccpm:pm:spec:migrate` to import if needed
 
 ### Testing
 
@@ -236,11 +236,11 @@ Before committing:
 
 | Scenario | Action |
 |----------|--------|
-| Implementing complex feature | `/pm:spec:create epic/feature` + spec doc |
-| Quick task or bug fix | `/pm:planning:create` or `/pm:planning:quick-plan` |
+| Implementing complex feature | `/ccpm:pm:spec:create epic/feature` + spec doc |
+| Quick task or bug fix | `/ccpm:pm:planning:create` or `/ccpm:pm:planning:quick-plan` |
 | New pattern discovered | Update CLAUDE.md + reference Linear issue |
 | Testing mobile | Test plan in Linear comments + QA results |
-| Legacy content needed | `/pm:spec:migrate` to import to Linear |
+| Legacy content needed | `/ccpm:pm:spec:migrate` to import to Linear |
 
 ### Before Invoking Agents
 
@@ -302,6 +302,6 @@ This file provides project-specific guidance. For global Claude Code instruction
 
 ---
 
-**Last Updated**: 2025-11-07
-**Structure Version**: 2.0 (Reorganized for maintainability)
+**Last Updated**: 2025-11-10
+**Structure Version**: 2.1 (Updated PM commands to /ccpm:pm: prefix)
 **Backup**: Original version available as `CLAUDE.md.backup`
