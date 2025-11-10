@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { Text } from '@/components/ui/text'
 
 export type DeleteAccountFirstWarningProps = {
@@ -55,56 +56,44 @@ export const DeleteAccountFirstWarning: FC<DeleteAccountFirstWarningProps> = ({
                 Hành động này không thể hoàn tác. Bạn sẽ mất:
               </Text>
 
-              <View className="gap-2.5">
-                <View className="flex-row gap-2">
-                  <Text className="font-semibold text-base text-destructive leading-6">
-                    •
-                  </Text>
-                  <Text className="flex-1 font-medium text-base text-foreground leading-6">
-                    Quyền truy cập vào tài khoản
-                  </Text>
-                </View>
-
-                <View className="flex-row gap-2 pl-4">
-                  <Text className="text-muted-foreground text-sm leading-5">
-                    ◦
-                  </Text>
-                  <Text className="flex-1 text-muted-foreground text-sm leading-5">
-                    Tất cả dữ liệu cá nhân
-                  </Text>
-                </View>
-
-                <View className="flex-row gap-2 pl-4">
-                  <Text className="text-muted-foreground text-sm leading-5">
-                    ◦
-                  </Text>
-                  <Text className="flex-1 text-muted-foreground text-sm leading-5">
-                    Lịch sử công việc
-                  </Text>
-                </View>
+              <View className="items-start gap-2">
+                <Text className="text-base text-foreground">
+                  • Quyền truy cập vào tài khoản
+                </Text>
+                <Text className="text-base text-foreground">
+                  • Tất cả dữ liệu cá nhân
+                </Text>
+                <Text className="text-base text-foreground">
+                  • Lịch sử công việc
+                </Text>
               </View>
             </View>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel
-            accessibilityHint="Hủy bỏ việc xóa tài khoản"
-            accessibilityLabel="Hủy"
-            accessibilityRole="button"
-            onPress={onCancel}
-            testID="delete-account-cancel-button"
-          >
-            <Text>Hủy</Text>
+          <AlertDialogCancel asChild>
+            <Button
+              accessibilityHint="Hủy bỏ việc xóa tài khoản"
+              accessibilityLabel="Hủy"
+              accessibilityRole="button"
+              onPress={onCancel}
+              testID="delete-account-cancel-button"
+              variant="outline"
+            >
+              <Text>Hủy</Text>
+            </Button>
           </AlertDialogCancel>
-          <AlertDialogAction
-            accessibilityHint="Tiếp tục đến bước xác nhận cuối cùng"
-            accessibilityLabel="Tiếp tục"
-            accessibilityRole="button"
-            className="bg-destructive active:bg-destructive/80"
-            onPress={onContinue}
-            testID="delete-account-continue-button"
-          >
-            <Text className="text-white">Tiếp tục</Text>
+          <AlertDialogAction asChild>
+            <Button
+              accessibilityHint="Tiếp tục đến bước xác nhận cuối cùng"
+              accessibilityLabel="Tiếp tục"
+              accessibilityRole="button"
+              onPress={onContinue}
+              testID="delete-account-continue-button"
+              variant="destructive"
+            >
+              <Text>Tiếp tục</Text>
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

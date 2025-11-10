@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Text } from '@/components/ui/text'
 
@@ -105,33 +106,38 @@ export const DeleteAccountFinalConfirmation: FC<
         </View>
 
         <AlertDialogFooter>
-          <AlertDialogCancel
-            accessibilityHint="Hủy bỏ việc xóa tài khoản"
-            accessibilityLabel="Hủy"
-            accessibilityRole="button"
-            disabled={isDeleting}
-            onPress={handleCancel}
-            testID="delete-account-final-cancel-button"
-          >
-            <Text>Hủy</Text>
+          <AlertDialogCancel asChild>
+            <Button
+              accessibilityHint="Hủy bỏ việc xóa tài khoản"
+              accessibilityLabel="Hủy"
+              accessibilityRole="button"
+              disabled={isDeleting}
+              onPress={handleCancel}
+              testID="delete-account-final-cancel-button"
+              variant="outline"
+            >
+              <Text>Hủy</Text>
+            </Button>
           </AlertDialogCancel>
-          <AlertDialogAction
-            accessibilityHint="Xóa tài khoản vĩnh viễn"
-            accessibilityLabel="Xóa tài khoản vĩnh viễn"
-            accessibilityRole="button"
-            className="bg-destructive active:bg-destructive/80"
-            disabled={!isValid || isDeleting}
-            onPress={handleConfirm}
-            testID="delete-account-final-confirm-button"
-          >
-            {isDeleting ? (
-              <View className="flex-row items-center gap-2">
-                <ActivityIndicator color="white" size="small" />
-                <Text className="text-white">Đang xóa...</Text>
-              </View>
-            ) : (
-              <Text className="text-white">Xóa tài khoản vĩnh viễn</Text>
-            )}
+          <AlertDialogAction asChild>
+            <Button
+              accessibilityHint="Xóa tài khoản vĩnh viễn"
+              accessibilityLabel="Xóa tài khoản vĩnh viễn"
+              accessibilityRole="button"
+              disabled={!isValid || isDeleting}
+              onPress={handleConfirm}
+              testID="delete-account-final-confirm-button"
+              variant="destructive"
+            >
+              {isDeleting ? (
+                <View className="flex-row items-center gap-2">
+                  <ActivityIndicator color="white" size="small" />
+                  <Text>Đang xóa...</Text>
+                </View>
+              ) : (
+                <Text>Xóa tài khoản vĩnh viễn</Text>
+              )}
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
