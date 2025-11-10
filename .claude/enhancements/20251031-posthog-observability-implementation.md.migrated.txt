@@ -1,0 +1,8 @@
+This enhancement has been migrated to Linear.
+
+Linear Issue: PSN-6
+Title: PostHog Observability - Analytics, Feature Flags & Error Tracking
+URL: https://linear.app/withdustin/issue/PSN-6/posthog-observability-analytics-feature-flags-error-tracking
+Migrated: 2025-11-10
+
+Original file preserved at: .claude/enhancements/20251031-posthog-observability-implementation.md

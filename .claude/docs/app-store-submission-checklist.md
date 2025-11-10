@@ -252,19 +252,56 @@ eas credentials --platform ios
     - **2.3 Accurate Metadata**: Screenshots and description match app
     - **5.1 Privacy**: Proper disclosure of data collection
 
-- [ ] **Prepare Demo Account for Reviewers** (if app requires login)
+- [ ] **Prepare Demo Account for Reviewers** (REQUIRED - app requires login)
   - **CRITICAL**: Create test account for Apple reviewers
-  - Provide username and password in App Store Connect
-  - Account should have access to all features
-  - Pre-populate with sample data if needed
+  - **Run setup script**:
+    ```bash
+    cd apps/api
+    npx tsx scripts/setup-demo-account.ts
+    ```
+  - **Demo Account Credentials**:
+    - Email: `applereview@namviet.app`
+    - Password: `AppleDemo2025!`
+  - **What's included**:
+    - 6 tasks with various statuses (PREPARING, READY, IN_PROGRESS, COMPLETED, ON_HOLD)
+    - 5 customers (Vietnamese names)
+    - 5 locations (Ho Chi Minh City coordinates)
+    - Activity history (check-ins, completions)
+    - Payment records for completed tasks
+  - **Special features**:
+    - GPS validation bypassed (demo can check in from anywhere)
+    - All worker permissions enabled
+    - Realistic Vietnamese business data
+  - **Monitoring**:
+    ```bash
+    # Check demo account health before submission
+    npx tsx scripts/monitor-demo-account.ts
+    ```
+  - **Documentation**: See `.claude/docs/demo-account-strategy.md` for complete guide
 
 - [ ] **App Review Information in App Store Connect**
-  - Demo account credentials (if required)
+  - Demo account credentials:
+    - Username: `applereview@namviet.app`
+    - Password: `AppleDemo2025!`
   - Contact information (email, phone)
-  - Notes for reviewer explaining:
-    - App is for air conditioning service company employees
-    - GPS features require physical location testing
-    - Any specific test scenarios
+  - Notes for reviewer (copy from demo-account-strategy.md):
+    ```
+    Demo Account Credentials:
+    Email: applereview@namviet.app
+    Password: AppleDemo2025!
+
+    About This App:
+    Nam Việt Internal is a task management app for air conditioning service
+    technicians in Ho Chi Minh City, Vietnam. The demo account has full worker
+    permissions with 6 sample tasks showing various statuses and realistic
+    Vietnamese customer data.
+
+    Important Notes:
+    - GPS validation is relaxed for demo account (no need to visit actual locations)
+    - All features are fully functional
+    - No VPN or special network required
+    - Vietnamese language is intentional (app targets Vietnamese market)
+    ```
 
 ---
 

@@ -63,16 +63,23 @@ pnpm biome:check --write .            # Format and lint
 
 ### Common Workflows
 
-**Feature Implementation**:
+**Complex Feature (Spec-First)**:
 ```
-task-doc-tracker (plan) → backend-engineer/frontend-engineer (implement)
-→ code-quality-enforcer (validate) → qa-ui (test) → task-doc-tracker (complete)
+/pm:spec:create → /pm:spec:write → /pm:spec:review → /pm:spec:break-down
+→ backend-engineer/frontend-engineer (implement) → /pm:verification:check
+→ code-quality-enforcer → qa-ui → /pm:complete:finalize
+```
+
+**Quick Task (Task-First)**:
+```
+/pm:planning:create → backend-engineer/frontend-engineer (implement)
+→ /pm:verification:check → code-quality-enforcer → /pm:complete:finalize
 ```
 
 **Bug Fix**:
 ```
-backend-engineer/frontend-engineer (fix) → code-quality-enforcer (validate)
-→ qa-ui (verify) → task-doc-tracker (document)
+/pm:planning:quick-plan → backend-engineer/frontend-engineer (fix)
+→ code-quality-enforcer → qa-ui (verify) → /pm:complete:finalize
 ```
 
 **Detailed Workflows**: [.claude/docs/agent-workflows.md](./.claude/docs/agent-workflows.md)
@@ -98,17 +105,24 @@ backend-engineer/frontend-engineer (fix) → code-quality-enforcer (validate)
 - **Testing Guide**: [docs/testing/README.md](./docs/testing/README.md)
 - **Mobile-MCP Testing**: [docs/testing/mobile-mcp.md](./docs/testing/mobile-mcp.md)
 
-### Feature Planning
+### Project Management
 
-- **V1 Master Plan**: [.claude/plans/v1/README.md](./.claude/plans/v1/README.md)
-- **Enhancement Ideas**: [.claude/enhancements/README.md](./.claude/enhancements/README.md)
+- **PM Commands**: Use `/pm:utils:help` for full command reference
+- **Spec-First Workflow**: `/pm:spec:create` → `/pm:spec:write` → `/pm:spec:break-down` → `/pm:implementation:start`
+- **Task-First Workflow**: `/pm:planning:create` → `/pm:implementation:start` → `/pm:verification:check` → `/pm:complete:finalize`
 
 ### Project Knowledge
 
-- **Task Documentation**: [.claude/tasks/](./.claude/tasks/)
-- **Documentation Standards**: [.claude/memory/documentation-structure.md](./.claude/memory/documentation-structure.md)
+- **Linear Migration Guide**: [.claude/docs/linear-migration-guide.md](./.claude/docs/linear-migration-guide.md) - **READ THIS** for PM workflow migration
 - **Feature Flags Guide**: [.claude/docs/feature-flags-guide.md](./.claude/docs/feature-flags-guide.md)
 - **Error Tracking Guide**: [.claude/docs/error-tracking-guide.md](./.claude/docs/error-tracking-guide.md)
+- **Documentation Standards**: [.claude/memory/documentation-structure.md](./.claude/memory/documentation-structure.md)
+
+### Legacy Reference (Read-Only)
+
+- **Legacy Task Files**: [.claude/tasks/](./.claude/tasks/) - Historical context only
+- **Legacy V1 Plans**: [.claude/plans/v1/README.md](./.claude/plans/v1/README.md) - Migrate to Linear via `/pm:spec:migrate`
+- **Enhancement Ideas**: [.claude/enhancements/README.md](./.claude/enhancements/README.md) - Create Linear features instead
 
 ---
 
@@ -198,11 +212,14 @@ Before committing:
 
 ### Task Documentation
 
-**ALWAYS document work in `.claude/tasks/`**:
-- Format: `YYYYMMDD-HHMMSS-description.md`
-- Track problem, implementation, decisions, testing
-- Link to v1 plans if applicable
-- Extract learnings to patterns
+**ALWAYS use Linear for task tracking** (via `/pm:*` commands):
+- Use `/pm:planning:create` for quick tasks
+- Use `/pm:spec:create` for complex features (epic/feature)
+- Track progress with Linear comments and subtasks
+- Link to spec documents for planning
+- Extract learnings to patterns in CLAUDE.md
+
+**Legacy task files** (`.claude/tasks/`, `.claude/plans/v1/`): Read-only reference, use `/pm:spec:migrate` to import if needed
 
 ### Testing
 
@@ -217,21 +234,21 @@ Before committing:
 
 ### When to Create What
 
-| Scenario | Create |
+| Scenario | Action |
 |----------|--------|
-| Implementing v1 feature | Task file + link to v1 plan |
-| Bug fix | Task file with reproduction |
-| New pattern discovered | Task file + update CHANGELOG |
-| Future idea | Enhancement doc in `.claude/enhancements/` |
-| Testing mobile | Test plan + scenarios + results |
+| Implementing complex feature | `/pm:spec:create epic/feature` + spec doc |
+| Quick task or bug fix | `/pm:planning:create` or `/pm:planning:quick-plan` |
+| New pattern discovered | Update CLAUDE.md + reference Linear issue |
+| Testing mobile | Test plan in Linear comments + QA results |
+| Legacy content needed | `/pm:spec:migrate` to import to Linear |
 
 ### Before Invoking Agents
 
-- **backend-engineer**: Have API contract, requirements, patterns to follow
-- **frontend-engineer**: Have UI/UX requirements, API endpoints, accessibility needs
+- **backend-engineer**: Have API contract, requirements, patterns to follow (create Linear issue first)
+- **frontend-engineer**: Have UI/UX requirements, API endpoints, accessibility needs (create Linear issue first)
 - **code-quality-enforcer**: Have changes staged, ready to validate
-- **qa-ui**: Have test plan, expected behaviors, edge cases
-- **task-doc-tracker**: Have work status, learnings to document
+- **qa-ui**: Have test plan, expected behaviors, edge cases (document in Linear)
+- **task-doc-tracker**: Have Linear issue ID, work status, learnings to extract to CLAUDE.md
 
 ### Common Commands by Context
 

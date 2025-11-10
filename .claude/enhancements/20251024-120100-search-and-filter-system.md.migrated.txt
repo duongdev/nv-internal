@@ -1,0 +1,8 @@
+This enhancement has been migrated to Linear.
+
+Linear Issue: PSN-7
+Title: Task Search and Filter System - Essential for Scalability
+URL: https://linear.app/withdustin/issue/PSN-7/task-search-and-filter-system-essential-for-scalability
+Migrated: 2025-11-10
+
+Original file preserved at: .claude/enhancements/20251024-120100-search-and-filter-system.md
