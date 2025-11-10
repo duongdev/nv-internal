@@ -38,16 +38,21 @@ export const DeleteAccountDialog: FC<DeleteAccountDialogProps> = ({
     }
   }, [open, state, openDialog, closeDialog])
 
-  // Notify parent when dialog is closed internally
-  const handleClose = () => {
+  // Notify parent when dialog is closed internally (only from first warning cancel)
+  const handleFirstWarningClose = () => {
     closeDialog()
     onOpenChange(false)
+  }
+
+  // For final confirmation, just go back to first warning (don't close entirely)
+  const handleFinalConfirmationCancel = () => {
+    goBackToWarning()
   }
 
   return (
     <>
       <DeleteAccountFirstWarning
-        onCancel={handleClose}
+        onCancel={handleFirstWarningClose}
         onContinue={proceedToFinal}
         open={state === 'first-warning'}
       />
@@ -55,7 +60,7 @@ export const DeleteAccountDialog: FC<DeleteAccountDialogProps> = ({
       <DeleteAccountFinalConfirmation
         error={error}
         isDeleting={isDeleting}
-        onCancel={goBackToWarning}
+        onCancel={handleFinalConfirmationCancel}
         onConfirm={confirmDeletion}
         open={state === 'final-confirmation' || state === 'deleting'}
       />

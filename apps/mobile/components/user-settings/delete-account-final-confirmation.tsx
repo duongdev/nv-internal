@@ -50,14 +50,7 @@ export const DeleteAccountFinalConfirmation: FC<
   }
 
   return (
-    <AlertDialog
-      onOpenChange={(isOpen) => {
-        if (!isOpen && !isDeleting) {
-          handleCancel()
-        }
-      }}
-      open={open}
-    >
+    <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <View className="flex-row items-center gap-2 self-start">

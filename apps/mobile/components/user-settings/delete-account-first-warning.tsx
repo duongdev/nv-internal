@@ -29,7 +29,7 @@ export const DeleteAccountFirstWarning: FC<DeleteAccountFirstWarningProps> = ({
   onCancel,
 }) => {
   return (
-    <AlertDialog onOpenChange={(isOpen) => !isOpen && onCancel()} open={open}>
+    <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <View className="flex-row items-center gap-2 self-start">
