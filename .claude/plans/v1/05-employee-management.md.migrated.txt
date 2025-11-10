@@ -1,0 +1,8 @@
+This spec has been migrated to Linear.
+
+Linear Issue: PSN-4
+Title: Employee Management Enhancements - Profile Updates and Deletion
+URL: https://linear.app/withdustin/issue/PSN-4/employee-management-enhancements-profile-updates-and-deletion
+Migrated: 2025-11-10
+
+Original file preserved at: .claude/plans/v1/05-employee-management.md

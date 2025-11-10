@@ -13,8 +13,9 @@ import {
   ShieldUserIcon,
   SquareAsteriskIcon,
   SunMoonIcon,
+  TrashIcon,
 } from 'lucide-react-native'
-import type { FC } from 'react'
+import { type FC, useState } from 'react'
 import { Alert, View } from 'react-native'
 import type { User } from '@/api/user/use-user-list'
 import { MenuGroup, MenuItem } from '@/components/ui/menu'
@@ -22,7 +23,9 @@ import { Separator } from '@/components/ui/separator'
 import { Text } from '@/components/ui/text'
 import { UserAvatar } from '@/components/user-avatar'
 import { UserRoleBadge } from '@/components/user-role-badge'
+import { DeleteAccountDialog } from '@/components/user-settings/delete-account-dialog'
 import { VersionInfoFooter } from '@/components/version-info-footer'
+import { FEATURE_FLAGS, useFeatureFlag } from '@/hooks/use-feature-flag'
 import { saveModulePreference } from '@/lib/module-preference'
 import {
   formatPhoneNumber,
@@ -41,6 +44,12 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
   const { signOut } = useAuth()
   const queryClient = useQueryClient()
   const router = useRouter()
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  // Feature flag for account deletion
+  const { isEnabled: isAccountDeletionEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.ACCOUNT_DELETION_ENABLED,
+  )
 
   if (!user) {
     return null
@@ -95,7 +104,7 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
           '__clerk_session_id',
         ]
         for (const key of clerkKeys) {
-          await SecureStore.deleteItemAsync(key).catch((error: unknown) => {
+          await SecureStore.deleteItemAsync(key).catch(() => {
             // Ignore errors if key doesn't exist
           })
         }
@@ -227,6 +236,21 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
             rightIcon={ChevronRightIcon}
           />
         </Link>
+        {isAccountDeletionEnabled && (
+          <>
+            <Separator />
+            <MenuItem
+              accessibilityHint="Xóa vĩnh viễn tài khoản của bạn"
+              accessibilityLabel="Xóa tài khoản"
+              accessibilityRole="button"
+              contentClassName="!text-destructive"
+              label="Xóa tài khoản"
+              leftIcon={TrashIcon}
+              onPress={() => setIsDeleteDialogOpen(true)}
+              testID="delete-account-button"
+            />
+          </>
+        )}
         <Separator />
         <MenuItem
           contentClassName="!text-destructive"
@@ -244,6 +268,10 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
           }
         />
       </MenuGroup>
+      <DeleteAccountDialog
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+      />
       <VersionInfoFooter className="mt-8" />
     </View>
   )

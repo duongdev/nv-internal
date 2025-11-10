@@ -28,6 +28,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.2",
     "@vercel/node": "^5.3.17",
+    "esbuild-register": "^3.6.0",
     "typescript": "^5.9.3",
     "vercel": "^46.1.1"
   },

@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import accountApp from './account/account.route'
 import activityApp from './activity/activity.route'
 import attachmentApp from './attachment/attachment.route'
 import { authMiddleware } from './middlewares/auth'
@@ -12,6 +13,7 @@ export const hono = new Hono()
   .get('/health', (c) => c.text('ok'))
   .use('*', authMiddleware)
 
+  .route('/account', accountApp)
   .route('/activity', activityApp)
   .route('/task', taskApp)
   .route('/task', taskEventsApp)

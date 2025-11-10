@@ -1,0 +1,372 @@
+ACCOUNT DELETION UI - WIREFRAMES
+================================
+
+User Flow: Settings → First Confirmation → Final Confirmation → Deleting → Success → Sign-In
+
+
+SCREEN 1: SETTINGS (ENTRY POINT)
+=================================
+
+┌─────────────────────────────────────┐
+│  ← Cài đặt                          │
+├─────────────────────────────────────┤
+│                                     │
+│  👤 [User Avatar]                   │
+│     Nguyễn Văn A                    │
+│     nva@example.com                 │
+│                                     │
+│  ───────────────────────────────    │
+│                                     │
+│  🌙  Giao diện              ›       │
+│  📊  Báo cáo nhân viên      ›       │
+│  🔁  Chuyển sang tài khoản thợ ›    │
+│                                     │
+│  ───────────────────────────────    │
+│                                     │
+│  🔒  Quản lý tài khoản      ›       │
+│  🔑  Đổi mật khẩu           ›       │
+│  🚪  Đăng xuất                      │
+│                                     │
+│  ───────────────────────────────    │
+│                                     │
+│  🗑️   Xóa tài khoản                 │ ← NEW (Red text, feature flag controlled)
+│                                     │
+│  Version 1.0.0 (Build 123)          │
+└─────────────────────────────────────┘
+
+Notes:
+- Delete button only shows when PostHog flag "account-deletion-enabled" is true
+- Red text color (destructive styling)
+- Trash icon (🗑️) on left side
+- No chevron (›) on right (it's an action, not navigation)
+
+
+SCREEN 2: FIRST CONFIRMATION DIALOG
+====================================
+
+┌─────────────────────────────────────┐
+│                                     │
+│     [Dimmed Background]             │
+│                                     │
+│   ┌─────────────────────────────┐   │
+│   │  Xóa tài khoản?             │   │ ← Title
+│   ├─────────────────────────────┤   │
+│   │                             │   │
+│   │  Hành động này không thể    │   │
+│   │  hoàn tác. Tất cả dữ liệu   │   │
+│   │  của bạn sẽ bị xóa vĩnh     │   │ ← Warning message
+│   │  viễn.                      │   │
+│   │                             │   │
+│   │  Dữ liệu sẽ bị xóa:         │   │ ← Section header
+│   │    ❌ Thông tin cá nhân     │   │
+│   │    ❌ Lịch sử công việc     │   │ ← List of data
+│   │    ❌ Hình ảnh đã tải lên   │   │
+│   │    ❌ Lịch sử check-in      │   │
+│   │                             │   │
+│   ├─────────────────────────────┤   │
+│   │                             │   │
+│   │   [Hủy]    [Tiếp tục]       │   │ ← Action buttons
+│   │                             │   │
+│   └─────────────────────────────┘   │
+│                                     │
+└─────────────────────────────────────┘
+
+Notes:
+- Modal dialog (AlertDialog component)
+- Semi-transparent black background
+- White card with rounded corners
+- "Hủy" button: outline style (default)
+- "Tiếp tục" button: primary style (blue)
+- Tapping "Hủy" closes dialog
+- Tapping "Tiếp tục" proceeds to final confirmation
+
+
+SCREEN 3: FINAL CONFIRMATION DIALOG
+====================================
+
+┌─────────────────────────────────────┐
+│                                     │
+│     [Dimmed Background]             │
+│                                     │
+│   ┌─────────────────────────────┐   │
+│   │  Xác nhận xóa tài khoản     │   │ ← Title
+│   ├─────────────────────────────┤   │
+│   │                             │   │
+│   │  Nhập "XÓA TÀI KHOẢN" để    │   │ ← Instructions
+│   │  xác nhận xóa tài khoản     │   │
+│   │  vĩnh viễn.                 │   │
+│   │                             │   │
+│   │  ┌───────────────────────┐  │   │
+│   │  │ XÓA TÀI KHOẢN         │  │   │ ← Text input (user types here)
+│   │  └───────────────────────┘  │   │
+│   │                             │   │
+│   │  ⚠️ Vui lòng nhập chính xác │   │ ← Error hint (shows if wrong)
+│   │                             │   │
+│   ├─────────────────────────────┤   │
+│   │                             │   │
+│   │   [Hủy]                     │   │ ← Cancel button
+│   │   [Xóa tài khoản vĩnh viễn] │   │ ← Confirm button (red, destructive)
+│   │                             │   │
+│   └─────────────────────────────┘   │
+│                                     │
+└─────────────────────────────────────┘
+
+Notes:
+- Text input field with placeholder "XÓA TÀI KHOẢN"
+- Validation: user must type exact phrase (case-insensitive)
+- Confirm button DISABLED until phrase matches
+- Confirm button RED (destructive style)
+- Error hint only shows if user types incorrect text
+- Tapping "Hủy" returns to Settings (closes all dialogs)
+
+
+SCREEN 4: DELETING STATE (LOADING)
+===================================
+
+┌─────────────────────────────────────┐
+│                                     │
+│     [Dimmed Background]             │
+│                                     │
+│   ┌─────────────────────────────┐   │
+│   │  Xác nhận xóa tài khoản     │   │
+│   ├─────────────────────────────┤   │
+│   │                             │   │
+│   │  Nhập "XÓA TÀI KHOẢN" để    │   │
+│   │  xác nhận xóa tài khoản     │   │
+│   │  vĩnh viễn.                 │   │
+│   │                             │   │
+│   │  ┌───────────────────────┐  │   │
+│   │  │ XÓA TÀI KHOẢN         │  │   │ ← Input DISABLED (grayed out)
+│   │  └───────────────────────┘  │   │
+│   │                             │   │
+│   ├─────────────────────────────┤   │
+│   │                             │   │
+│   │   [Hủy] (disabled)          │   │ ← Cancel DISABLED
+│   │   [⏳ Đang xóa...]          │   │ ← Loading spinner + text
+│   │                             │   │
+│   └─────────────────────────────┘   │
+│                                     │
+└─────────────────────────────────────┘
+
+Notes:
+- Same dialog as Screen 3, but with loading state
+- Input field disabled (grayed out, cannot type)
+- Cancel button disabled (grayed out, cannot tap)
+- Confirm button shows spinner icon + "Đang xóa..." text
+- Confirm button still red but disabled (opacity 50%)
+- API call in progress: DELETE /v1/account
+
+
+SCREEN 5: SUCCESS SCREEN
+=========================
+
+┌─────────────────────────────────────┐
+│                                     │
+│     [Dimmed Background]             │
+│                                     │
+│   ┌─────────────────────────────┐   │
+│   │                             │   │
+│   │           ✅                │   │ ← Large green checkmark
+│   │                             │   │
+│   │    Tài khoản đã được xóa    │   │ ← Success message (header)
+│   │                             │   │
+│   │  Cảm ơn bạn đã sử dụng      │   │ ← Thank you message
+│   │  NV Internal                │   │
+│   │                             │   │
+│   │  Đang chuyển hướng...       │   │ ← Redirecting indicator
+│   │                             │   │
+│   └─────────────────────────────┘   │
+│                                     │
+└─────────────────────────────────────┘
+
+Notes:
+- Full-screen overlay (cannot be dismissed)
+- Large green checkmark icon (size: 64px)
+- Success message in bold
+- Thank you message in regular weight
+- "Đang chuyển hướng..." text in small, muted color
+- Auto-dismisses after 3 seconds
+- No buttons (user cannot interact)
+
+
+SCREEN 6: SIGN-IN (AFTER REDIRECT)
+===================================
+
+┌─────────────────────────────────────┐
+│                                     │
+│        [Logo]                       │ ← NV Internal logo
+│                                     │
+│     Chào mừng đến NV Internal       │ ← Welcome message
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │ Email                         │  │ ← Email input
+│  └───────────────────────────────┘  │
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │ Mật khẩu                      │  │ ← Password input
+│  └───────────────────────────────┘  │
+│                                     │
+│     [Đăng nhập]                     │ ← Sign in button
+│                                     │
+│     Quên mật khẩu?                  │ ← Forgot password link
+│                                     │
+└─────────────────────────────────────┘
+
+Notes:
+- Standard Clerk sign-in screen
+- User automatically redirected here after success screen
+- All local data cleared (AsyncStorage, SecureStore)
+- All TanStack Query cache cleared
+- User must sign in with different account
+- Deleted account cannot sign in again
+
+
+FLOW SUMMARY
+============
+
+1. Settings Screen
+   - User taps "Xóa tài khoản" button (red)
+   ↓
+
+2. First Confirmation Dialog
+   - User reads warning + data list
+   - User taps "Tiếp tục"
+   ↓
+
+3. Final Confirmation Dialog
+   - User types "XÓA TÀI KHOẢN"
+   - Button enables when phrase matches
+   - User taps "Xóa tài khoản vĩnh viễn"
+   ↓
+
+4. Deleting State (Same Dialog)
+   - API call: DELETE /v1/account
+   - Loading spinner shows
+   - All buttons disabled
+   - Waits 2-5 seconds
+   ↓
+
+5. Success Screen
+   - Green checkmark
+   - Success message
+   - Auto-dismiss after 3 seconds
+   ↓
+
+6. Sign-In Screen
+   - User redirected automatically
+   - Clean slate (all data cleared)
+   - User cannot sign in with deleted account
+
+
+ERROR STATES
+============
+
+Network Error (Airplane Mode):
+┌─────────────────────────────────────┐
+│   ⚠️ Không có kết nối mạng          │
+│                                     │
+│   Vui lòng kiểm tra kết nối và     │
+│   thử lại.                          │
+│                                     │
+│   [Đóng]  [Thử lại]                 │
+└─────────────────────────────────────┘
+
+Auth Error (Session Expired):
+┌─────────────────────────────────────┐
+│   ⚠️ Phiên đăng nhập đã hết hạn     │
+│                                     │
+│   Vui lòng đăng nhập lại.           │
+│                                     │
+│   [Đóng]  [Đăng nhập]               │
+└─────────────────────────────────────┘
+
+Server Error:
+┌─────────────────────────────────────┐
+│   ⚠️ Đã xảy ra lỗi                  │
+│                                     │
+│   Không thể xóa tài khoản.          │
+│   Vui lòng thử lại sau.             │
+│                                     │
+│   [Đóng]  [Thử lại]                 │
+└─────────────────────────────────────┘
+
+
+FEATURE FLAG BEHAVIOR
+=====================
+
+When flag is FALSE (disabled):
+┌─────────────────────────────────────┐
+│  🔒  Quản lý tài khoản      ›       │
+│  🔑  Đổi mật khẩu           ›       │
+│  🚪  Đăng xuất                      │
+│                                     │
+│  ───────────────────────────────    │ ← No delete button
+│                                     │
+│  Version 1.0.0 (Build 123)          │
+└─────────────────────────────────────┘
+
+When flag is TRUE (enabled):
+┌─────────────────────────────────────┐
+│  🔒  Quản lý tài khoản      ›       │
+│  🔑  Đổi mật khẩu           ›       │
+│  🚪  Đăng xuất                      │
+│                                     │
+│  ───────────────────────────────    │
+│                                     │
+│  🗑️   Xóa tài khoản                 │ ← Delete button appears
+│                                     │
+│  Version 1.0.0 (Build 123)          │
+└─────────────────────────────────────┘
+
+
+ACCESSIBILITY NOTES
+===================
+
+All interactive elements MUST have 4 required props:
+
+1. accessibilityLabel (Vietnamese description)
+2. accessibilityHint (What happens when activated)
+3. accessibilityRole (button, text, header, etc.)
+4. testID (Unique identifier)
+
+Example for Delete Button:
+- accessibilityLabel="Xóa tài khoản vĩnh viễn"
+- accessibilityHint="Mở hộp thoại xác nhận xóa tài khoản"
+- accessibilityRole="button"
+- testID="settings-delete-account-button"
+
+VoiceOver/TalkBack will announce:
+"Xóa tài khoản vĩnh viễn, button. Mở hộp thoại xác nhận xóa tài khoản."
+
+
+RESPONSIVE BEHAVIOR
+===================
+
+iPhone SE (Small Screen):
+- Dialog takes up more vertical space
+- Buttons stack vertically on small screens
+- Font sizes remain readable
+
+iPhone Pro Max (Large Screen):
+- Dialog centered with padding on sides
+- Buttons remain horizontal
+- More whitespace around content
+
+iPad:
+- Dialog max width: 500px
+- Centered in screen
+- Same behavior as iPhone
+
+
+DARK MODE
+=========
+
+All components support dark mode:
+- Background: Uses theme background color
+- Text: Uses theme foreground color
+- Buttons: Uses theme destructive color for delete actions
+- Dialogs: Uses theme card background
+
+
+END OF WIREFRAMES
+=================
