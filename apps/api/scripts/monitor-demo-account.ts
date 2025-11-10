@@ -30,7 +30,7 @@ const DEMO_EMAIL = 'applereview@namviet.app'
 interface HealthCheckResult {
   status: 'healthy' | 'warning' | 'error'
   message: string
-  details?: any
+  details?: Record<string, unknown>
 }
 
 interface MonitoringReport {
@@ -524,7 +524,7 @@ async function monitorDemoAccount() {
           newestTaskDate: null,
           oldestTaskDate: null,
         },
-        recommendations: generateRecommendations({} as any),
+        recommendations: generateRecommendations({} as MonitoringReport),
       }
 
       if (isJson) {

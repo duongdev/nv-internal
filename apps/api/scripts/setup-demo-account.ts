@@ -24,6 +24,7 @@
  */
 
 import { clerkClient } from '@clerk/backend'
+import type { Customer, GeoLocation, Task } from '@nv-internal/prisma-client'
 import { UserRole } from '@nv-internal/validation'
 import { getLogger } from '../src/lib/log'
 import { getPrisma } from '../src/lib/prisma'
@@ -253,8 +254,8 @@ async function createDemoLocations() {
  */
 async function createDemoTasks(
   userId: string,
-  customers: any[],
-  locations: any[],
+  customers: Customer[],
+  locations: GeoLocation[],
 ) {
   logger.info('Creating demo tasks...')
 
@@ -373,7 +374,7 @@ async function createDemoTasks(
 /**
  * Create activity logs for demo tasks
  */
-async function createDemoActivities(userId: string, tasks: any[]) {
+async function createDemoActivities(userId: string, tasks: Task[]) {
   logger.info('Creating demo activities...')
 
   const activities = []
@@ -432,7 +433,7 @@ async function createDemoActivities(userId: string, tasks: any[]) {
 /**
  * Create payment records for completed tasks
  */
-async function createDemoPayments(userId: string, tasks: any[]) {
+async function createDemoPayments(userId: string, tasks: Task[]) {
   logger.info('Creating demo payments...')
 
   const completedTasks = tasks.filter((t) => t.status === 'COMPLETED')
