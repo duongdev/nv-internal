@@ -313,6 +313,7 @@ jobs:
           echo "  - EXPO_PUBLIC_POSTHOG_API_KEY"
           echo "  - EXPO_PUBLIC_POSTHOG_HOST"
           echo "  - EXPO_PUBLIC_POSTHOG_ENABLED"
+          echo "  - EXPO_PUBLIC_BUILD_NUMBER"
           echo "  - BUILD_NUMBER"
 
       - name: Configure channel-specific environment
@@ -347,6 +348,9 @@ jobs:
           echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_POSTHOG_API_KEY=${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}" >> $GITHUB_ENV
+
+          # Set OTA build number so app can display it
+          echo "EXPO_PUBLIC_BUILD_NUMBER=${{ steps.increment.outputs.build_number }}" >> $GITHUB_ENV
 
           echo "✅ Environment configured for $CHANNEL"
 

@@ -26,14 +26,21 @@ export function getAppVersion(): string {
 /**
  * Get the build number.
  * In Expo Go, returns 'Expo Go' identifier.
- * In production builds, returns native build version.
+ * In production builds, returns OTA build number if available (from EXPO_PUBLIC_BUILD_NUMBER),
+ * otherwise falls back to native build version.
  * Format: Build number as string (e.g., "123")
  */
 export function getBuildNumber(): string {
   if (IS_EXPO_GO) {
     return 'Expo Go'
   }
-  return Application.nativeBuildVersion || 'Unknown'
+  // Prefer OTA build number from workflow (shows actual deployed version)
+  // Falls back to native build number if OTA hasn't been applied yet
+  return (
+    process.env.EXPO_PUBLIC_BUILD_NUMBER ||
+    Application.nativeBuildVersion ||
+    'Unknown'
+  )
 }
 
 /**
