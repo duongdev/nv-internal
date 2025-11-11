@@ -103,3 +103,29 @@ export const zTaskSearchFilterQuery = z.object({
 })
 
 export type TaskSearchFilterQuery = z.infer<typeof zTaskSearchFilterQuery>
+
+// Schema for updating a task (partial fields)
+export const zUpdateTask = z
+  .object({
+    title: z.string().trim().min(2).max(100).optional(),
+    description: z.string().trim().max(5000).optional(),
+    customerPhone: z
+      .string()
+      .trim()
+      .regex(/^0\d{9}$/, 'Số điện thoại phải có 10 chữ số và bắt đầu bằng 0')
+      .optional(),
+    customerName: z.string().trim().max(100).optional(),
+    geoLocation: z
+      .object({
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        address: z.string().trim().max(500).optional(),
+        name: z.string().trim().max(200).optional(),
+      })
+      .optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Phải cập nhật ít nhất một trường',
+  })
+
+export type UpdateTaskValues = z.infer<typeof zUpdateTask>

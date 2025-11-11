@@ -1,5 +1,6 @@
 import type { User } from '@clerk/backend'
-import type { Prisma, Task, TaskStatus } from '@nv-internal/prisma-client'
+import type { Prisma, Task } from '@nv-internal/prisma-client'
+import { TaskStatus } from '@nv-internal/prisma-client'
 import type {
   CreateTaskValues,
   TaskSearchFilterQuery,
@@ -53,42 +54,6 @@ function buildSearchableText(data: {
   // Normalize for Vietnamese accent-insensitive search
   // and collapse multiple spaces into single space
   return normalizeForSearch(parts.join(' ')).replace(/\s+/g, ' ').trim()
-}
-
-/**
- * Refresh searchableText for a specific task
- *
- * Fetches the task with all related data and updates its searchableText field.
- * Useful when customer or location data changes.
- *
- * @param taskId - ID of the task to refresh
- * @param tx - Prisma transaction client
- */
-async function _refreshTaskSearchableText(
-  taskId: number,
-  tx: Prisma.TransactionClient,
-): Promise<void> {
-  const task = await tx.task.findUnique({
-    where: { id: taskId },
-    include: { customer: true, geoLocation: true },
-  })
-
-  if (!task) {
-    return
-  }
-
-  await tx.task.update({
-    where: { id: taskId },
-    data: {
-      searchableText: buildSearchableText({
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        customer: task.customer,
-        geoLocation: task.geoLocation,
-      }),
-    },
-  })
 }
 
 export async function canUserCreateTask({ user }: { user: User }) {
@@ -303,6 +268,7 @@ export async function getTaskList({
   const prisma = getPrisma()
 
   const where: Prisma.TaskWhereInput = {
+    deletedAt: null,
     ...(assignedUserIds ? { assigneeIds: { hasSome: assignedUserIds } } : {}),
     ...(status ? { status: { in: status } } : {}),
   }
@@ -375,6 +341,9 @@ export async function searchAndFilterTasks(
 
   // Build WHERE clause
   const whereConditions: Prisma.TaskWhereInput[] = []
+
+  // Filter out soft-deleted tasks
+  whereConditions.push({ deletedAt: null })
 
   // Access control: Non-admins can ONLY see their assigned tasks
   // Admins can see all tasks UNLESS assignedOnly is explicitly set to 'true'
@@ -505,8 +474,8 @@ export async function searchAndFilterTasks(
 export async function getTaskById({ id }: { id: number }) {
   const prisma = getPrisma()
 
-  const task = await prisma.task.findUnique({
-    where: { id },
+  const task = await prisma.task.findFirst({
+    where: { id, deletedAt: null },
     include: DEFAULT_TASK_INCLUDE,
   })
 
@@ -763,4 +732,369 @@ export async function addTaskComment({
     )
     throw error
   }
+}
+
+/**
+ * Check if user can update a task
+ *
+ * Authorization:
+ * - Admin only
+ * - Cannot update COMPLETED tasks
+ *
+ * @returns { canUpdate: boolean; task?: Task }
+ */
+export async function canUserUpdateTask({
+  user,
+  taskId,
+}: {
+  user: User
+  taskId: number
+}): Promise<{ canUpdate: boolean; task?: Task }> {
+  const prisma = getPrisma()
+
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, deletedAt: null },
+  })
+
+  if (!task) {
+    return { canUpdate: false }
+  }
+
+  if (!isUserAdmin({ user })) {
+    return { canUpdate: false, task }
+  }
+
+  // Business rule: Cannot edit COMPLETED tasks
+  if (task.status === 'COMPLETED') {
+    return { canUpdate: false, task }
+  }
+
+  return { canUpdate: true, task }
+}
+
+/**
+ * Check if user can delete a task
+ *
+ * Authorization:
+ * - Admin only
+ *
+ * Business Rules:
+ * - Cannot delete if task has payments
+ * - Cannot delete if task has check-ins
+ * - Can only delete PREPARING or READY tasks
+ *
+ * @returns { canDelete: boolean; task?: Task; reason?: string }
+ */
+export async function canUserDeleteTask({
+  user,
+  taskId,
+}: {
+  user: User
+  taskId: number
+}): Promise<{ canDelete: boolean; task?: Task; reason?: string }> {
+  const prisma = getPrisma()
+
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, deletedAt: null },
+    include: { payments: true },
+  })
+
+  if (!task) {
+    return { canDelete: false, reason: 'NOT_FOUND' }
+  }
+
+  if (!isUserAdmin({ user })) {
+    return { canDelete: false, task, reason: 'FORBIDDEN' }
+  }
+
+  // Business rule: Cannot delete if has payments
+  if (task.payments.length > 0) {
+    return { canDelete: false, task, reason: 'HAS_PAYMENTS' }
+  }
+
+  // Business rule: Can only delete PREPARING or READY tasks
+  if (!['PREPARING', 'READY'].includes(task.status)) {
+    return { canDelete: false, task, reason: 'INVALID_STATUS' }
+  }
+
+  // Check for check-ins (from Activity table)
+  const hasCheckIns = await prisma.activity.findFirst({
+    where: {
+      action: 'TASK_CHECKED_IN',
+      topic: `TASK_${taskId}`,
+    },
+  })
+
+  if (hasCheckIns) {
+    return { canDelete: false, task, reason: 'HAS_CHECK_INS' }
+  }
+
+  return { canDelete: true, task }
+}
+
+/**
+ * Update a task
+ *
+ * Authorization: Admin only, cannot update COMPLETED tasks
+ *
+ * Features:
+ * - Customer matching by phone
+ * - GeoLocation update/create
+ * - searchableText refresh
+ * - Activity logging with changed fields
+ * - Transaction-based for data consistency
+ *
+ * @param taskId - ID of the task to update
+ * @param data - Partial task data to update
+ * @param user - User performing the update
+ * @returns Updated task with relations
+ */
+export async function updateTask({
+  taskId,
+  data,
+  user,
+}: {
+  taskId: number
+  data: {
+    title?: string
+    description?: string
+    customerPhone?: string
+    customerName?: string
+    geoLocation?: {
+      lat: number
+      lng: number
+      address?: string
+      name?: string
+    }
+  }
+  user: User
+}): Promise<Task> {
+  const logger = getLogger('task.service:updateTask')
+  const prisma = getPrisma()
+
+  return await prisma.$transaction(async (tx) => {
+    // 1. Get existing task
+    const existingTask = await tx.task.findFirst({
+      where: { id: taskId, deletedAt: null },
+      include: DEFAULT_TASK_INCLUDE,
+    })
+
+    if (!existingTask) {
+      throw new HTTPException(404, { message: 'Không tìm thấy công việc' })
+    }
+
+    // 2. Handle customer updates
+    let customerId = existingTask.customerId
+
+    // If phone is provided, try to match existing customer
+    if (data.customerPhone) {
+      let customer = await tx.customer.findFirst({
+        where: { phone: data.customerPhone },
+      })
+
+      if (customer) {
+        // Found existing customer - use their ID
+        customerId = customer.id
+        // Update customer name if provided
+        if (data.customerName) {
+          await tx.customer.update({
+            where: { id: customer.id },
+            data: { name: data.customerName },
+          })
+        }
+      } else {
+        // Customer doesn't exist - create new one
+        customer = await tx.customer.create({
+          data: {
+            phone: data.customerPhone,
+            name: data.customerName || null,
+          },
+        })
+        customerId = customer.id
+      }
+    } else if (data.customerName && existingTask.customerId) {
+      // Only name provided, update existing customer
+      await tx.customer.update({
+        where: { id: existingTask.customerId },
+        data: { name: data.customerName },
+      })
+    }
+
+    // 3. Handle geoLocation updates
+    let geoLocationId = existingTask.geoLocationId
+
+    if (data.geoLocation) {
+      if (existingTask.geoLocationId) {
+        // Update existing location
+        await tx.geoLocation.update({
+          where: { id: existingTask.geoLocationId },
+          data: data.geoLocation,
+        })
+      } else {
+        // Create new location
+        const geoLocation = await tx.geoLocation.create({
+          data: data.geoLocation,
+        })
+        geoLocationId = geoLocation.id
+      }
+    }
+
+    // 4. Update task
+    const updatedTask = await tx.task.update({
+      where: { id: taskId },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+        ...(customerId && { customerId }),
+        ...(geoLocationId && { geoLocationId }),
+      },
+      include: DEFAULT_TASK_INCLUDE,
+    })
+
+    // 5. Refresh searchableText
+    const searchableText = buildSearchableText({
+      id: updatedTask.id,
+      title: updatedTask.title,
+      description: updatedTask.description,
+      customer: updatedTask.customer,
+      geoLocation: updatedTask.geoLocation,
+    })
+
+    await tx.task.update({
+      where: { id: taskId },
+      data: { searchableText },
+    })
+
+    // 6. Log activity with changed fields
+    await createActivity(
+      {
+        action: 'TASK_UPDATED',
+        userId: user.id,
+        topic: { entityType: 'TASK', entityId: taskId },
+        payload: {
+          updatedFields: Object.keys(data),
+          taskId,
+        },
+      },
+      tx,
+    )
+
+    logger.info(
+      {
+        taskId,
+        userId: user.id,
+        updatedFields: Object.keys(data),
+      },
+      'Task updated successfully',
+    )
+
+    return updatedTask
+  })
+}
+
+/**
+ * Delete a task (soft delete)
+ *
+ * Authorization: Admin only
+ *
+ * Business Rules:
+ * - Cannot delete if task has payments
+ * - Cannot delete if task has check-ins
+ * - Can only delete PREPARING or READY tasks
+ *
+ * @param taskId - ID of the task to delete
+ * @param user - User performing the deletion
+ */
+export async function deleteTask({
+  taskId,
+  user,
+}: {
+  taskId: number
+  user: User
+}): Promise<void> {
+  const logger = getLogger('task.service:deleteTask')
+  const prisma = getPrisma()
+
+  await prisma.$transaction(async (tx) => {
+    const task = await tx.task.findFirst({
+      where: { id: taskId, deletedAt: null },
+      include: {
+        payments: true,
+      },
+    })
+
+    if (!task) {
+      throw new HTTPException(404, { message: 'Không tìm thấy công việc' })
+    }
+
+    // Authorization: Only admin can delete tasks
+    if (!isUserAdmin({ user })) {
+      throw new HTTPException(403, {
+        message: 'Không có quyền xóa công việc',
+      })
+    }
+
+    // Validation: Cannot delete tasks with status other than PREPARING or READY
+    if (
+      task.status !== TaskStatus.PREPARING &&
+      task.status !== TaskStatus.READY
+    ) {
+      throw new HTTPException(400, {
+        message: 'Chỉ có thể xóa công việc ở trạng thái Chuẩn bị hoặc Sẵn sàng',
+      })
+    }
+
+    // Validation: Cannot delete if task has payments
+    if (task.payments && task.payments.length > 0) {
+      throw new HTTPException(400, {
+        message: 'Không thể xóa công việc đã có thanh toán',
+      })
+    }
+
+    // Validation: Cannot delete if task has check-ins
+    const checkInActivity = await tx.activity.findFirst({
+      where: {
+        topic: `TASK_${taskId}`,
+        action: 'TASK_CHECKED_IN',
+      },
+    })
+
+    if (checkInActivity) {
+      throw new HTTPException(400, {
+        message: 'Không thể xóa công việc đã có check-in',
+      })
+    }
+
+    // Soft delete
+    await tx.task.update({
+      where: { id: taskId },
+      data: { deletedAt: new Date() },
+    })
+
+    // Log activity
+    await createActivity(
+      {
+        action: 'TASK_DELETED',
+        userId: user.id,
+        topic: { entityType: 'TASK', entityId: taskId },
+        payload: {
+          taskTitle: task.title,
+          taskStatus: task.status,
+          taskId,
+        },
+      },
+      tx,
+    )
+
+    logger.info(
+      {
+        taskId,
+        userId: user.id,
+        taskTitle: task.title,
+      },
+      'Task deleted successfully',
+    )
+  })
 }

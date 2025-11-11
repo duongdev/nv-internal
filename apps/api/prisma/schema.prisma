@@ -51,6 +51,9 @@ model Task {
   // Nullable temporarily due to migration issues - will be made NOT NULL after data population
   searchableText String? @db.Text
 
+  // Soft delete support
+  deletedAt DateTime?
+
   // Note: Advanced indexes with CONCURRENTLY, GIN operators, and partial WHERE clauses
   // are defined in manual migrations (see migrations/20251030053152_add_task_search_indexes)
 
@@ -61,6 +64,10 @@ model Task {
   @@index([status, completedAt]) // Completed task date range queries (existing)
   @@index([status, createdAt]) // Status + creation date sorting (common pattern)
   @@index([assigneeIds]) // Array overlap queries (existing - becomes GIN in migration)
+  @@index([deletedAt]) // Soft delete filtering
+  @@index([deletedAt, status]) // Combined soft delete + status queries
+  @@index([deletedAt, createdAt]) // Soft delete + date sorting
+  @@index([deletedAt, customerId]) // Customer tasks excluding deleted
 }
 
 model GeoLocation {

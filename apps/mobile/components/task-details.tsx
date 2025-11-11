@@ -1,5 +1,6 @@
 import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
-import { useRouter } from 'expo-router'
+import { ImpactFeedbackStyle, impactAsync } from 'expo-haptics'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import {
   DollarSign,
   MapPinnedIcon,
@@ -7,16 +8,19 @@ import {
   UsersIcon,
 } from 'lucide-react-native'
 import { type FC, useEffect, useRef, useState } from 'react'
-import { Linking, View } from 'react-native'
+import { Linking, Pressable, View } from 'react-native'
 import { useTaskPayments } from '@/api/payment/use-task-payments'
 import type { Task } from '@/api/task/use-task'
+import { useUpdateTask } from '@/api/task/use-update-task'
 import { useUpdateTaskAssignees } from '@/api/task/use-update-task-assignees'
 import { useAppRole } from '@/hooks/use-app-role'
 import { formatTaskId } from '@/utils/task-id-helper'
 import { AttachmentList } from './attachment-list'
 import { AttachmentUploader } from './attachment-uploader'
+import { CustomerEditBottomSheet } from './customer-edit-bottom-sheet'
 import { ExpectedRevenueModal } from './payment/expected-revenue-modal'
 import { TaskAction } from './task-action'
+import { TaskFieldEditBottomSheet } from './task-field-edit-bottom-sheet'
 import { Badge } from './ui/badge'
 import { BottomSheet } from './ui/bottom-sheet'
 import { Button } from './ui/button'
@@ -34,19 +38,106 @@ export type TaskDetailsProps = {
 export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
   const appRole = useAppRole()
   const router = useRouter()
+  const params = useLocalSearchParams()
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task.assigneeIds)
   const originalAssigneeIds = useRef<string[]>(task.assigneeIds)
   const assigneeModalRef = useRef<BottomSheetModalMethods>(null)
   const expectedRevenueModalRef = useRef<BottomSheetModalMethods>(null)
+  const titleEditRef = useRef<BottomSheetModalMethods>(null)
+  const descriptionEditRef = useRef<BottomSheetModalMethods>(null)
+  const customerEditRef = useRef<BottomSheetModalMethods>(null)
   const { mutateAsync } = useUpdateTaskAssignees()
+  const { mutate: updateTask, isPending: isUpdating } = useUpdateTask()
+
+  // Track processed location params to prevent duplicate updates
+  const processedLocationKey = useRef<string | null>(null)
+
+  // Fetch payment data - always fetch regardless of expected revenue
+  const { data: paymentData } = useTaskPayments(task.id)
 
   // Handler for opening expected revenue modal
   const handleOpenExpectedRevenueModal = () => {
     expectedRevenueModalRef.current?.present()
   }
 
-  // Fetch payment data - always fetch regardless of expected revenue
-  const { data: paymentData } = useTaskPayments(task.id)
+  // Handle field updates
+  const handleFieldUpdate = (field: string, value: string | number | null) => {
+    updateTask({
+      taskId: task.id,
+      data: { [field]: value },
+    })
+  }
+
+  // Handle customer update (combined name and phone)
+  const handleCustomerUpdate = (data: { name: string; phone: string }) => {
+    updateTask({
+      taskId: task.id,
+      data: {
+        customerName: data.name,
+        customerPhone: data.phone,
+      },
+    })
+  }
+
+  // Handle location picker return
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally exclude task.geoLocation to prevent infinite loop. We use processedLocationKey ref to track already-processed params.
+  useEffect(() => {
+    // Only process params if we have ALL THREE required params
+    // The key insight: params from navigation TO picker won't have lat/lng
+    // Only when RETURNING from map-picker will we have all three
+    if (!params.address || !params.latitude || !params.longitude) {
+      return
+    }
+
+    // Create a unique key for this set of location params
+    const currentLocationKey = `${params.latitude}_${params.longitude}_${params.address}`
+
+    // Check if we've already processed these exact params
+    // This prevents duplicate updates when the component re-renders
+    if (processedLocationKey.current === currentLocationKey) {
+      return
+    }
+
+    const newLat = parseFloat(params.latitude as string)
+    const newLng = parseFloat(params.longitude as string)
+
+    // Verify the coordinates are valid numbers
+    if (Number.isNaN(newLat) || Number.isNaN(newLng)) {
+      return
+    }
+
+    // Check if location actually changed compared to current task data
+    const hasLocationChanged =
+      !task.geoLocation ||
+      Math.abs(task.geoLocation.lat - newLat) > 0.000001 ||
+      Math.abs(task.geoLocation.lng - newLng) > 0.000001 ||
+      task.geoLocation.address !== params.address
+
+    if (hasLocationChanged) {
+      // Mark these params as processed BEFORE updating
+      // This prevents re-running if the update causes a re-render
+      processedLocationKey.current = currentLocationKey
+
+      updateTask({
+        taskId: task.id,
+        data: {
+          geoLocation: {
+            address: params.address as string,
+            lat: newLat,
+            lng: newLng,
+            name: (params.name as string) || (params.address as string),
+          },
+        },
+      })
+    }
+  }, [
+    params.address,
+    params.latitude,
+    params.longitude,
+    params.name,
+    task.id,
+    updateTask,
+  ])
 
   const saveAssignees = async () => {
     await mutateAsync({ taskId: task.id, assigneeIds })
@@ -71,6 +162,12 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
     originalAssigneeIds.current = task.assigneeIds
   }, [task.assigneeIds])
 
+  // Don't render role-dependent UI until role is determined
+  // This prevents flickering and ensures stable UI during navigation
+  if (!appRole) {
+    return null
+  }
+
   return (
     <>
       {/* Flat Header - No Card */}
@@ -78,9 +175,27 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
         <Badge className="self-start" variant="outline">
           <Text>#{formatTaskId(task.id)}</Text>
         </Badge>
-        <Text className="font-sans-bold text-2xl">
-          {task.title || 'Chưa có tiêu đề'}
-        </Text>
+        {appRole === 'admin' && task.status !== 'COMPLETED' ? (
+          <Pressable
+            accessibilityHint="Nhấn để chỉnh sửa tiêu đề công việc"
+            accessibilityLabel="Tiêu đề công việc"
+            accessibilityRole="button"
+            className="rounded active:opacity-70"
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light)
+              titleEditRef.current?.present()
+            }}
+            testID="task-title-edit-pressable"
+          >
+            <Text className="font-sans-bold text-2xl">
+              {task.title || 'Chưa có tiêu đề'}
+            </Text>
+          </Pressable>
+        ) : (
+          <Text className="font-sans-bold text-2xl">
+            {task.title || 'Chưa có tiêu đề'}
+          </Text>
+        )}
         <TaskStatusBadge status={task.status} />
       </View>
 
@@ -147,7 +262,47 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
           <CardTitle>Địa chỉ làm việc</CardTitle>
         </CardHeader>
         <CardContent className="gap-3">
-          {task.geoLocation ? (
+          {appRole === 'admin' && task.status !== 'COMPLETED' ? (
+            <Pressable
+              accessibilityHint="Nhấn để chỉnh sửa địa chỉ làm việc"
+              accessibilityLabel="Địa chỉ làm việc"
+              accessibilityRole="button"
+              className="-m-2 rounded p-2 active:bg-muted"
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light)
+                router.push({
+                  pathname: '/(inputs)/location-picker',
+                  params: {
+                    redirectTo: `/admin/tasks/${task.id}/view`,
+                    // Pass full address for search, and name separately if available
+                    address:
+                      task.geoLocation?.address || task.geoLocation?.name,
+                    name: task.geoLocation?.name,
+                  },
+                })
+              }}
+              testID="task-location-edit-pressable"
+            >
+              {task.geoLocation ? (
+                <>
+                  {task.geoLocation.name && (
+                    <Text className="font-sans-medium">
+                      {task.geoLocation.name}
+                    </Text>
+                  )}
+                  {task.geoLocation.address && (
+                    <Text className="text-primary">
+                      {task.geoLocation.address}
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <Text className="text-muted-foreground">
+                  Nhấn để thêm địa chỉ
+                </Text>
+              )}
+            </Pressable>
+          ) : task.geoLocation ? (
             <>
               {task.geoLocation.name && (
                 <Text className="font-sans-medium">
@@ -166,12 +321,35 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             <Text className="font-sans-medium text-muted-foreground leading-none">
               Thông tin khách hàng
             </Text>
-            <Text className="font-sans-medium">
-              {task.customer?.name || 'Không có tên'}
-            </Text>
-            <Text className="text-primary">
-              {task.customer?.phone || 'Không có số điện thoại'}
-            </Text>
+            {appRole === 'admin' && task.status !== 'COMPLETED' ? (
+              <Pressable
+                accessibilityHint="Nhấn để chỉnh sửa thông tin khách hàng"
+                accessibilityLabel="Thông tin khách hàng"
+                accessibilityRole="button"
+                className="-m-1 gap-1 rounded p-1 active:bg-muted"
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light)
+                  customerEditRef.current?.present()
+                }}
+                testID="task-customer-info-edit-pressable"
+              >
+                <Text className="font-sans-medium">
+                  {task.customer?.name || 'Nhấn để thêm tên'}
+                </Text>
+                <Text className="text-primary">
+                  {task.customer?.phone || 'Nhấn để thêm số điện thoại'}
+                </Text>
+              </Pressable>
+            ) : (
+              <>
+                <Text className="font-sans-medium">
+                  {task.customer?.name || 'Không có tên'}
+                </Text>
+                <Text className="text-primary">
+                  {task.customer?.phone || 'Không có số điện thoại'}
+                </Text>
+              </>
+            )}
           </View>
         </CardContent>
       </Card>
@@ -182,7 +360,23 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
           <CardTitle>Mô tả công việc</CardTitle>
         </CardHeader>
         <CardContent>
-          <Text>{task.description || 'Chưa có mô tả'}</Text>
+          {appRole === 'admin' && task.status !== 'COMPLETED' ? (
+            <Pressable
+              accessibilityHint="Nhấn để chỉnh sửa mô tả công việc"
+              accessibilityLabel="Mô tả công việc"
+              accessibilityRole="button"
+              className="-m-2 rounded p-2 active:bg-muted"
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light)
+                descriptionEditRef.current?.present()
+              }}
+              testID="task-description-edit-pressable"
+            >
+              <Text>{task.description || 'Nhấn để thêm mô tả'}</Text>
+            </Pressable>
+          ) : (
+            <Text>{task.description || 'Chưa có mô tả'}</Text>
+          )}
         </CardContent>
       </Card>
 
@@ -407,6 +601,43 @@ export const TaskDetails: FC<TaskDetailsProps> = ({ task }) => {
             taskId={task.id}
           />
         </BottomSheet>
+      )}
+
+      {/* Title Edit Bottom Sheet (Admin Only) */}
+      {appRole === 'admin' && (
+        <TaskFieldEditBottomSheet
+          currentValue={task.title}
+          fieldLabel="Tiêu đề công việc"
+          fieldName="title"
+          fieldType="text"
+          isPending={isUpdating}
+          onSave={(value) => handleFieldUpdate('title', value)}
+          ref={titleEditRef}
+        />
+      )}
+
+      {/* Description Edit Bottom Sheet (Admin Only) */}
+      {appRole === 'admin' && (
+        <TaskFieldEditBottomSheet
+          currentValue={task.description}
+          fieldLabel="Mô tả công việc"
+          fieldName="description"
+          fieldType="textarea"
+          isPending={isUpdating}
+          onSave={(value) => handleFieldUpdate('description', value)}
+          ref={descriptionEditRef}
+        />
+      )}
+
+      {/* Customer Edit Bottom Sheet (Admin Only) */}
+      {appRole === 'admin' && (
+        <CustomerEditBottomSheet
+          currentName={task.customer?.name || ''}
+          currentPhone={task.customer?.phone || ''}
+          isPending={isUpdating}
+          onSave={handleCustomerUpdate}
+          ref={customerEditRef}
+        />
       )}
 
       {/* Attachments Card */}

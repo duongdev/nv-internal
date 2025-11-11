@@ -6,6 +6,7 @@ import {
   zTaskExpectedRevenue,
   zTaskListQuery,
   zTaskSearchFilterQuery,
+  zUpdateTask,
 } from '@nv-internal/validation'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
@@ -22,14 +23,18 @@ import {
 import {
   addTaskComment,
   canUserCreateTask,
+  canUserDeleteTask,
   canUserListTasks,
+  canUserUpdateTask,
   canUserUpdateTaskAssignees,
   canUserUpdateTaskStatus,
   canUserViewTask,
   createTask,
+  deleteTask,
   getTaskById,
   getTaskList,
   searchAndFilterTasks,
+  updateTask,
   updateTaskAssignees,
   updateTaskStatus,
 } from './task.service'
@@ -551,5 +556,124 @@ const router = new Hono()
       }
     },
   )
+  /**
+   * PATCH /v1/task/:id
+   *
+   * Update a task (title, description, customer, location only)
+   *
+   * Authorization:
+   * - Admin only
+   * - Cannot update COMPLETED tasks
+   *
+   * Body: Partial task data (at least one field required)
+   * - title?: string (2-100 chars)
+   * - description?: string (max 5000 chars)
+   * - customerPhone?: string (10 digits, starts with 0)
+   * - customerName?: string (max 100 chars)
+   * - geoLocation?: { address, name, lat, lng }
+   *
+   * Note: Use PATCH /v1/task/:id/expected-revenue to update expectedRevenue
+   *
+   * Returns: Updated task with relations
+   */
+  .patch('/:id', zValidator('json', zUpdateTask), async (c) => {
+    const logger = getLogger('task.route:patch')
+    const user = getAuthUserStrict(c)
+    const taskId = Number.parseInt(c.req.param('id'))
+    const data = c.req.valid('json')
+
+    logger.trace({ taskId, userId: user.id }, 'Updating task')
+
+    // Check permissions
+    const { canUpdate, task } = await canUserUpdateTask({ user, taskId })
+
+    if (!canUpdate) {
+      if (!task) {
+        throw new HTTPException(404, { message: 'Không tìm thấy công việc' })
+      }
+      if (task.status === 'COMPLETED') {
+        throw new HTTPException(400, {
+          message: 'Không thể cập nhật công việc đã hoàn thành',
+        })
+      }
+      throw new HTTPException(403, {
+        message: 'Bạn không có quyền cập nhật công việc này',
+      })
+    }
+
+    // Update task
+    const updatedTask = await updateTask({ taskId, data, user })
+
+    return c.json(updatedTask, 200)
+  })
+  /**
+   * DELETE /v1/task/:id
+   *
+   * Delete a task (soft delete)
+   *
+   * Authorization:
+   * - Admin only
+   *
+   * Business Rules:
+   * - Cannot delete if task has payments
+   * - Cannot delete if task has check-ins
+   * - Can only delete PREPARING or READY tasks
+   *
+   * Returns: Success message
+   */
+  .delete('/:id', async (c) => {
+    const logger = getLogger('task.route:delete')
+    const user = getAuthUserStrict(c)
+    const taskId = Number.parseInt(c.req.param('id'))
+
+    logger.trace({ taskId, userId: user.id }, 'Deleting task')
+
+    // Check permissions
+    const { canDelete, task, reason } = await canUserDeleteTask({
+      user,
+      taskId,
+    })
+
+    if (!canDelete) {
+      if (!task || reason === 'NOT_FOUND') {
+        throw new HTTPException(404, { message: 'Không tìm thấy công việc' })
+      }
+
+      // Return specific error messages based on reason
+      if (reason === 'FORBIDDEN') {
+        throw new HTTPException(403, {
+          message: 'Bạn không có quyền xóa công việc này',
+        })
+      }
+      if (reason === 'HAS_PAYMENTS') {
+        throw new HTTPException(400, {
+          message: 'Không thể xóa công việc đã có thanh toán',
+        })
+      }
+      if (reason === 'HAS_CHECK_INS') {
+        throw new HTTPException(400, {
+          message: 'Không thể xóa công việc đã có check-in',
+        })
+      }
+      if (reason === 'INVALID_STATUS') {
+        throw new HTTPException(400, {
+          message:
+            'Chỉ có thể xóa công việc ở trạng thái Chuẩn bị hoặc Sẵn sàng',
+        })
+      }
+
+      throw new HTTPException(400, {
+        message: 'Không thể xóa công việc này',
+      })
+    }
+
+    // Delete task
+    await deleteTask({ taskId, user })
+
+    return c.json(
+      { success: true, message: 'Đã xóa công việc thành công' },
+      200,
+    )
+  })
 
 export default router
