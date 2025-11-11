@@ -276,9 +276,9 @@ export function processErrorQueue(posthog: PostHog | null | undefined): void {
   }
 
   while (errorQueue.length > 0) {
-    const { error, context } = errorQueue.shift()
-    if (error) {
-      captureException(posthog, error, context)
+    const item = errorQueue.shift()
+    if (item?.error) {
+      captureException(posthog, item.error, item.context)
     }
   }
 }
