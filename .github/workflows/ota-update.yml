@@ -273,6 +273,10 @@ jobs:
             MISSING_VARS+=("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY")
           fi
 
+          if [ -z "${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}" ]; then
+            MISSING_VARS+=("EXPO_PUBLIC_GOOGLE_MAPS_API_KEY")
+          fi
+
           if [ -z "${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}" ]; then
             MISSING_VARS+=("EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS")
           fi
@@ -303,6 +307,7 @@ jobs:
           echo "  - EXPO_PUBLIC_ENV"
           echo "  - EXPO_PUBLIC_API_URL"
           echo "  - EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"
+          echo "  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
           echo "  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS"
           echo "  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID"
           echo "  - EXPO_PUBLIC_POSTHOG_API_KEY"
@@ -338,6 +343,7 @@ jobs:
 
           # Set common environment variables from secrets
           echo "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}" >> $GITHUB_ENV
           echo "EXPO_PUBLIC_POSTHOG_API_KEY=${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}" >> $GITHUB_ENV
