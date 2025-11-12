@@ -175,7 +175,7 @@ jobs:
 
   build-android:
     name: Build Android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores
     needs: increment-build-number
     if: |
       github.event.inputs.platform == 'android' ||
@@ -240,14 +240,18 @@ jobs:
         run: |
           mkdir -p android
           cat > android/gradle.properties << 'EOF'
-          # Configure Gradle memory settings for CI
-          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError
-          org.gradle.daemon=false
-          org.gradle.parallel=false
-          org.gradle.workers.max=2
+          # Configure Gradle memory settings for CI (16GB runner)
+          # Optimized for React Native 0.81 + Expo SDK 54 + New Architecture
+          org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          org.gradle.daemon=true
+          org.gradle.parallel=true
+          org.gradle.workers.max=4
+          org.gradle.caching=true
+          # Critical: Kotlin daemon memory limits (prevents uncapped growth)
+          kotlin.daemon.jvm.options=-Xmx2G
           android.useAndroidX=true
           android.enableJetifier=true
-          # Disable lint checks for release builds to save memory
+          # Disable lint checks for release builds
           android.lintOptions.checkReleaseBuilds=false
           android.lintOptions.abortOnError=false
           EOF
@@ -270,8 +274,8 @@ jobs:
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
           EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
           EXPO_PUBLIC_POSTHOG_ENABLED: true
-          # Configure Gradle for better memory management
-          GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dorg.gradle.daemon=false"
+          # Configure Gradle for 16GB runner (matches gradle.properties)
+          GRADLE_OPTS: "-Xmx8G -XX:MaxMetaspaceSize=2G"
         run: |
           # CURRENT: Production-only configuration
           # TODO: Add staging APK lane and validate before use
