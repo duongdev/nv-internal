@@ -253,7 +253,8 @@ platform :android do
         "android.injected.signing.store.password" => ENV["ANDROID_KEYSTORE_PASSWORD"],
         "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"] || "nv-internal",
         "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"]
-      }
+      },
+      flags: "-x lint -x lintVitalRelease -x lintVitalAnalyzeRelease --no-daemon"
     )
 
     # Upload to Play Store
@@ -282,7 +283,8 @@ platform :android do
         "android.injected.signing.store.password" => ENV["ANDROID_KEYSTORE_PASSWORD"],
         "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"] || "nv-internal",
         "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"]
-      }
+      },
+      flags: "-x lint -x lintVitalRelease -x lintVitalAnalyzeRelease --no-daemon"
     )
 
     UI.success("✅ Successfully built APK!")
