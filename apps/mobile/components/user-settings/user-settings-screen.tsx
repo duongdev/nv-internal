@@ -51,6 +51,11 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
     FEATURE_FLAGS.ACCOUNT_DELETION_ENABLED,
   )
 
+  // Feature flag for dark mode
+  const { isEnabled: isDarkModeEnabled } = useFeatureFlag(
+    FEATURE_FLAGS.DARK_MODE_ENABLED,
+  )
+
   if (!user) {
     return null
   }
@@ -170,15 +175,17 @@ export const UserSettingsScreen: FC<UserSettingsProps> = ({ isAdminView }) => {
           } as any as User
         }
       />
-      <MenuGroup>
-        <Link asChild href="/(user-settings)/theme-switcher">
-          <MenuItem
-            label="Giao diện"
-            leftIcon={SunMoonIcon}
-            rightIcon={ChevronRightIcon}
-          />
-        </Link>
-      </MenuGroup>
+      {isDarkModeEnabled && (
+        <MenuGroup>
+          <Link asChild href="/(user-settings)/theme-switcher">
+            <MenuItem
+              label="Giao diện"
+              leftIcon={SunMoonIcon}
+              rightIcon={ChevronRightIcon}
+            />
+          </Link>
+        </MenuGroup>
+      )}
       {isAdminView && (
         <MenuGroup>
           <Link asChild href="/admin/reports">
