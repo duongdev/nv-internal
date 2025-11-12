@@ -7,10 +7,9 @@ import {
 } from '@gorhom/bottom-sheet'
 import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { forwardRef, useCallback } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { FullWindowOverlay } from 'react-native-screens'
 import { useColorPalette } from '@/hooks/use-color-palette'
-import { Toasts } from './toasts'
 
 export const BottomSheet = forwardRef<
   BottomSheetModalMethods,
@@ -31,12 +30,11 @@ export const BottomSheet = forwardRef<
     [],
   )
 
+  // Only use custom container on iOS for FullWindowOverlay
+  // Android: Let the library use its default container (critical for rendering)
   const containerComponent = useCallback(
     (props: { children?: React.ReactNode }) => (
-      <FullWindowOverlay>
-        {props.children}
-        <Toasts />
-      </FullWindowOverlay>
+      <FullWindowOverlay>{props.children}</FullWindowOverlay>
     ),
     [],
   )
@@ -52,7 +50,8 @@ export const BottomSheet = forwardRef<
     <BottomSheetModal
       backdropComponent={backdropComponent}
       backgroundComponent={backgroundComponent}
-      containerComponent={containerComponent}
+      // Only use custom container on iOS - Android needs default for proper rendering
+      {...(Platform.OS === 'ios' && { containerComponent })}
       enableDismissOnClose
       enablePanDownToClose
       handleIndicatorStyle={{ backgroundColor: getColor('foreground') }}

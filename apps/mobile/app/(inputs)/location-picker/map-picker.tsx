@@ -2,7 +2,7 @@ import * as Location from 'expo-location'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { MapPinCheckIcon, XIcon } from 'lucide-react-native'
 import React, { useCallback, useEffect, useState } from 'react'
-import { Image, StyleSheet, View } from 'react-native'
+import { Image, Platform, StyleSheet, View } from 'react-native'
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
@@ -29,7 +29,14 @@ export default function App() {
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+          {
+            headers: {
+              'User-Agent': 'NV-Internal-App/1.0 (contact@your-domain.com)',
+            },
+          },
         )
+        // biome-ignore lint/suspicious/noConsole: Debug geocoding response
+        console.log('🚀 ~ App ~ response:', response)
         const address = await response.json()
 
         if (!address) {
@@ -108,9 +115,10 @@ export default function App() {
   return (
     <View className="relative flex-1">
       <Button
-        className="absolute top-4 left-4 z-10 rounded-full shadow-lg"
+        className="absolute left-4 z-10 rounded-full shadow-lg"
         onPress={() => router.dismiss()}
         size="icon"
+        style={{ top: Platform.OS === 'android' ? 48 : 16 }}
         variant="secondary"
       >
         <Icon as={XIcon} className="size-7 text-muted-foreground" />
