@@ -257,10 +257,11 @@ platform :android do
       flags: "-x lint -x lintVitalRelease -x lintVitalAnalyzeRelease"
     )
 
-    # Upload to Play Store
+    # Upload to Play Store with R8 mapping file for crash deobfuscation
     upload_to_play_store(
       track: 'internal',
       aab: 'android/app/build/outputs/bundle/release/app-release.aab',
+      mapping: 'android/app/build/outputs/mapping/release/mapping.txt',
       json_key: 'google-play-service-account.json',
       package_name: 'vn.dienlanhnamviet.internal',
       skip_upload_metadata: true,
