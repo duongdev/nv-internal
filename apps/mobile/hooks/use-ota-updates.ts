@@ -1,8 +1,6 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants'
 import * as Updates from 'expo-updates'
-import { usePostHog } from 'posthog-react-native'
 import { useCallback, useEffect, useState } from 'react'
-import { captureException } from '@/lib/posthog'
 import { getUpdateState, saveUpdateState } from '@/lib/update-state'
 
 const IS_EXPO_GO =
@@ -22,6 +20,7 @@ export interface OTAUpdateState {
 
 export interface OTAUpdateActions {
   checkForUpdates: () => Promise<void>
+  reloadApp: () => Promise<void>
 }
 
 export type OTAUpdateHook = OTAUpdateState & OTAUpdateActions
@@ -29,17 +28,11 @@ export type OTAUpdateHook = OTAUpdateState & OTAUpdateActions
 /**
  * Hook for managing OTA (Over-The-Air) updates.
  * Automatically checks for updates on mount in production builds.
- * Downloads updates silently - user must manually restart app to apply.
  * Gracefully handles Expo Go and development environments.
- *
- * SAFETY NOTE: This hook deliberately DOES NOT call Updates.reloadAsync()
- * due to known native crashes in Expo's ErrorRecovery module.
- * Updates are applied automatically on next cold start after download.
  *
  * @returns OTA update state and actions
  */
 export function useOTAUpdates(): OTAUpdateHook {
-  const posthog = usePostHog()
   const [state, setState] = useState<OTAUpdateState>({
     isChecking: false,
     isDownloading: false,
@@ -75,13 +68,6 @@ export function useOTAUpdates(): OTAUpdateHook {
       if (update.isAvailable) {
         setState((prev) => ({ ...prev, isDownloading: true }))
         await Updates.fetchUpdateAsync()
-
-        // Track successful download to PostHog
-        posthog?.capture('ota_update_download_completed', {
-          update_id: Updates.updateId,
-          current_channel: Updates.channel,
-        })
-
         setState((prev) => ({
           ...prev,
           isUpdateAvailable: true,
@@ -123,18 +109,6 @@ export function useOTAUpdates(): OTAUpdateHook {
       }
 
       console.error('[OTA] All retries exhausted:', error)
-
-      // Track download failure to PostHog
-      captureException(posthog, error, {
-        action: 'ota_update_download',
-        screen: 'use_ota_updates',
-        metadata: {
-          retry_count: retryCount,
-          update_id: Updates.updateId,
-          current_channel: Updates.channel,
-        },
-      })
-
       setState((prev) => ({
         ...prev,
         isChecking: false,
@@ -167,14 +141,35 @@ export function useOTAUpdates(): OTAUpdateHook {
       return
     }
 
-    // Track update check attempt
-    posthog?.capture('ota_update_check_attempted', {
-      update_id: Updates.updateId,
-      current_channel: Updates.channel,
-    })
-
     await checkForUpdatesWithRetry()
-  }, [posthog])
+  }, [])
+
+  /**
+   * Reload the app to apply downloaded update.
+   * Skips in Expo Go and development environments.
+   * Note: reloadAsync() will terminate the app and restart it - this is expected behavior.
+   */
+  const reloadApp = useCallback(async (): Promise<void> => {
+    if (IS_EXPO_GO || IS_DEV) {
+      // biome-ignore lint/suspicious/noConsole: Intentional for OTA monitoring
+      console.log('[OTA] Skipping reload (Expo Go or dev mode)')
+      return
+    }
+
+    try {
+      // Updates.reloadAsync() will terminate and restart the app immediately.
+      // This is expected behavior and NOT a crash - the app will restart with the new update.
+      await Updates.reloadAsync()
+    } catch (error) {
+      // This catch block will rarely execute because reloadAsync() terminates the app.
+      // It's here for completeness in case reloadAsync fails before termination.
+      console.error('[OTA] Reload failed:', error)
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error : new Error('Reload failed'),
+      }))
+    }
+  }, [])
 
   /**
    * Load persisted state and auto-check for updates on mount.
@@ -206,5 +201,5 @@ export function useOTAUpdates(): OTAUpdateHook {
     }
   }, [checkForUpdates])
 
-  return { ...state, checkForUpdates }
+  return { ...state, checkForUpdates, reloadApp }
 }

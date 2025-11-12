@@ -261,12 +261,106 @@ jobs:
             echo "rollback_id=latest" >> $GITHUB_OUTPUT
           fi
 
+      - name: Validate required environment variables
+        id: validate-env
+        run: |
+          echo "🔍 Validating environment variables..."
+
+          MISSING_VARS=()
+
+          # Check critical secrets (without exposing values)
+          if [ -z "${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}" ]; then
+            MISSING_VARS+=("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY")
+          fi
+
+          if [ -z "${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}" ]; then
+            MISSING_VARS+=("EXPO_PUBLIC_GOOGLE_MAPS_API_KEY")
+          fi
+
+          if [ -z "${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}" ]; then
+            MISSING_VARS+=("EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS")
+          fi
+
+          if [ -z "${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}" ]; then
+            MISSING_VARS+=("EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID")
+          fi
+
+          if [ -z "${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}" ]; then
+            MISSING_VARS+=("EXPO_PUBLIC_POSTHOG_API_KEY")
+          fi
+
+          # Report missing variables
+          if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+            echo "❌ ERROR: Missing required GitHub Secrets:"
+            for var in "${MISSING_VARS[@]}"; do
+              echo "  - $var"
+            done
+            echo ""
+            echo "Please configure these secrets in GitHub Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are configured"
+
+          # Log configured env var names (without values)
+          echo "📋 Environment variables that will be set:"
+          echo "  - EXPO_PUBLIC_ENV"
+          echo "  - EXPO_PUBLIC_API_URL"
+          echo "  - EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"
+          echo "  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+          echo "  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS"
+          echo "  - EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID"
+          echo "  - EXPO_PUBLIC_POSTHOG_API_KEY"
+          echo "  - EXPO_PUBLIC_POSTHOG_HOST"
+          echo "  - EXPO_PUBLIC_POSTHOG_ENABLED"
+          echo "  - EXPO_PUBLIC_BUILD_NUMBER"
+          echo "  - BUILD_NUMBER"
+
+      - name: Configure channel-specific environment
+        id: configure-env
+        run: |
+          CHANNEL="${{ needs.preflight.outputs.channel }}"
+
+          echo "⚙️  Configuring environment for channel: $CHANNEL"
+
+          # Set channel-specific environment variables
+          if [ "$CHANNEL" == "production" ]; then
+            echo "EXPO_PUBLIC_ENV=production" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_API_URL=https://nv-internal-api.vercel.app" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_POSTHOG_ENABLED=true" >> $GITHUB_ENV
+            echo "env_type=production" >> $GITHUB_OUTPUT
+          elif [ "$CHANNEL" == "staging" ] || [ "$CHANNEL" == "preview" ]; then
+            echo "EXPO_PUBLIC_ENV=staging" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_API_URL=https://nv-internal-staging.vercel.app" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_POSTHOG_ENABLED=true" >> $GITHUB_ENV
+            echo "env_type=staging" >> $GITHUB_OUTPUT
+          else
+            echo "❌ ERROR: Unknown channel '$CHANNEL'"
+            echo "Valid channels: production, staging, preview"
+            exit 1
+          fi
+
+          # Set common environment variables from secrets
+          echo "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}" >> $GITHUB_ENV
+          echo "EXPO_PUBLIC_POSTHOG_API_KEY=${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}" >> $GITHUB_ENV
+
+          # Set OTA build number so app can display it
+          echo "EXPO_PUBLIC_BUILD_NUMBER=${{ steps.increment.outputs.build_number }}" >> $GITHUB_ENV
+
+          echo "✅ Environment configured for $CHANNEL"
+
       - name: Publish OTA update
         id: publish
         working-directory: apps/mobile
         if: github.event.inputs.rollback != 'true'
         env:
           BUILD_NUMBER: ${{ steps.increment.outputs.build_number }}
+          # All EXPO_PUBLIC_* vars are now set via steps above
         run: |
           CHANNEL="${{ needs.preflight.outputs.channel }}"
           VERSION="${{ needs.preflight.outputs.version }}"
@@ -275,8 +369,17 @@ jobs:
           echo "Publishing OTA to channel: $CHANNEL"
           echo "App version: $VERSION"
           echo "Build number: $BUILD"
+          echo "Environment: ${EXPO_PUBLIC_ENV}"
+          echo "API URL: ${EXPO_PUBLIC_API_URL}"
+
+          # Verify env vars are set before publishing
+          if [ -z "$EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY" ] || [ -z "$EXPO_PUBLIC_API_URL" ]; then
+            echo "❌ ERROR: Critical environment variables not set"
+            exit 1
+          fi
 
           # Publish to the specified channel using EAS Update
+          # All EXPO_PUBLIC_* environment variables will be bundled into the update
           eas update --channel "$CHANNEL" --message "Deploy v$VERSION ($BUILD) to $CHANNEL" --non-interactive
 
           echo "✅ OTA published successfully"
