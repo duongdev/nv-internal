@@ -4,3 +4,8 @@ team_id("9F77J83SKT")
 
 # For App Store Connect API
 itc_team_id("9F77J83SKT")
+
+# For Android Google Play Store
+# Service account JSON key for Play Console API access
+# File is created by CI/CD from GitHub Secrets or manually for local builds
+json_key_file("google-play-service-account.json")
