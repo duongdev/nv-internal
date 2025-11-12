@@ -86,8 +86,9 @@ Configure these secrets in your GitHub repository settings (Settings → Secrets
 | Secret | Description | How to get |
 |--------|-------------|------------|
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | Google Play service account JSON | 1. Go to [Google Cloud Console](https://console.cloud.google.com/)<br>2. Create service account with Google Play Developer API access<br>3. Download JSON key<br>4. Copy entire JSON content |
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded Android keystore | 1. Encode keystore: `openssl base64 -A -in @duongdev__nv-internal.jks`<br>2. Copy output to GitHub secret<br>3. Workflow will decode during build |
 
-**Android Keystore**: Already checked into repository at `apps/mobile/@duongdev__nv-internal.jks` (configured in `app.config.ts`)
+**Android Keystore**: Not committed to repository (security). Stored as base64-encoded GitHub secret and decoded during CI builds.
 
 ### Optional for iOS builds
 

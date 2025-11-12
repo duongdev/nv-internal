@@ -235,6 +235,12 @@ jobs:
         run: |
           echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
 
+      - name: Decode and setup Android keystore
+        working-directory: apps/mobile
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > @duongdev__nv-internal.jks
+          chmod 600 @duongdev__nv-internal.jks
+
       - name: Create gradle.properties with memory settings
         working-directory: apps/mobile
         run: |
@@ -289,6 +295,7 @@ jobs:
         if: always()
         run: |
           rm -f apps/mobile/google-play-service-account.json
+          rm -f apps/mobile/@duongdev__nv-internal.jks
 
       - name: Upload build artifacts
         if: always()
