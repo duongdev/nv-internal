@@ -235,6 +235,23 @@ jobs:
         run: |
           echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}' > google-play-service-account.json
 
+      - name: Create gradle.properties with memory settings
+        working-directory: apps/mobile
+        run: |
+          mkdir -p android
+          cat > android/gradle.properties << 'EOF'
+          # Configure Gradle memory settings for CI
+          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError
+          org.gradle.daemon=false
+          org.gradle.parallel=false
+          org.gradle.workers.max=2
+          android.useAndroidX=true
+          android.enableJetifier=true
+          # Disable lint checks for release builds to save memory
+          android.lintOptions.checkReleaseBuilds=false
+          android.lintOptions.abortOnError=false
+          EOF
+
       - name: Build and upload to Play Store
         working-directory: apps/mobile
         env:
@@ -253,6 +270,8 @@ jobs:
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
           EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
           EXPO_PUBLIC_POSTHOG_ENABLED: true
+          # Configure Gradle for better memory management
+          GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dorg.gradle.daemon=false"
         run: |
           # CURRENT: Production-only configuration
           # TODO: Add staging APK lane and validate before use
