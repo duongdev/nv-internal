@@ -8,11 +8,9 @@ import {
   notificationAsync,
 } from 'expo-haptics'
 import {
-  ChevronRightIcon,
   CircleSlashIcon,
   CrownIcon,
   EllipsisVerticalIcon,
-  InfoIcon,
   LockKeyholeOpenIcon,
   PhoneCallIcon,
   SquareArrowOutUpRightIcon,
@@ -192,13 +190,13 @@ export const AdminUserUserActionSheet: FC<AdminUserUserActionSheetProps> = ({
           </View>
         </View>
         <Separator />
-        <MenuGroup>
+        {/* <MenuGroup>
           <MenuItem
             label="Xem thông tin chi tiết"
             leftIcon={InfoIcon}
             rightIcon={ChevronRightIcon}
           />
-        </MenuGroup>
+        </MenuGroup> */}
         <MenuGroup>
           <MenuItem
             disabled={!userPhoneNumber}
