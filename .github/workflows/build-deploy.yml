@@ -11,28 +11,28 @@ name: Build & Deploy to TestFlight/Play Store
 on:
   push:
     tags:
-      - 'v*'  # Auto-trigger production builds on version tags
+      - "v*" # Auto-trigger production builds on version tags
   workflow_dispatch:
     inputs:
       platform:
-        description: 'Platform to build'
+        description: "Platform to build"
         required: true
         type: choice
         options:
           - ios
           - android
           - all
-        default: 'ios'
+        default: "ios"
       environment:
-        description: 'Environment (⚠️ staging not fully configured yet - use production)'
+        description: "Environment (⚠️ staging not fully configured yet - use production)"
         required: true
         type: choice
         options:
           - production
-          - staging  # TODO: Not fully configured - see .claude/plans/staging-channel-plan.md
-        default: 'production'
+          - staging # TODO: Not fully configured - see .claude/plans/staging-channel-plan.md
+        default: "production"
       submit:
-        description: 'Submit to stores'
+        description: "Submit to stores"
         required: true
         type: boolean
         default: true
@@ -96,7 +96,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -194,7 +194,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -206,8 +206,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
