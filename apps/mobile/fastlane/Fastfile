@@ -257,17 +257,29 @@ platform :android do
       flags: "-x lint -x lintVitalRelease -x lintVitalAnalyzeRelease"
     )
 
-    # Upload to Play Store with R8 mapping file for crash deobfuscation
-    upload_to_play_store(
+    # Upload to Play Store with R8 mapping file for crash deobfuscation (if exists)
+    mapping_path = 'android/app/build/outputs/mapping/release/mapping.txt'
+    upload_options = {
       track: 'internal',
       aab: 'android/app/build/outputs/bundle/release/app-release.aab',
-      mapping: 'android/app/build/outputs/mapping/release/mapping.txt',
       json_key: 'google-play-service-account.json',
       package_name: 'vn.dienlanhnamviet.internal',
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true
-    )
+    }
+
+    # Only include mapping file if it exists (requires minifyEnabled=true in build.gradle)
+    if File.exist?(mapping_path)
+      UI.message("📄 R8 mapping file found, including in upload for crash deobfuscation")
+      upload_options[:mapping] = mapping_path
+    else
+      UI.warning("⚠️  R8 mapping file not found at #{mapping_path}")
+      UI.warning("   Crash reports will not be deobfuscated in Play Console")
+      UI.warning("   To fix: Enable minifyEnabled in android/app/build.gradle release buildType")
+    end
+
+    upload_to_play_store(upload_options)
 
     UI.success("✅ Successfully uploaded build to Play Store Internal Track!")
   end
