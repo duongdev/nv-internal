@@ -96,26 +96,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc.',
       },
     ],
-    [
-      'expo-build-properties',
-      {
-        android: {
-          // Increase memory allocation for Gradle to prevent OutOfMemoryError in CI
-          // https://docs.gradle.org/current/userguide/build_environment.html#sec:configuring_jvm_memory
-          minSdkVersion: 26,
-          compileSdkVersion: 35,
-          targetSdkVersion: 35,
-          buildToolsVersion: '35.0.0',
-          // Configure Gradle JVM arguments for better memory management
-          newArchEnabled: true,
-          // Disable lint checks for release builds to save memory
-          enableProguardInReleaseBuilds: true,
-        },
-        ios: {
-          deploymentTarget: '15.1',
-        },
-      },
-    ],
   ],
   experiments: {
     typedRoutes: true,
