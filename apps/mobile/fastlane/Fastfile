@@ -274,9 +274,9 @@ platform :android do
       UI.message("📄 R8 mapping file found, including in upload for crash deobfuscation")
       upload_options[:mapping] = mapping_path
     else
-      UI.warning("⚠️  R8 mapping file not found at #{mapping_path}")
-      UI.warning("   Crash reports will not be deobfuscated in Play Console")
-      UI.warning("   To fix: Enable minifyEnabled in android/app/build.gradle release buildType")
+      UI.important("⚠️  R8 mapping file not found at #{mapping_path}")
+      UI.important("   Crash reports will not be deobfuscated in Play Console")
+      UI.important("   To fix: Enable minifyEnabled in android/app/build.gradle release buildType")
     end
 
     upload_to_play_store(upload_options)
