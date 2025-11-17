@@ -1,16 +1,19 @@
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { SignInForm } from '@/components/sign-in-form'
 
 export default function SignInScreen() {
   return (
-    <ScrollView
-      contentContainerClassName="mt-safe items-center justify-center p-4 py-8 sm:flex-1 sm:p-6 sm:py-4"
+    <KeyboardAwareScrollView
+      bottomOffset={40}
+      className="flex-1 bg-background"
+      contentContainerClassName="flex-1 items-center justify-center p-4 py-8"
       keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled"
     >
       <View className="w-full max-w-sm">
         <SignInForm />
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   )
 }
