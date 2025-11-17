@@ -1,4 +1,5 @@
 import { useUser } from '@clerk/clerk-expo'
+import { usePathname } from 'expo-router'
 import { useMemo } from 'react'
 import type { User } from '@/api/user/use-user-list'
 import { isUserAdmin } from '@/utils/user-helper'
@@ -6,16 +7,26 @@ import { isUserAdmin } from '@/utils/user-helper'
 export type AppRole = 'admin' | 'worker'
 
 /**
- * A hook to get the current app role based on user's Clerk metadata.
- * Returns 'admin' if user has admin role in their public metadata, otherwise 'worker'.
+ * A hook to get the current app role based on pathname-first detection with user permission fallback.
  *
- * IMPORTANT: This hook determines role from user permissions, NOT from URL pathname.
- * This ensures role remains stable during navigation (e.g., when opening location picker).
+ * **Detection Strategy** (in priority order):
+ * 1. **Pathname-based**: Detects role from current route (/admin/* → 'admin', /worker/* → 'worker')
+ *    - This allows admin users to switch to worker mode by navigating to worker routes
+ *    - Resolves PSN-19: Admin users can now start work in worker module
+ * 2. **Permission-based**: Falls back to user's Clerk metadata for shared routes (e.g., location picker)
+ *    - Ensures role remains consistent when navigating to shared components
+ *    - Returns 'admin' if user has admin role, otherwise 'worker'
  *
- * @returns {AppRole | null} The user's role, or null if user data is still loading
+ * **Edge Cases**:
+ * - Shared routes (not under /admin or /worker): Uses user permissions
+ * - Module transitions: Role updates automatically based on pathname
+ * - RBAC guards provide security layer independently of this hook
+ *
+ * @returns {AppRole | null} The user's role based on pathname or permissions, or null if user data is still loading
  */
 export function useAppRole(): AppRole | null {
   const { user, isLoaded } = useUser()
+  const pathname = usePathname()
 
   return useMemo(() => {
     // Return null while loading to prevent flickering/incorrect role
@@ -23,9 +34,17 @@ export function useAppRole(): AppRole | null {
       return null
     }
 
-    // Check user's actual role from Clerk metadata
+    // PRIORITY 1: Detect from pathname (active module)
+    if (pathname?.startsWith('/admin')) {
+      return 'admin'
+    }
+    if (pathname?.startsWith('/worker')) {
+      return 'worker'
+    }
+
+    // PRIORITY 2: Shared routes - fall back to user permissions
     return isUserAdmin(user as unknown as User) ? 'admin' : 'worker'
-  }, [isLoaded, user])
+  }, [isLoaded, user, pathname])
 }
 
 /**

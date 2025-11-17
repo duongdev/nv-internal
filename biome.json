@@ -322,7 +322,7 @@
     }
   ],
   "javascript": {
-    "globals": ["__DEV__"],
+    "globals": ["__DEV__", "jest"],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
