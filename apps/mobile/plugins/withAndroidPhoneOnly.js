@@ -23,6 +23,7 @@ function addSupportsScreens(androidManifest) {
   // This tells Google Play Store which screen sizes are supported
   manifest['supports-screens'] = [
     {
+      // biome-ignore lint/style/useNamingConvention: xml2js library requires '$' for attributes
       $: {
         'android:smallScreens': 'true',
         'android:normalScreens': 'true',
