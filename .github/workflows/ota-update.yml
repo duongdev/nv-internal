@@ -354,7 +354,16 @@ jobs:
         if: github.event.inputs.rollback != 'true'
         env:
           BUILD_NUMBER: ${{ steps.increment.outputs.build_number }}
-          # All EXPO_PUBLIC_* vars are now set via steps above
+          # Explicitly pass all environment variables for OTA bundle
+          EXPO_PUBLIC_ENV: ${{ env.EXPO_PUBLIC_ENV }}
+          EXPO_PUBLIC_API_URL: ${{ env.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
+          EXPO_PUBLIC_POSTHOG_API_KEY: ${{ env.EXPO_PUBLIC_POSTHOG_API_KEY }}
+          EXPO_PUBLIC_POSTHOG_HOST: ${{ env.EXPO_PUBLIC_POSTHOG_HOST }}
+          EXPO_PUBLIC_POSTHOG_ENABLED: ${{ env.EXPO_PUBLIC_POSTHOG_ENABLED }}
+          EXPO_PUBLIC_BUILD_NUMBER: ${{ env.EXPO_PUBLIC_BUILD_NUMBER }}
         run: |
           CHANNEL="${{ needs.preflight.outputs.channel }}"
           VERSION="${{ needs.preflight.outputs.version }}"

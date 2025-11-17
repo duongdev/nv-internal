@@ -116,6 +116,7 @@ pnpm biome:check --write .            # Format and lint
 - **Linear Migration Guide**: [.claude/docs/linear-migration-guide.md](./.claude/docs/linear-migration-guide.md) - **READ THIS** for PM workflow migration
 - **Feature Flags Guide**: [.claude/docs/feature-flags-guide.md](./.claude/docs/feature-flags-guide.md)
 - **Error Tracking Guide**: [.claude/docs/error-tracking-guide.md](./.claude/docs/error-tracking-guide.md)
+- **OTA Update Troubleshooting**: [docs/development/ota-troubleshooting.md](./docs/development/ota-troubleshooting.md) - Fix for missing env vars in OTA
 - **Documentation Standards**: [.claude/memory/documentation-structure.md](./.claude/memory/documentation-structure.md)
 
 ### Legacy Reference (Read-Only)
@@ -147,6 +148,7 @@ pnpm biome:check --write .            # Format and lint
 - **Mobile Accessibility** - 4 required props: accessibilityLabel, accessibilityHint, accessibilityRole, testID ([pattern](./docs/architecture/patterns/mobile-accessibility.md))
 - **Feature Flags** - PostHog flags for controlled rollouts ([guide](./.claude/docs/feature-flags-guide.md))
 - **OTA Updates** - Expo Updates with user-controlled reload ([pattern](./docs/architecture/patterns/ota-updates.md))
+- **OTA Environment Variables** - ⚠️ Must explicitly pass ALL env vars to publish step ([troubleshooting](./docs/development/ota-troubleshooting.md))
 
 ### Performance
 
