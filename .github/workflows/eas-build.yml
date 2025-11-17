@@ -24,6 +24,7 @@ on:
         type: choice
         options:
           - production
+          - production-apk
           - preview
           - staging
         default: 'production'

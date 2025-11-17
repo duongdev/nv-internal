@@ -36,6 +36,15 @@ on:
         required: true
         type: boolean
         default: true
+      build_format:
+        description: "Android build format"
+        required: false
+        type: choice
+        options:
+          - both
+          - aab
+          - apk
+        default: "both"
 
 permissions:
   contents: read
@@ -262,34 +271,51 @@ jobs:
           android.lintOptions.abortOnError=false
           EOF
 
-      - name: Build and upload to Play Store
+      - name: Build Android AAB (in parallel with APK)
+        if: github.event.inputs.build_format == 'both' || github.event.inputs.build_format == 'aab' || github.event.inputs.build_format == ''
         working-directory: apps/mobile
         env:
           BUILD_NUMBER: ${{ needs.increment-build-number.outputs.build_number }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          # Environment variables for app.config.ts
-          # NOTE: Currently only production is fully configured
-          # TODO: Add EXPO_PUBLIC_API_URL_STAGING to secrets for staging support
           EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
-          # Match EAS production environment exactly
           EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://api.namviet.withdustin.com' }}
           EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
           EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
           EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
           EXPO_PUBLIC_POSTHOG_ENABLED: true
-          # Configure Gradle for 16GB runner (matches gradle.properties)
           GRADLE_OPTS: "-Xmx8G -XX:MaxMetaspaceSize=2G"
         run: |
-          # CURRENT: Production-only configuration
-          # TODO: Add staging APK lane and validate before use
+          echo "📦 Building AAB (Android App Bundle)"
           if [ "${{ github.event.inputs.submit }}" = "true" ]; then
+            echo "📤 Will upload to Play Store after build"
             bundle exec fastlane android build_upload_playstore
           else
-            bundle exec fastlane android build_apk
+            echo "🔨 Building AAB without Play Store submission"
+            bundle exec fastlane android build_upload_playstore || bundle exec fastlane android build_aab
           fi
+
+      - name: Build Android APK (in parallel with AAB)
+        if: github.event.inputs.build_format == 'both' || github.event.inputs.build_format == 'apk' || github.event.inputs.build_format == ''
+        working-directory: apps/mobile
+        env:
+          BUILD_NUMBER: ${{ needs.increment-build-number.outputs.build_number }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPO_PUBLIC_ENV: ${{ github.event.inputs.environment || 'production' }}
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.environment == 'staging' && 'https://nv-internal-staging.vercel.app' || 'https://api.namviet.withdustin.com' }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
+          EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
+          EXPO_PUBLIC_POSTHOG_ENABLED: true
+          GRADLE_OPTS: "-Xmx4G -XX:MaxMetaspaceSize=1G"
+        run: |
+          echo "📦 Building APK (for direct distribution)"
+          bundle exec fastlane android build_apk
 
       - name: Cleanup secrets
         if: always()
@@ -301,8 +327,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-build-logs-${{ needs.increment-build-number.outputs.build_number }}
+          name: android-build-${{ github.event.inputs.build_format || 'aab' }}-${{ needs.increment-build-number.outputs.build_number }}
           path: |
-            apps/mobile/android/app/build/outputs/
+            apps/mobile/android/app/build/outputs/bundle/
+            apps/mobile/android/app/build/outputs/apk/
             apps/mobile/fastlane/report.xml
           retention-days: 30

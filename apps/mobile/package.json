@@ -12,6 +12,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "build:apk:local": "eas build --platform android --profile preview --local",
+    "build:apk:production": "eas build --platform android --profile production-apk",
+    "build:aab:production": "eas build --platform android --profile production",
     "postinstall": "cd ../.. && pnpm --filter @nv-internal/prisma-client build && pnpm --filter @nv-internal/validation build"
   },
   "dependencies": {

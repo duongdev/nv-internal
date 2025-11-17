@@ -78,6 +78,24 @@
         "EXPO_PUBLIC_POSTHOG_HOST": "https://app.posthog.com",
         "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
       }
+    },
+    "production-apk": {
+      "distribution": "internal",
+      "channel": "production",
+      "autoIncrement": true,
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://nv-internal-api.vercel.app",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://app.posthog.com",
+        "EXPO_PUBLIC_POSTHOG_ENABLED": "true"
+      }
     }
   },
   "submit": {
