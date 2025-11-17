@@ -21,7 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    supportsTablet: true,
+    supportsTablet: false, // Phones only - no iPad support
     bundleIdentifier: 'vn.dienlanhnamviet.internal',
     buildNumber: buildNumber,
     config: {
@@ -31,6 +31,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // This prevents Xcode from defaulting to automatic signing
     usesAppleSignIn: false,
     infoPlist: {
+      // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
+      UIDeviceFamily: [1], // 1 = iPhone only (exclude iPad)
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSLocationWhenInUseUsageDescription:
         'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
@@ -96,6 +98,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc.',
       },
     ],
+    // Restrict app to phones only (exclude tablets)
+    './plugins/withAndroidPhoneOnly.js',
   ],
   experiments: {
     typedRoutes: true,
