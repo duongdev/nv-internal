@@ -5,26 +5,26 @@ on:
   workflow_dispatch:
     inputs:
       channel:
-        description: 'Update channel'
+        description: "Update channel"
         required: true
         type: choice
         options:
           - staging
           - preview
           - production
-        default: 'staging'
+        default: "staging"
       skip_ci:
-        description: 'Skip CI checks (emergency only)'
+        description: "Skip CI checks (emergency only)"
         required: false
         type: boolean
         default: false
       rollback:
-        description: 'Rollback to previous version'
+        description: "Rollback to previous version"
         required: false
         type: boolean
         default: false
       rollback_id:
-        description: 'Specific deployment ID to rollback to (if not latest)'
+        description: "Specific deployment ID to rollback to (if not latest)"
         required: false
         type: string
 
@@ -95,7 +95,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -155,7 +155,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -357,10 +357,10 @@ jobs:
           # Explicitly pass all environment variables for OTA bundle
           EXPO_PUBLIC_ENV: ${{ env.EXPO_PUBLIC_ENV }}
           EXPO_PUBLIC_API_URL: ${{ env.EXPO_PUBLIC_API_URL }}
-          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
-          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
-          EXPO_PUBLIC_POSTHOG_API_KEY: ${{ env.EXPO_PUBLIC_POSTHOG_API_KEY }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID }}
+          EXPO_PUBLIC_POSTHOG_API_KEY: ${{ secrets.EXPO_PUBLIC_POSTHOG_API_KEY }}
           EXPO_PUBLIC_POSTHOG_HOST: ${{ env.EXPO_PUBLIC_POSTHOG_HOST }}
           EXPO_PUBLIC_POSTHOG_ENABLED: ${{ env.EXPO_PUBLIC_POSTHOG_ENABLED }}
           EXPO_PUBLIC_BUILD_NUMBER: ${{ env.EXPO_PUBLIC_BUILD_NUMBER }}
