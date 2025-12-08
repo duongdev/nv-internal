@@ -6,7 +6,7 @@ const buildNumber = process.env.BUILD_NUMBER || '1'
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Nam Việt Internal',
+  name: 'Nam Việt Solution',
   slug: 'nv-internal',
   version: '1.0.0',
   orientation: 'portrait',
@@ -35,16 +35,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       UIDeviceFamily: [1], // 1 = iPhone only (exclude iPad)
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSLocationWhenInUseUsageDescription:
-        'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
+        'Nam Việt Solution cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSLocationAlwaysAndWhenInUseUsageDescription:
-        'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
+        'Nam Việt Solution cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSCameraUsageDescription:
-        'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc và đính kèm vào nhiệm vụ.',
+        'Nam Việt Solution cần quyền truy cập máy ảnh để chụp ảnh công việc và đính kèm vào nhiệm vụ.',
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       NSPhotoLibraryUsageDescription:
-        'Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
+        'Nam Việt Solution cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
       // biome-ignore lint/style/useNamingConvention: iOS InfoPlist requires exact key names
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -86,16 +86,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-location',
       {
         locationAlwaysAndWhenInUsePermission:
-          'Nam Việt Internal cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
+          'Nam Việt Solution cần quyền truy cập vị trí để xác minh check-in/check-out tại địa điểm công việc.',
       },
     ],
     [
       'expo-image-picker',
       {
         photosPermission:
-          'Nam Việt Internal cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
+          'Nam Việt Solution cần quyền truy cập thư viện ảnh để đính kèm ảnh vào nhiệm vụ.',
         cameraPermission:
-          'Nam Việt Internal cần quyền truy cập máy ảnh để chụp ảnh công việc.',
+          'Nam Việt Solution cần quyền truy cập máy ảnh để chụp ảnh công việc.',
       },
     ],
     // Restrict app to phones only (exclude tablets)

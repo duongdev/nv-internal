@@ -44,9 +44,9 @@ platform :ios do
     UI.message("Setting CODE_SIGN_STYLE to Manual in Xcode project...")
     update_code_signing_settings(
       use_automatic_signing: false,
-      path: "ios/NamVitInternal.xcodeproj",
+      path: "ios/NamVitSolution.xcodeproj",
       team_id: "9F77J83SKT",
-      targets: ["NamVitInternal"],
+      targets: ["NamVitSolution"],
       code_sign_identity: "iPhone Distribution",
       profile_name: nil  # Will be set later based on build type
     )
@@ -89,9 +89,9 @@ platform :ios do
     # Set provisioning profile for App Store build
     update_code_signing_settings(
       use_automatic_signing: false,
-      path: "ios/NamVitInternal.xcodeproj",
+      path: "ios/NamVitSolution.xcodeproj",
       team_id: "9F77J83SKT",
-      targets: ["NamVitInternal"],
+      targets: ["NamVitSolution"],
       build_configurations: ["Release"],
       profile_name: "match AppStore vn.dienlanhnamviet.internal",
       code_sign_identity: "Apple Distribution"
@@ -99,8 +99,8 @@ platform :ios do
 
     # Build app
     build_app(
-      workspace: "ios/NamVitInternal.xcworkspace",
-      scheme: "NamVitInternal",
+      workspace: "ios/NamVitSolution.xcworkspace",
+      scheme: "NamVitSolution",
       configuration: "Release",
       export_method: "app-store",
       output_directory: "./build",
@@ -176,17 +176,17 @@ platform :ios do
     # Set provisioning profile
     update_code_signing_settings(
       use_automatic_signing: false,
-      path: "ios/NamVitInternal.xcodeproj",
+      path: "ios/NamVitSolution.xcodeproj",
       team_id: "9F77J83SKT",
-      targets: ["NamVitInternal"],
+      targets: ["NamVitSolution"],
       build_configurations: ["Release"],
       profile_name: profile_name,
       code_sign_identity: "Apple Distribution"
     )
 
     build_app(
-      workspace: "ios/NamVitInternal.xcworkspace",
-      scheme: "NamVitInternal",
+      workspace: "ios/NamVitSolution.xcworkspace",
+      scheme: "NamVitSolution",
       configuration: "Release",
       export_method: export_method,
       output_directory: "./build",
