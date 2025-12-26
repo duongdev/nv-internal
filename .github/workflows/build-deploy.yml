@@ -279,6 +279,8 @@ jobs:
 
       - name: Build Android AAB (in parallel with APK)
         if: github.event.inputs.build_format == 'both' || github.event.inputs.build_format == 'aab' || github.event.inputs.build_format == ''
+        continue-on-error: true  # Allow APK step to run even if AAB upload fails
+        id: build-aab
         working-directory: apps/mobile
         env:
           BUILD_NUMBER: ${{ needs.increment-build-number.outputs.build_number }}
@@ -300,7 +302,7 @@ jobs:
             bundle exec fastlane android build_upload_playstore
           else
             echo "🔨 Building AAB without Play Store submission"
-            bundle exec fastlane android build_upload_playstore || bundle exec fastlane android build_aab
+            bundle exec fastlane android build_aab
           fi
 
       - name: Build Android APK (in parallel with AAB)
@@ -339,3 +341,12 @@ jobs:
             apps/mobile/android/app/build/outputs/apk/
             apps/mobile/fastlane/report.xml
           retention-days: 30
+
+      - name: Check build status
+        if: always()
+        run: |
+          if [ "${{ steps.build-aab.outcome }}" = "failure" ]; then
+            echo "❌ AAB build/upload failed. Check logs above for details."
+            exit 1
+          fi
+          echo "✅ All build steps completed successfully"

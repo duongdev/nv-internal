@@ -279,9 +279,34 @@ platform :android do
       UI.important("   To fix: Enable minifyEnabled in android/app/build.gradle release buildType")
     end
 
+    # For apps in draft status, we must use release_status: 'draft'
+    # Once the app is published, this can be changed to 'completed' for immediate rollout
+    upload_options[:release_status] = 'draft'
+
     upload_to_play_store(upload_options)
 
     UI.success("✅ Successfully uploaded build to Play Store Internal Track!")
+  end
+
+  desc "Build AAB only (no upload)"
+  lane :build_aab do
+    increment_build_number_lane
+    run_prebuild
+
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "android/",
+      properties: {
+        "android.injected.signing.store.file" => File.expand_path("../@duongdev__nv-internal.jks"),
+        "android.injected.signing.store.password" => ENV["ANDROID_KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"] || "nv-internal",
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"]
+      },
+      flags: "-x lint -x lintVitalRelease -x lintVitalAnalyzeRelease"
+    )
+
+    UI.success("✅ Successfully built AAB!")
   end
 
   desc "Build APK for testing"
