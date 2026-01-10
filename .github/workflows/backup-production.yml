@@ -8,6 +8,11 @@ on:
     # Twice daily: 2 AM and 2 PM UTC (9 AM and 9 PM Vietnam time)
     - cron: "0 2,14 * * *"
 
+  # Test on push to feature branch (dry-run mode)
+  push:
+    branches:
+      - "feature/psn-71-*"
+
   workflow_dispatch:
     inputs:
       skip_blobs:
@@ -374,7 +379,8 @@ jobs:
     name: Upload to Backup Repo
     runs-on: ubuntu-latest
     needs: [verify, encrypt]
-    if: ${{ !inputs.dry_run }}
+    # Skip upload on push (always dry-run) or when dry_run input is true
+    if: ${{ github.event_name != 'push' && !inputs.dry_run }}
 
     steps:
       - name: Download encrypted backups
@@ -450,13 +456,14 @@ jobs:
           echo "**Path**: \`backups/${BACKUP_DATE}/\`" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
-  # Dry Run Summary (when dry_run is true)
+  # Dry Run Summary (when dry_run is true or push event)
   # ============================================
   dry-run-summary:
     name: Dry Run Summary
     runs-on: ubuntu-latest
     needs: [verify, encrypt]
-    if: ${{ inputs.dry_run }}
+    # Run on push (always dry-run) or when dry_run input is true
+    if: ${{ github.event_name == 'push' || inputs.dry_run }}
 
     steps:
       - name: Download encrypted backups
