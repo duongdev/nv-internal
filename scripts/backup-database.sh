@@ -16,7 +16,7 @@
 #   ./scripts/backup-database.sh --dry-run
 #   ./scripts/backup-database.sh --output /tmp/backup.sql.gz
 
-set -e
+set -eo pipefail
 
 # Colors for output
 RED='\033[0;31m'
