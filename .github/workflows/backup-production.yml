@@ -1,0 +1,486 @@
+name: Production Backup
+
+# Automated production backup workflow
+# Creates encrypted backups of database, blobs, and env vars
+# Pushes to a dedicated backup repository
+on:
+  schedule:
+    # Twice daily: 2 AM and 2 PM UTC (9 AM and 9 PM Vietnam time)
+    - cron: "0 2,14 * * *"
+
+  workflow_dispatch:
+    inputs:
+      skip_blobs:
+        description: "Skip blob backup (faster for testing)"
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: "Dry run - don't push to backup repo"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  BACKUP_DATE: ""
+  BACKUP_DIR: ""
+
+jobs:
+  # ============================================
+  # Job 1: Backup Database
+  # ============================================
+  backup-database:
+    name: Backup Database
+    runs-on: ubuntu-latest
+    outputs:
+      backup_file: ${{ steps.backup.outputs.backup_file }}
+      backup_date: ${{ steps.set-date.outputs.backup_date }}
+      backup_dir: ${{ steps.set-date.outputs.backup_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set backup date
+        id: set-date
+        run: |
+          BACKUP_DATE=$(date -u +'%Y-%m-%d')
+          BACKUP_DIR="${{ github.workspace }}/backup-staging"
+          echo "backup_date=$BACKUP_DATE" >> $GITHUB_OUTPUT
+          echo "backup_dir=$BACKUP_DIR" >> $GITHUB_OUTPUT
+          echo "BACKUP_DATE=$BACKUP_DATE" >> $GITHUB_ENV
+          echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
+          mkdir -p "$BACKUP_DIR"
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run database backup
+        id: backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          chmod +x scripts/backup-database.sh
+          OUTPUT_FILE="${{ env.BACKUP_DIR }}/database-${{ env.BACKUP_DATE }}.sql.gz"
+          ./scripts/backup-database.sh --output "$OUTPUT_FILE"
+          echo "backup_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload database backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: ${{ steps.backup.outputs.backup_file }}
+          retention-days: 1
+
+  # ============================================
+  # Job 2: Backup Blobs (parallel with database)
+  # ============================================
+  backup-blobs:
+    name: Backup Blobs
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_blobs }}
+    outputs:
+      backup_dir: ${{ steps.backup.outputs.backup_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set backup directory
+        run: |
+          BACKUP_DIR="${{ github.workspace }}/backup-staging/blobs"
+          echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
+          mkdir -p "$BACKUP_DIR"
+
+      - name: Run blob backup
+        id: backup
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          pnpm tsx scripts/backup-blobs.ts --output "${{ env.BACKUP_DIR }}"
+          echo "backup_dir=${{ env.BACKUP_DIR }}" >> $GITHUB_OUTPUT
+
+      - name: Create blobs tarball
+        run: |
+          cd "${{ github.workspace }}/backup-staging"
+          tar -cvf blobs.tar blobs/
+
+      - name: Upload blobs backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blobs-backup
+          path: ${{ github.workspace }}/backup-staging/blobs.tar
+          retention-days: 1
+
+  # ============================================
+  # Job 3: Backup Environment Variables (parallel)
+  # ============================================
+  backup-env:
+    name: Backup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      backup_file: ${{ steps.backup.outputs.backup_file }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set backup directory
+        run: |
+          BACKUP_DATE=$(date -u +'%Y-%m-%d')
+          BACKUP_DIR="${{ github.workspace }}/backup-staging"
+          echo "BACKUP_DATE=$BACKUP_DATE" >> $GITHUB_ENV
+          echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
+          mkdir -p "$BACKUP_DIR"
+
+      - name: Run environment backup
+        id: backup
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          chmod +x scripts/backup-env.sh
+          OUTPUT_FILE="${{ env.BACKUP_DIR }}/env-${{ env.BACKUP_DATE }}.txt"
+          ./scripts/backup-env.sh --include-values --output "$OUTPUT_FILE"
+          echo "backup_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload env backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: env-backup
+          path: ${{ steps.backup.outputs.backup_file }}
+          retention-days: 1
+
+  # ============================================
+  # Job 4: Encrypt All Backups
+  # ============================================
+  encrypt:
+    name: Encrypt Backups
+    runs-on: ubuntu-latest
+    needs: [backup-database, backup-blobs, backup-env]
+    if: |
+      always() &&
+      needs.backup-database.result == 'success' &&
+      needs.backup-env.result == 'success' &&
+      (needs.backup-blobs.result == 'success' || needs.backup-blobs.result == 'skipped')
+    outputs:
+      encrypted_files: ${{ steps.encrypt.outputs.encrypted_files }}
+      backup_date: ${{ needs.backup-database.outputs.backup_date }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create staging directory
+        run: |
+          mkdir -p staging
+          mkdir -p encrypted
+
+      - name: Download database backup
+        uses: actions/download-artifact@v4
+        with:
+          name: database-backup
+          path: staging/
+
+      - name: Download env backup
+        uses: actions/download-artifact@v4
+        with:
+          name: env-backup
+          path: staging/
+
+      - name: Download blobs backup
+        if: ${{ !inputs.skip_blobs }}
+        uses: actions/download-artifact@v4
+        with:
+          name: blobs-backup
+          path: staging/
+
+      - name: Install GPG
+        run: sudo apt-get update && sudo apt-get install -y gnupg
+
+      - name: Encrypt all backup files
+        id: encrypt
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          ENCRYPTED_FILES=""
+
+          encrypt_file() {
+            local INPUT_FILE="$1"
+            local OUTPUT_FILE="$2"
+
+            echo "Encrypting $INPUT_FILE to $OUTPUT_FILE..."
+
+            # Use GPG directly to avoid interactive prompts
+            echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+              --symmetric \
+              --cipher-algo AES256 \
+              --batch \
+              --yes \
+              --passphrase-fd 0 \
+              --output "$OUTPUT_FILE" \
+              "$INPUT_FILE"
+
+            if [ -f "$OUTPUT_FILE" ]; then
+              SIZE=$(ls -lh "$OUTPUT_FILE" | awk '{print $5}')
+              echo "Encrypted: $OUTPUT_FILE ($SIZE)"
+              ENCRYPTED_FILES="$ENCRYPTED_FILES $OUTPUT_FILE"
+            else
+              echo "::error::Failed to encrypt $INPUT_FILE"
+              exit 1
+            fi
+          }
+
+          # Encrypt database backup
+          for f in staging/*.sql.gz; do
+            if [ -f "$f" ]; then
+              encrypt_file "$f" "encrypted/$(basename "$f").gpg"
+            fi
+          done
+
+          # Encrypt env backup
+          for f in staging/*.txt; do
+            if [ -f "$f" ]; then
+              encrypt_file "$f" "encrypted/$(basename "$f").gpg"
+            fi
+          done
+
+          # Encrypt blobs tarball
+          for f in staging/*.tar; do
+            if [ -f "$f" ]; then
+              encrypt_file "$f" "encrypted/$(basename "$f").gpg"
+            fi
+          done
+
+          echo "encrypted_files=$ENCRYPTED_FILES" >> $GITHUB_OUTPUT
+          ls -la encrypted/
+
+      - name: Upload encrypted backups artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-backups
+          path: encrypted/
+          retention-days: 1
+
+  # ============================================
+  # Job 5: Verify Encrypted Backups
+  # ============================================
+  verify:
+    name: Verify Backups
+    runs-on: ubuntu-latest
+    needs: [encrypt]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download encrypted backups
+        uses: actions/download-artifact@v4
+        with:
+          name: encrypted-backups
+          path: encrypted/
+
+      - name: Install GPG
+        run: sudo apt-get update && sudo apt-get install -y gnupg
+
+      - name: Verify database backup
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          chmod +x scripts/backup-verify.sh
+
+          # Find and verify the database backup
+          for f in encrypted/*.sql.gz.gpg; do
+            if [ -f "$f" ]; then
+              echo "Verifying $f..."
+              ./scripts/backup-verify.sh "$f" --verbose
+            fi
+          done
+
+      - name: Verify all encrypted files exist and have size
+        run: |
+          echo "Checking encrypted backup files..."
+          for f in encrypted/*.gpg; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
+              if [ "$SIZE" -gt 0 ]; then
+                echo "PASS: $f ($SIZE bytes)"
+              else
+                echo "FAIL: $f is empty"
+                exit 1
+              fi
+            fi
+          done
+          echo "All encrypted files verified."
+
+  # ============================================
+  # Job 6: Upload to Backup Repository
+  # ============================================
+  upload:
+    name: Upload to Backup Repo
+    runs-on: ubuntu-latest
+    needs: [verify, encrypt]
+    if: ${{ !inputs.dry_run }}
+
+    steps:
+      - name: Download encrypted backups
+        uses: actions/download-artifact@v4
+        with:
+          name: encrypted-backups
+          path: encrypted/
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+
+      - name: Clone backup repository
+        env:
+          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+          BACKUP_REPO: ${{ secrets.BACKUP_REPO }}
+        run: |
+          git clone "https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/${BACKUP_REPO}.git" backup-repo
+          cd backup-repo
+          git lfs install
+
+      - name: Copy backups to dated folder
+        run: |
+          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
+          DEST_DIR="backup-repo/backups/${BACKUP_DATE}"
+          mkdir -p "$DEST_DIR"
+
+          cp encrypted/*.gpg "$DEST_DIR/"
+          ls -la "$DEST_DIR/"
+
+      - name: Configure Git LFS tracking
+        working-directory: backup-repo
+        run: |
+          # Track all .gpg files with Git LFS
+          git lfs track "*.gpg"
+          git add .gitattributes
+
+      - name: Commit and push backups
+        working-directory: backup-repo
+        env:
+          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
+
+          git add "backups/${BACKUP_DATE}/"
+          git commit -m "Backup ${BACKUP_DATE} - Automated production backup" || echo "No changes to commit"
+
+          git push origin main
+
+      - name: Create summary
+        run: |
+          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
+
+          echo "## Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: ${BACKUP_DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: Success" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Backed Up" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for f in encrypted/*.gpg; do
+            if [ -f "$f" ]; then
+              SIZE=$(ls -lh "$f" | awk '{print $5}')
+              echo "- $(basename "$f") ($SIZE)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository**: \`${{ secrets.BACKUP_REPO }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Path**: \`backups/${BACKUP_DATE}/\`" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Dry Run Summary (when dry_run is true)
+  # ============================================
+  dry-run-summary:
+    name: Dry Run Summary
+    runs-on: ubuntu-latest
+    needs: [verify, encrypt]
+    if: ${{ inputs.dry_run }}
+
+    steps:
+      - name: Download encrypted backups
+        uses: actions/download-artifact@v4
+        with:
+          name: encrypted-backups
+          path: encrypted/
+
+      - name: Create dry run summary
+        run: |
+          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
+
+          echo "## Dry Run Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: ${BACKUP_DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode**: Dry Run (no push to backup repo)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files That Would Be Backed Up" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for f in encrypted/*.gpg; do
+            if [ -f "$f" ]; then
+              SIZE=$(ls -lh "$f" | awk '{print $5}')
+              echo "- $(basename "$f") ($SIZE)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Run without \`dry_run\` to push to backup repository." >> $GITHUB_STEP_SUMMARY
