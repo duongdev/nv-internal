@@ -180,6 +180,41 @@ function formatBytes(bytes: number): string {
   return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`
 }
 
+// Parallel download with concurrency limit
+async function downloadWithConcurrency<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  concurrency: number,
+): Promise<R[]> {
+  const results: R[] = []
+  const executing: Promise<void>[] = []
+
+  for (const item of items) {
+    const p = fn(item).then((result) => {
+      results.push(result)
+    })
+
+    executing.push(p)
+
+    if (executing.length >= concurrency) {
+      await Promise.race(executing)
+      // Remove completed promises
+      for (let i = executing.length - 1; i >= 0; i--) {
+        const status = await Promise.race([
+          executing[i].then(() => 'fulfilled'),
+          Promise.resolve('pending'),
+        ])
+        if (status === 'fulfilled') {
+          executing.splice(i, 1)
+        }
+      }
+    }
+  }
+
+  await Promise.all(executing)
+  return results
+}
+
 async function backupBlobs(
   blobs: ListBlobResultBlob[],
   options: CliOptions,
@@ -191,12 +226,9 @@ async function backupBlobs(
     blobs: [],
   }
 
-  let downloaded = 0
-  let failed = 0
-
+  // Build manifest entries first
   for (const blob of blobs) {
     const localFilename = sanitizeFilename(blob.pathname)
-    const localPath = join(options.outputDir, localFilename)
 
     const entry: BlobManifestEntry = {
       pathname: blob.pathname,
@@ -214,26 +246,49 @@ async function backupBlobs(
       logInfo(
         `DRY RUN - would download: ${blob.pathname} (${formatBytes(blob.size)})`,
       )
-      continue
-    }
-
-    try {
-      await downloadBlob(blob, localPath)
-      downloaded++
-      logSuccess(`Downloaded: ${blob.pathname} (${formatBytes(blob.size)})`)
-    } catch (error) {
-      failed++
-      const message = error instanceof Error ? error.message : String(error)
-      logError(`Failed to download ${blob.pathname}: ${message}`)
     }
   }
 
-  if (!options.dryRun) {
-    logInfo('')
-    logInfo(`Downloaded: ${downloaded}/${blobs.length}`)
-    if (failed > 0) {
-      logWarning(`Failed: ${failed}`)
-    }
+  if (options.dryRun) {
+    return manifest
+  }
+
+  // Download in parallel with concurrency limit
+  const CONCURRENCY = 10
+  let downloaded = 0
+  let failed = 0
+  const startTime = Date.now()
+
+  logInfo(`Downloading ${blobs.length} blobs with ${CONCURRENCY} parallel connections...`)
+
+  await downloadWithConcurrency(
+    blobs,
+    async (blob) => {
+      const localFilename = sanitizeFilename(blob.pathname)
+      const localPath = join(options.outputDir, localFilename)
+
+      try {
+        await downloadBlob(blob, localPath)
+        downloaded++
+        // Show progress every 10 downloads
+        if (downloaded % 10 === 0 || downloaded === blobs.length) {
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+          logInfo(`Progress: ${downloaded}/${blobs.length} (${elapsed}s)`)
+        }
+      } catch (error) {
+        failed++
+        const message = error instanceof Error ? error.message : String(error)
+        logError(`Failed to download ${blob.pathname}: ${message}`)
+      }
+    },
+    CONCURRENCY,
+  )
+
+  const totalTime = ((Date.now() - startTime) / 1000).toFixed(1)
+  logInfo('')
+  logSuccess(`Downloaded: ${downloaded}/${blobs.length} in ${totalTime}s`)
+  if (failed > 0) {
+    logWarning(`Failed: ${failed}`)
   }
 
   return manifest
