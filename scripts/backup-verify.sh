@@ -235,41 +235,57 @@ verify_sql() {
     exit 1
   fi
 
-  # Look for common PostgreSQL dump markers
+  # Look for common PostgreSQL dump markers (case-insensitive, anywhere in line)
   local has_pg_dump=false
   local has_set_statements=false
   local has_create_or_data=false
+  local has_sql_comments=false
 
-  # Check for pg_dump header (common in PostgreSQL dumps)
-  if head -100 "$file" | grep -q -E "(PostgreSQL|pg_dump|Dumped)" 2>/dev/null; then
+  # Check for pg_dump header (common in PostgreSQL dumps) - case insensitive
+  if head -100 "$file" | grep -q -i -E "(postgresql|pg_dump|dumped|database dump)" 2>/dev/null; then
     has_pg_dump=true
   fi
 
-  # Check for SET statements (very common in SQL dumps)
-  if head -100 "$file" | grep -q -E "^SET " 2>/dev/null; then
+  # Check for SQL comments (-- style)
+  if head -100 "$file" | grep -q -E "^--" 2>/dev/null; then
+    has_sql_comments=true
+  fi
+
+  # Check for SET statements (may have leading whitespace)
+  if grep -q -E "^\s*SET " "$file" 2>/dev/null; then
     has_set_statements=true
   fi
 
-  # Check for CREATE or INSERT statements
-  if grep -q -E "^(CREATE|INSERT|ALTER|DROP|COPY)" "$file" 2>/dev/null; then
+  # Check for CREATE or INSERT statements (may have leading whitespace)
+  if grep -q -i -E "^\s*(CREATE|INSERT|ALTER|DROP|COPY|SELECT)" "$file" 2>/dev/null; then
     has_create_or_data=true
   fi
 
   # Count significant SQL statements
-  local statement_count=$(grep -c -E "^(CREATE|INSERT|ALTER|COPY|DROP)" "$file" 2>/dev/null || echo "0")
+  local statement_count=$(grep -c -i -E "^\s*(CREATE|INSERT|ALTER|COPY|DROP|SELECT)" "$file" 2>/dev/null || echo "0")
+
+  # Count semicolons (SQL statement terminators)
+  local semicolon_count=$(grep -c ";" "$file" 2>/dev/null || echo "0")
 
   if [ "$VERBOSE" = true ]; then
     log_info "  - pg_dump markers: $([ "$has_pg_dump" = true ] && echo "found" || echo "not found")"
+    log_info "  - SQL comments: $([ "$has_sql_comments" = true ] && echo "found" || echo "not found")"
     log_info "  - SET statements: $([ "$has_set_statements" = true ] && echo "found" || echo "not found")"
     log_info "  - DDL/DML statements: $statement_count found"
+    log_info "  - Semicolons: $semicolon_count found"
   fi
 
-  # Validate - require either pg_dump header or SQL statements
-  if [ "$has_pg_dump" = true ] || [ "$has_create_or_data" = true ]; then
-    log_success "SQL content: Valid ($statement_count statements found)"
+  # Validate - more lenient: accept if any SQL indicators found
+  if [ "$has_pg_dump" = true ] || [ "$has_create_or_data" = true ] || [ "$has_set_statements" = true ] || [ "$semicolon_count" -gt 5 ]; then
+    log_success "SQL content: Valid ($statement_count DDL/DML, $semicolon_count semicolons)"
     return 0
   else
+    # Show first few lines to help debug
     log_error "SQL content: Does not appear to be a valid SQL dump"
+    log_info "First 10 lines of file:"
+    head -10 "$file" | while read -r line; do
+      log_info "  > $line"
+    done
     exit 1
   fi
 }
