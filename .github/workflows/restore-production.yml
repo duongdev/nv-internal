@@ -5,8 +5,8 @@ name: Production Restore
 on:
   workflow_dispatch:
     inputs:
-      backup_date:
-        description: "Backup date to restore from (YYYY-MM-DD format)"
+      backup_timestamp:
+        description: "Backup timestamp folder to restore from (YYYYMMDDHHmmss format, e.g., 20260111143052)"
         required: true
         type: string
       restore_database:
@@ -44,7 +44,7 @@ jobs:
     name: Validate Restore Request
     runs-on: ubuntu-latest
     outputs:
-      backup_date: ${{ inputs.backup_date }}
+      backup_timestamp: ${{ inputs.backup_timestamp }}
       restore_database: ${{ inputs.restore_database }}
       restore_blobs: ${{ inputs.restore_blobs }}
 
@@ -61,14 +61,14 @@ jobs:
           echo "::error::No restore option selected. Select at least one of: restore_database, restore_blobs"
           exit 1
 
-      - name: Validate backup date format
+      - name: Validate backup timestamp format
         run: |
-          DATE="${{ inputs.backup_date }}"
-          if ! [[ "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            echo "::error::Invalid date format. Use YYYY-MM-DD (e.g., 2024-01-15)"
+          TIMESTAMP="${{ inputs.backup_timestamp }}"
+          if ! [[ "$TIMESTAMP" =~ ^[0-9]{14}$ ]]; then
+            echo "::error::Invalid timestamp format. Use YYYYMMDDHHmmss (e.g., 20260111143052)"
             exit 1
           fi
-          echo "Backup date: $DATE"
+          echo "Backup timestamp: $TIMESTAMP"
 
       - name: Display restore warning
         run: |
@@ -79,7 +79,7 @@ jobs:
           echo "========================================"
           echo ""
           echo "Target Environment: ${{ inputs.target_environment }}"
-          echo "Backup Date: ${{ inputs.backup_date }}"
+          echo "Backup Timestamp: ${{ inputs.backup_timestamp }}"
           echo "Restore Database: ${{ inputs.restore_database }}"
           echo "Restore Blobs: ${{ inputs.restore_blobs }}"
           echo ""
@@ -93,7 +93,7 @@ jobs:
           echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Target Environment | \`${{ inputs.target_environment }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Backup Date | \`${{ inputs.backup_date }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backup Timestamp | \`${{ inputs.backup_timestamp }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Restore Database | ${{ inputs.restore_database }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Restore Blobs | ${{ inputs.restore_blobs }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -137,7 +137,7 @@ jobs:
       - name: Check backup exists
         id: check-backup
         run: |
-          BACKUP_DATE="${{ inputs.backup_date }}"
+          BACKUP_DATE="${{ inputs.backup_timestamp }}"
           BACKUP_PATH="backup-repo/backups/${BACKUP_DATE}"
 
           if [ ! -d "$BACKUP_PATH" ]; then
@@ -158,7 +158,7 @@ jobs:
 
       - name: Copy encrypted files
         run: |
-          BACKUP_DATE="${{ inputs.backup_date }}"
+          BACKUP_DATE="${{ inputs.backup_timestamp }}"
           cp backup-repo/backups/${BACKUP_DATE}/*.gpg encrypted/
           ls -la encrypted/
 
@@ -198,7 +198,7 @@ jobs:
             echo "Database backup found"
           fi
 
-          if ls decrypted/blobs.tar 1> /dev/null 2>&1; then
+          if ls decrypted/blobs-*.tar 1> /dev/null 2>&1; then
             HAS_BLOBS="true"
             echo "Blobs backup found"
           fi
@@ -209,10 +209,13 @@ jobs:
       - name: Extract blobs tarball
         if: ${{ inputs.restore_blobs }}
         run: |
-          if [ -f decrypted/blobs.tar ]; then
+          BLOBS_TAR=$(ls decrypted/blobs-*.tar 2>/dev/null | head -1)
+          if [ -n "$BLOBS_TAR" ]; then
             cd decrypted
-            tar -xvf blobs.tar
+            tar -xvf "$(basename "$BLOBS_TAR")"
             ls -la blobs/ || echo "No blobs directory after extraction"
+          else
+            echo "No blobs tarball found"
           fi
 
       - name: Upload decrypted database backup
@@ -267,7 +270,7 @@ jobs:
           echo "========================================"
           echo ""
           echo "Target: ${{ inputs.target_environment }}"
-          echo "Backup Date: ${{ inputs.backup_date }}"
+          echo "Backup Timestamp: ${{ inputs.backup_timestamp }}"
           echo ""
           echo "This will DROP and RECREATE all tables!"
           echo "========================================"
@@ -309,7 +312,7 @@ jobs:
           echo "## Database Restore Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ inputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup Date**: ${{ inputs.backup_date }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Timestamp**: ${{ inputs.backup_timestamp }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: Success" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
@@ -369,7 +372,7 @@ jobs:
           echo "========================================"
           echo ""
           echo "Target: ${{ inputs.target_environment }}"
-          echo "Backup Date: ${{ inputs.backup_date }}"
+          echo "Backup Timestamp: ${{ inputs.backup_timestamp }}"
           echo ""
           ls -la backup/blobs/ || echo "No files in blobs directory"
 
@@ -394,7 +397,7 @@ jobs:
           echo "## Blob Restore Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ inputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup Date**: ${{ inputs.backup_date }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Timestamp**: ${{ inputs.backup_timestamp }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: Success" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
@@ -461,5 +464,5 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ inputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup Date**: ${{ inputs.backup_date }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Timestamp**: ${{ inputs.backup_timestamp }}" >> $GITHUB_STEP_SUMMARY
           echo "**Completed**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

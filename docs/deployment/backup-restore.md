@@ -25,15 +25,15 @@ Backups run automatically twice daily via GitHub Actions:
 
 ### Storage Location
 
-Backups are stored in a **private GitHub repository** configured via `BACKUP_REPO` secret. Each backup is organized by date:
+Backups are stored in a **private GitHub repository** configured via `BACKUP_REPO` secret. Each backup is organized by timestamp (YYYYMMDDHHmmss):
 
 ```
 backups/
-  2024-01-15/
-    database-2024-01-15.sql.gz.gpg
-    blobs.tar.gpg
-    env-2024-01-15.txt.gpg
-  2024-01-16/
+  20260111020000/           # 2 AM UTC backup
+    database-20260111020000.sql.gz.gpg
+    blobs-20260111020000.tar.gpg
+    env-20260111020000.txt.gpg
+  20260111140000/           # 2 PM UTC backup
     ...
 ```
 
@@ -194,10 +194,10 @@ Validates backup file integrity.
 
 ```bash
 # Basic verification
-./scripts/backup-verify.sh backups/database-2024-01-15.sql.gz.gpg
+./scripts/backup-verify.sh backups/database-20260111020000.sql.gz.gpg
 
 # Verbose output
-./scripts/backup-verify.sh backups/database-2024-01-15.sql.gz.gpg --verbose
+./scripts/backup-verify.sh backups/database-20260111020000.sql.gz.gpg --verbose
 ```
 
 **Environment Variables:**
@@ -296,7 +296,7 @@ Decrypts GPG-encrypted backup files.
 **Inputs (Required):**
 | Input | Description |
 |-------|-------------|
-| `backup_date` | Backup date in YYYY-MM-DD format |
+| `backup_timestamp` | Backup timestamp folder in YYYYMMDDHHmmss format (e.g., 20260111143052) |
 | `restore_database` | Restore database (boolean) |
 | `restore_blobs` | Restore blob storage (boolean) |
 | `confirm_restore` | **Must be checked** to proceed |
@@ -396,7 +396,7 @@ This checks:
 If you need to restore production immediately:
 
 1. [ ] Go to **Actions** > **Production Restore**
-2. [ ] Enter the backup date (YYYY-MM-DD format)
+2. [ ] Enter the backup timestamp (YYYYMMDDHHmmss format, e.g., 20260111143052)
 3. [ ] Select what to restore (database and/or blobs)
 4. [ ] Set target environment to `production`
 5. [ ] Check **"I understand this will OVERWRITE production data"**

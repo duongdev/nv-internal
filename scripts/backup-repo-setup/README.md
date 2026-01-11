@@ -90,11 +90,11 @@ After backups start running, the structure will look like:
 nv-internal-backups/
 ├── .gitattributes          # Git LFS configuration
 ├── backups/
-│   ├── 2024-01-15/
-│   │   ├── database-2024-01-15.sql.gz.gpg
-│   │   ├── blobs.tar.gpg
-│   │   └── env-2024-01-15.txt.gpg
-│   ├── 2024-01-16/
+│   ├── 20260111020000/     # Backup at 2 AM UTC
+│   │   ├── database-20260111020000.sql.gz.gpg
+│   │   ├── blobs-20260111020000.tar.gpg
+│   │   └── env-20260111020000.txt.gpg
+│   ├── 20260111140000/     # Backup at 2 PM UTC
 │   │   └── ...
 │   └── ...
 └── README.md               # Optional: documentation
