@@ -37,7 +37,7 @@ jobs:
     name: Backup & Encrypt
     runs-on: ubuntu-latest
     outputs:
-      backup_date: ${{ steps.setup.outputs.backup_date }}
+      backup_timestamp: ${{ steps.setup.outputs.backup_timestamp }}
 
     steps:
       - name: Checkout repository
@@ -48,9 +48,10 @@ jobs:
       - name: Setup environment
         id: setup
         run: |
-          BACKUP_DATE=$(date -u +'%Y-%m-%d')
-          echo "backup_date=$BACKUP_DATE" >> $GITHUB_OUTPUT
-          echo "BACKUP_DATE=$BACKUP_DATE" >> $GITHUB_ENV
+          # Include timestamp for multiple backups per day
+          BACKUP_TIMESTAMP=$(date -u +'%Y-%m-%d-%H%M%S')
+          echo "backup_timestamp=$BACKUP_TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "BACKUP_TIMESTAMP=$BACKUP_TIMESTAMP" >> $GITHUB_ENV
           mkdir -p backup-staging encrypted
 
       - name: Setup PNPM
@@ -91,7 +92,7 @@ jobs:
         run: |
           echo "::group::Database Backup"
           chmod +x scripts/backup-database.sh
-          ./scripts/backup-database.sh --output "backup-staging/database-${{ env.BACKUP_DATE }}.sql.gz"
+          ./scripts/backup-database.sh --output "backup-staging/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz"
           echo "::endgroup::"
 
       - name: Encrypt database backup
@@ -101,11 +102,11 @@ jobs:
           echo "Encrypting database backup..."
           echo "$BACKUP_ENCRYPTION_KEY" | gpg \
             --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
-            --output "encrypted/database-${{ env.BACKUP_DATE }}.sql.gz.gpg" \
-            "backup-staging/database-${{ env.BACKUP_DATE }}.sql.gz"
+            --output "encrypted/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz.gpg" \
+            "backup-staging/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz"
 
           # Immediately delete unencrypted file
-          rm -f "backup-staging/database-${{ env.BACKUP_DATE }}.sql.gz"
+          rm -f "backup-staging/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz"
           echo "Database backup encrypted and original deleted"
 
       # ============================================
@@ -134,7 +135,7 @@ jobs:
           echo "Encrypting blobs backup..."
           echo "$BACKUP_ENCRYPTION_KEY" | gpg \
             --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
-            --output "encrypted/blobs-${{ env.BACKUP_DATE }}.tar.gpg" \
+            --output "encrypted/blobs-${{ env.BACKUP_TIMESTAMP }}.tar.gpg" \
             "backup-staging/blobs.tar"
 
           # Immediately delete unencrypted files
@@ -158,7 +159,7 @@ jobs:
         run: |
           echo "::group::Environment Backup"
           chmod +x scripts/backup-env.sh
-          ./scripts/backup-env.sh --include-values --output "backup-staging/env-${{ env.BACKUP_DATE }}.txt"
+          ./scripts/backup-env.sh --include-values --output "backup-staging/env-${{ env.BACKUP_TIMESTAMP }}.txt"
           echo "::endgroup::"
 
       - name: Encrypt env backup
@@ -168,11 +169,11 @@ jobs:
           echo "Encrypting env backup..."
           echo "$BACKUP_ENCRYPTION_KEY" | gpg \
             --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
-            --output "encrypted/env-${{ env.BACKUP_DATE }}.txt.gpg" \
-            "backup-staging/env-${{ env.BACKUP_DATE }}.txt"
+            --output "encrypted/env-${{ env.BACKUP_TIMESTAMP }}.txt.gpg" \
+            "backup-staging/env-${{ env.BACKUP_TIMESTAMP }}.txt"
 
           # Immediately delete unencrypted file (contains secrets!)
-          rm -f "backup-staging/env-${{ env.BACKUP_DATE }}.txt"
+          rm -f "backup-staging/env-${{ env.BACKUP_TIMESTAMP }}.txt"
           echo "Env backup encrypted and original deleted"
 
       # ============================================
@@ -198,7 +199,7 @@ jobs:
           done
 
           # Verify database backup can be decrypted
-          ./scripts/backup-verify.sh "encrypted/database-${{ env.BACKUP_DATE }}.sql.gz.gpg" --verbose
+          ./scripts/backup-verify.sh "encrypted/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz.gpg" --verbose
 
           echo "All encrypted files verified."
 
@@ -211,7 +212,7 @@ jobs:
       - name: Upload encrypted backups
         uses: actions/upload-artifact@v4
         with:
-          name: encrypted-backups-${{ env.BACKUP_DATE }}
+          name: encrypted-backups-${{ env.BACKUP_TIMESTAMP }}
           path: encrypted/
           retention-days: 7
 
@@ -229,7 +230,7 @@ jobs:
       - name: Download encrypted backups
         uses: actions/download-artifact@v4
         with:
-          name: encrypted-backups-${{ needs.backup.outputs.backup_date }}
+          name: encrypted-backups-${{ needs.backup.outputs.backup_timestamp }}
           path: encrypted/
 
       - name: Install Git LFS
@@ -251,8 +252,8 @@ jobs:
         env:
           BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
         run: |
-          BACKUP_DATE="${{ needs.backup.outputs.backup_date }}"
-          DEST_DIR="backups/${BACKUP_DATE}"
+          BACKUP_TIMESTAMP="${{ needs.backup.outputs.backup_timestamp }}"
+          DEST_DIR="backups/${BACKUP_TIMESTAMP}"
           mkdir -p "$DEST_DIR"
 
           cp ../encrypted/*.gpg "$DEST_DIR/"
@@ -263,18 +264,18 @@ jobs:
 
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git commit -m "Backup ${BACKUP_DATE} - Automated production backup" || echo "No changes"
+          git commit -m "Backup ${BACKUP_TIMESTAMP} - Automated production backup" || echo "No changes"
           git push origin main
 
           echo "Backup pushed to ${{ secrets.BACKUP_REPO }}"
 
       - name: Create summary
         run: |
-          BACKUP_DATE="${{ needs.backup.outputs.backup_date }}"
+          BACKUP_TIMESTAMP="${{ needs.backup.outputs.backup_timestamp }}"
 
           echo "## ✅ Backup Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Date**: ${BACKUP_DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: ${BACKUP_TIMESTAMP}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Encrypted Files" >> $GITHUB_STEP_SUMMARY
           for f in encrypted/*.gpg; do
@@ -297,16 +298,16 @@ jobs:
       - name: Download encrypted backups
         uses: actions/download-artifact@v4
         with:
-          name: encrypted-backups-${{ needs.backup.outputs.backup_date }}
+          name: encrypted-backups-${{ needs.backup.outputs.backup_timestamp }}
           path: encrypted/
 
       - name: Create summary
         run: |
-          BACKUP_DATE="${{ needs.backup.outputs.backup_date }}"
+          BACKUP_TIMESTAMP="${{ needs.backup.outputs.backup_timestamp }}"
 
           echo "## 🔒 Dry Run Backup Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Date**: ${BACKUP_DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: ${BACKUP_TIMESTAMP}" >> $GITHUB_STEP_SUMMARY
           echo "**Mode**: Dry Run (encrypted artifacts created, not pushed)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Encrypted Files" >> $GITHUB_STEP_SUMMARY
