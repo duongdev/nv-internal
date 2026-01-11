@@ -3,6 +3,8 @@ name: Production Backup
 # Automated production backup workflow
 # Creates encrypted backups of database, blobs, and env vars
 # Pushes to a dedicated backup repository
+#
+# SECURITY: All artifacts are encrypted BEFORE upload (public repo safe)
 on:
   schedule:
     # Twice daily: 2 AM and 2 PM UTC (9 AM and 9 PM Vietnam time)
@@ -29,21 +31,13 @@ on:
 permissions:
   contents: read
 
-env:
-  BACKUP_DATE: ""
-  BACKUP_DIR: ""
-
 jobs:
-  # ============================================
-  # Job 1: Backup Database
-  # ============================================
-  backup-database:
-    name: Backup Database
+  # Single job to ensure no unencrypted data is ever uploaded as artifact
+  backup:
+    name: Backup & Encrypt
     runs-on: ubuntu-latest
     outputs:
-      backup_file: ${{ steps.backup.outputs.backup_file }}
-      backup_date: ${{ steps.set-date.outputs.backup_date }}
-      backup_dir: ${{ steps.set-date.outputs.backup_dir }}
+      backup_date: ${{ steps.setup.outputs.backup_date }}
 
     steps:
       - name: Checkout repository
@@ -51,16 +45,27 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set backup date
-        id: set-date
+      - name: Setup environment
+        id: setup
         run: |
           BACKUP_DATE=$(date -u +'%Y-%m-%d')
-          BACKUP_DIR="${{ github.workspace }}/backup-staging"
           echo "backup_date=$BACKUP_DATE" >> $GITHUB_OUTPUT
-          echo "backup_dir=$BACKUP_DIR" >> $GITHUB_OUTPUT
           echo "BACKUP_DATE=$BACKUP_DATE" >> $GITHUB_ENV
-          echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
-          mkdir -p "$BACKUP_DIR"
+          mkdir -p backup-staging encrypted
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Install PostgreSQL 17 client
         run: |
@@ -69,130 +74,76 @@ jobs:
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17
-          pg_dump --version
 
-      - name: Run database backup
-        id: backup
+          # Use PostgreSQL 17 pg_dump (not the default v16)
+          echo "/usr/lib/postgresql/17/bin" >> $GITHUB_PATH
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
+      - name: Install GPG
+        run: sudo apt-get install -y gnupg
+
+      # ============================================
+      # Database Backup
+      # ============================================
+      - name: Backup database
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          echo "::group::Database Backup"
           chmod +x scripts/backup-database.sh
-          OUTPUT_FILE="${{ env.BACKUP_DIR }}/database-${{ env.BACKUP_DATE }}.sql.gz"
-          ./scripts/backup-database.sh --output "$OUTPUT_FILE"
-          echo "backup_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          ./scripts/backup-database.sh --output "backup-staging/database-${{ env.BACKUP_DATE }}.sql.gz"
+          echo "::endgroup::"
 
-      - name: Upload database backup artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: database-backup
-          path: ${{ steps.backup.outputs.backup_file }}
-          retention-days: 1
-
-  # ============================================
-  # Job 2: Backup Blobs (parallel with database)
-  # ============================================
-  backup-blobs:
-    name: Backup Blobs
-    runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_blobs }}
-    outputs:
-      backup_dir: ${{ steps.backup.outputs.backup_dir }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.15.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: "pnpm"
-
-      - name: Get pnpm store directory
-        id: pnpm-store
-        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Set backup directory
+      - name: Encrypt database backup
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
-          BACKUP_DIR="${{ github.workspace }}/backup-staging/blobs"
-          echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
-          mkdir -p "$BACKUP_DIR"
+          echo "Encrypting database backup..."
+          echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+            --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
+            --output "encrypted/database-${{ env.BACKUP_DATE }}.sql.gz.gpg" \
+            "backup-staging/database-${{ env.BACKUP_DATE }}.sql.gz"
 
-      - name: Run blob backup
-        id: backup
+          # Immediately delete unencrypted file
+          rm -f "backup-staging/database-${{ env.BACKUP_DATE }}.sql.gz"
+          echo "Database backup encrypted and original deleted"
+
+      # ============================================
+      # Blobs Backup (optional)
+      # ============================================
+      - name: Backup blobs
+        if: ${{ !inputs.skip_blobs }}
         env:
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
-          pnpm tsx scripts/backup-blobs.ts --output "${{ env.BACKUP_DIR }}"
-          echo "backup_dir=${{ env.BACKUP_DIR }}" >> $GITHUB_OUTPUT
+          echo "::group::Blobs Backup"
+          mkdir -p backup-staging/blobs
+          pnpm tsx scripts/backup-blobs.ts --output "backup-staging/blobs"
 
-      - name: Create blobs tarball
+          # Create tarball
+          cd backup-staging
+          tar -cf blobs.tar blobs/
+          cd ..
+          echo "::endgroup::"
+
+      - name: Encrypt blobs backup
+        if: ${{ !inputs.skip_blobs }}
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
-          cd "${{ github.workspace }}/backup-staging"
-          tar -cvf blobs.tar blobs/
+          echo "Encrypting blobs backup..."
+          echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+            --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
+            --output "encrypted/blobs-${{ env.BACKUP_DATE }}.tar.gpg" \
+            "backup-staging/blobs.tar"
 
-      - name: Upload blobs backup artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: blobs-backup
-          path: ${{ github.workspace }}/backup-staging/blobs.tar
-          retention-days: 1
+          # Immediately delete unencrypted files
+          rm -rf backup-staging/blobs backup-staging/blobs.tar
+          echo "Blobs backup encrypted and originals deleted"
 
-  # ============================================
-  # Job 3: Backup Environment Variables (parallel)
-  # ============================================
-  backup-env:
-    name: Backup Environment
-    runs-on: ubuntu-latest
-    outputs:
-      backup_file: ${{ steps.backup.outputs.backup_file }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.15.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Set backup directory
-        run: |
-          BACKUP_DATE=$(date -u +'%Y-%m-%d')
-          BACKUP_DIR="${{ github.workspace }}/backup-staging"
-          echo "BACKUP_DATE=$BACKUP_DATE" >> $GITHUB_ENV
-          echo "BACKUP_DIR=$BACKUP_DIR" >> $GITHUB_ENV
-          mkdir -p "$BACKUP_DIR"
-
+      # ============================================
+      # Environment Variables Backup
+      # ============================================
       - name: Create Vercel project link
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -200,179 +151,40 @@ jobs:
         run: |
           mkdir -p .vercel
           echo "{\"orgId\":\"$VERCEL_ORG_ID\",\"projectId\":\"$VERCEL_PROJECT_ID\"}" > .vercel/project.json
-          echo "Created .vercel/project.json"
-          cat .vercel/project.json
 
-      - name: Run environment backup
-        id: backup
+      - name: Backup environment variables
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
+          echo "::group::Environment Backup"
           chmod +x scripts/backup-env.sh
-          OUTPUT_FILE="${{ env.BACKUP_DIR }}/env-${{ env.BACKUP_DATE }}.txt"
-          ./scripts/backup-env.sh --include-values --output "$OUTPUT_FILE"
-          echo "backup_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          ./scripts/backup-env.sh --include-values --output "backup-staging/env-${{ env.BACKUP_DATE }}.txt"
+          echo "::endgroup::"
 
-      - name: Upload env backup artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: env-backup
-          path: ${{ steps.backup.outputs.backup_file }}
-          retention-days: 1
-
-  # ============================================
-  # Job 4: Encrypt All Backups
-  # ============================================
-  encrypt:
-    name: Encrypt Backups
-    runs-on: ubuntu-latest
-    needs: [backup-database, backup-blobs, backup-env]
-    if: |
-      always() &&
-      needs.backup-database.result == 'success' &&
-      needs.backup-env.result == 'success' &&
-      (needs.backup-blobs.result == 'success' || needs.backup-blobs.result == 'skipped')
-    outputs:
-      encrypted_files: ${{ steps.encrypt.outputs.encrypted_files }}
-      backup_date: ${{ needs.backup-database.outputs.backup_date }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Create staging directory
-        run: |
-          mkdir -p staging
-          mkdir -p encrypted
-
-      - name: Download database backup
-        uses: actions/download-artifact@v4
-        with:
-          name: database-backup
-          path: staging/
-
-      - name: Download env backup
-        uses: actions/download-artifact@v4
-        with:
-          name: env-backup
-          path: staging/
-
-      - name: Download blobs backup
-        if: ${{ !inputs.skip_blobs }}
-        uses: actions/download-artifact@v4
-        with:
-          name: blobs-backup
-          path: staging/
-
-      - name: Install GPG
-        run: sudo apt-get update && sudo apt-get install -y gnupg
-
-      - name: Encrypt all backup files
-        id: encrypt
+      - name: Encrypt env backup
         env:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
-          ENCRYPTED_FILES=""
+          echo "Encrypting env backup..."
+          echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+            --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
+            --output "encrypted/env-${{ env.BACKUP_DATE }}.txt.gpg" \
+            "backup-staging/env-${{ env.BACKUP_DATE }}.txt"
 
-          encrypt_file() {
-            local INPUT_FILE="$1"
-            local OUTPUT_FILE="$2"
+          # Immediately delete unencrypted file (contains secrets!)
+          rm -f "backup-staging/env-${{ env.BACKUP_DATE }}.txt"
+          echo "Env backup encrypted and original deleted"
 
-            echo "Encrypting $INPUT_FILE to $OUTPUT_FILE..."
-
-            # Use GPG directly to avoid interactive prompts
-            echo "$BACKUP_ENCRYPTION_KEY" | gpg \
-              --symmetric \
-              --cipher-algo AES256 \
-              --batch \
-              --yes \
-              --passphrase-fd 0 \
-              --output "$OUTPUT_FILE" \
-              "$INPUT_FILE"
-
-            if [ -f "$OUTPUT_FILE" ]; then
-              SIZE=$(ls -lh "$OUTPUT_FILE" | awk '{print $5}')
-              echo "Encrypted: $OUTPUT_FILE ($SIZE)"
-              ENCRYPTED_FILES="$ENCRYPTED_FILES $OUTPUT_FILE"
-            else
-              echo "::error::Failed to encrypt $INPUT_FILE"
-              exit 1
-            fi
-          }
-
-          # Encrypt database backup
-          for f in staging/*.sql.gz; do
-            if [ -f "$f" ]; then
-              encrypt_file "$f" "encrypted/$(basename "$f").gpg"
-            fi
-          done
-
-          # Encrypt env backup
-          for f in staging/*.txt; do
-            if [ -f "$f" ]; then
-              encrypt_file "$f" "encrypted/$(basename "$f").gpg"
-            fi
-          done
-
-          # Encrypt blobs tarball
-          for f in staging/*.tar; do
-            if [ -f "$f" ]; then
-              encrypt_file "$f" "encrypted/$(basename "$f").gpg"
-            fi
-          done
-
-          echo "encrypted_files=$ENCRYPTED_FILES" >> $GITHUB_OUTPUT
-          ls -la encrypted/
-
-      - name: Upload encrypted backups artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: encrypted-backups
-          path: encrypted/
-          retention-days: 1
-
-  # ============================================
-  # Job 5: Verify Encrypted Backups
-  # ============================================
-  verify:
-    name: Verify Backups
-    runs-on: ubuntu-latest
-    needs: [encrypt]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Download encrypted backups
-        uses: actions/download-artifact@v4
-        with:
-          name: encrypted-backups
-          path: encrypted/
-
-      - name: Install GPG
-        run: sudo apt-get update && sudo apt-get install -y gnupg
-
-      - name: Verify database backup
+      # ============================================
+      # Verify & Upload (encrypted only)
+      # ============================================
+      - name: Verify encrypted backups
         env:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
+          echo "Verifying encrypted backups..."
           chmod +x scripts/backup-verify.sh
 
-          # Find and verify the database backup
-          for f in encrypted/*.sql.gz.gpg; do
-            if [ -f "$f" ]; then
-              echo "Verifying $f..."
-              ./scripts/backup-verify.sh "$f" --verbose
-            fi
-          done
-
-      - name: Verify all encrypted files exist and have size
-        run: |
-          echo "Checking encrypted backup files..."
           for f in encrypted/*.gpg; do
             if [ -f "$f" ]; then
               SIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
@@ -384,23 +196,40 @@ jobs:
               fi
             fi
           done
+
+          # Verify database backup can be decrypted
+          ./scripts/backup-verify.sh "encrypted/database-${{ env.BACKUP_DATE }}.sql.gz.gpg" --verbose
+
           echo "All encrypted files verified."
 
+      - name: List encrypted backups
+        run: |
+          echo "Encrypted backups ready for upload:"
+          ls -la encrypted/
+
+      # Upload ONLY encrypted artifacts (safe for public repo)
+      - name: Upload encrypted backups
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-backups-${{ env.BACKUP_DATE }}
+          path: encrypted/
+          retention-days: 7
+
   # ============================================
-  # Job 6: Upload to Backup Repository
+  # Upload to Backup Repository
   # ============================================
   upload:
     name: Upload to Backup Repo
     runs-on: ubuntu-latest
-    needs: [verify, encrypt]
-    # Skip upload on push (always dry-run) or when dry_run input is true
+    needs: [backup]
+    # Skip on push (dry-run) or when dry_run input is true
     if: ${{ github.event_name != 'push' && !inputs.dry_run }}
 
     steps:
       - name: Download encrypted backups
         uses: actions/download-artifact@v4
         with:
-          name: encrypted-backups
+          name: encrypted-backups-${{ needs.backup.outputs.backup_date }}
           path: encrypted/
 
       - name: Install Git LFS
@@ -417,91 +246,75 @@ jobs:
           cd backup-repo
           git lfs install
 
-      - name: Copy backups to dated folder
-        run: |
-          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
-          DEST_DIR="backup-repo/backups/${BACKUP_DATE}"
-          mkdir -p "$DEST_DIR"
-
-          cp encrypted/*.gpg "$DEST_DIR/"
-          ls -la "$DEST_DIR/"
-
-      - name: Configure Git LFS tracking
-        working-directory: backup-repo
-        run: |
-          # Track all .gpg files with Git LFS
-          git lfs track "*.gpg"
-          git add .gitattributes
-
-      - name: Commit and push backups
+      - name: Copy and push backups
         working-directory: backup-repo
         env:
           BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
         run: |
+          BACKUP_DATE="${{ needs.backup.outputs.backup_date }}"
+          DEST_DIR="backups/${BACKUP_DATE}"
+          mkdir -p "$DEST_DIR"
+
+          cp ../encrypted/*.gpg "$DEST_DIR/"
+
+          git lfs track "*.gpg"
+          git add .gitattributes
+          git add "$DEST_DIR/"
+
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-
-          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
-
-          git add "backups/${BACKUP_DATE}/"
-          git commit -m "Backup ${BACKUP_DATE} - Automated production backup" || echo "No changes to commit"
-
+          git commit -m "Backup ${BACKUP_DATE} - Automated production backup" || echo "No changes"
           git push origin main
+
+          echo "Backup pushed to ${{ secrets.BACKUP_REPO }}"
 
       - name: Create summary
         run: |
-          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
+          BACKUP_DATE="${{ needs.backup.outputs.backup_date }}"
 
-          echo "## Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Backup Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Date**: ${BACKUP_DATE}" >> $GITHUB_STEP_SUMMARY
-          echo "**Status**: Success" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Files Backed Up" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Encrypted Files" >> $GITHUB_STEP_SUMMARY
           for f in encrypted/*.gpg; do
-            if [ -f "$f" ]; then
-              SIZE=$(ls -lh "$f" | awk '{print $5}')
-              echo "- $(basename "$f") ($SIZE)" >> $GITHUB_STEP_SUMMARY
-            fi
+            SIZE=$(ls -lh "$f" | awk '{print $5}')
+            echo "- \`$(basename "$f")\` ($SIZE)" >> $GITHUB_STEP_SUMMARY
           done
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Repository**: \`${{ secrets.BACKUP_REPO }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Path**: \`backups/${BACKUP_DATE}/\`" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
-  # Dry Run Summary (when dry_run is true or push event)
+  # Dry Run Summary
   # ============================================
   dry-run-summary:
     name: Dry Run Summary
     runs-on: ubuntu-latest
-    needs: [verify, encrypt]
-    # Run on push (always dry-run) or when dry_run input is true
+    needs: [backup]
     if: ${{ github.event_name == 'push' || inputs.dry_run }}
 
     steps:
       - name: Download encrypted backups
         uses: actions/download-artifact@v4
         with:
-          name: encrypted-backups
+          name: encrypted-backups-${{ needs.backup.outputs.backup_date }}
           path: encrypted/
 
-      - name: Create dry run summary
+      - name: Create summary
         run: |
-          BACKUP_DATE="${{ needs.encrypt.outputs.backup_date }}"
+          BACKUP_DATE="${{ needs.backup.outputs.backup_date }}"
 
-          echo "## Dry Run Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔒 Dry Run Backup Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Date**: ${BACKUP_DATE}" >> $GITHUB_STEP_SUMMARY
-          echo "**Mode**: Dry Run (no push to backup repo)" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode**: Dry Run (encrypted artifacts created, not pushed)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Files That Would Be Backed Up" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Encrypted Files" >> $GITHUB_STEP_SUMMARY
           for f in encrypted/*.gpg; do
-            if [ -f "$f" ]; then
-              SIZE=$(ls -lh "$f" | awk '{print $5}')
-              echo "- $(basename "$f") ($SIZE)" >> $GITHUB_STEP_SUMMARY
-            fi
+            SIZE=$(ls -lh "$f" | awk '{print $5}')
+            echo "- \`$(basename "$f")\` ($SIZE)" >> $GITHUB_STEP_SUMMARY
           done
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Run without \`dry_run\` to push to backup repository." >> $GITHUB_STEP_SUMMARY
+          echo "✅ All backups encrypted - safe for public repo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Run with \`workflow_dispatch\` (dry_run=false) to push to backup repository." >> $GITHUB_STEP_SUMMARY
