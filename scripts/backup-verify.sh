@@ -61,27 +61,27 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Functions
+# Functions - all log to stderr so stdout can be used for return values
 log_info() {
   if [ "$VERBOSE" = true ]; then
-    echo -e "${BLUE}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1" >&2
   fi
 }
 
 log_success() {
-  echo -e "${GREEN}[PASS]${NC} $1"
+  echo -e "${GREEN}[PASS]${NC} $1" >&2
 }
 
 log_warning() {
-  echo -e "${YELLOW}[WARN]${NC} $1"
+  echo -e "${YELLOW}[WARN]${NC} $1" >&2
 }
 
 log_error() {
-  echo -e "${RED}[FAIL]${NC} $1"
+  echo -e "${RED}[FAIL]${NC} $1" >&2
 }
 
 log_result() {
-  echo -e "$1"
+  echo -e "$1" >&2
 }
 
 # Clean up temporary files on exit
