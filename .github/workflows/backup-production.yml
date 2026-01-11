@@ -49,7 +49,7 @@ jobs:
         id: setup
         run: |
           # Include timestamp for multiple backups per day
-          BACKUP_TIMESTAMP=$(date -u +'%Y-%m-%d-%H%M%S')
+          BACKUP_TIMESTAMP=$(date -u +'%Y%m%d%H%M%S')
           echo "backup_timestamp=$BACKUP_TIMESTAMP" >> $GITHUB_OUTPUT
           echo "BACKUP_TIMESTAMP=$BACKUP_TIMESTAMP" >> $GITHUB_ENV
           mkdir -p backup-staging encrypted
