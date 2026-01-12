@@ -25,7 +25,7 @@
 
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { type ListBlobResultBlob, list, put } from '@vercel/blob'
+import { list, put } from '@vercel/blob'
 
 // Colors for console output
 const colors = {
@@ -175,10 +175,14 @@ function loadManifest(inputDir: string): BlobManifest {
   try {
     const content = readFileSync(manifestPath, 'utf-8')
     const manifest = JSON.parse(content) as BlobManifest
-    logSuccess(`Loaded manifest: ${manifest.totalBlobs} blobs from ${manifest.createdAt}`)
+    logSuccess(
+      `Loaded manifest: ${manifest.totalBlobs} blobs from ${manifest.createdAt}`,
+    )
     return manifest
   } catch (error) {
-    logError(`Failed to parse manifest: ${error instanceof Error ? error.message : String(error)}`)
+    logError(
+      `Failed to parse manifest: ${error instanceof Error ? error.message : String(error)}`,
+    )
     process.exit(1)
   }
 }
@@ -247,7 +251,9 @@ async function restoreBlobs(
     }
 
     if (options.dryRun) {
-      logInfo(`${progress} Would upload: ${entry.pathname} (${formatBytes(entry.size)})`)
+      logInfo(
+        `${progress} Would upload: ${entry.pathname} (${formatBytes(entry.size)})`,
+      )
       stats.uploaded++
       continue
     }
@@ -261,7 +267,9 @@ async function restoreBlobs(
         addRandomSuffix: false,
       })
 
-      logSuccess(`${progress} Uploaded: ${entry.pathname} (${formatBytes(fileStats.size)})`)
+      logSuccess(
+        `${progress} Uploaded: ${entry.pathname} (${formatBytes(fileStats.size)})`,
+      )
       stats.uploaded++
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -275,9 +283,13 @@ async function restoreBlobs(
 
 async function main(): Promise<void> {
   console.log('')
-  console.log(`${colors.red}=========================================${colors.reset}`)
+  console.log(
+    `${colors.red}=========================================${colors.reset}`,
+  )
   console.log(`${colors.red}     BLOB STORAGE RESTORE SCRIPT${colors.reset}`)
-  console.log(`${colors.red}=========================================${colors.reset}`)
+  console.log(
+    `${colors.red}=========================================${colors.reset}`,
+  )
   console.log('')
 
   const options = parseArgs()

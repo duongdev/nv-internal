@@ -259,7 +259,9 @@ async function backupBlobs(
   let failed = 0
   const startTime = Date.now()
 
-  logInfo(`Downloading ${blobs.length} blobs with ${CONCURRENCY} parallel connections...`)
+  logInfo(
+    `Downloading ${blobs.length} blobs with ${CONCURRENCY} parallel connections...`,
+  )
 
   await downloadWithConcurrency(
     blobs,
