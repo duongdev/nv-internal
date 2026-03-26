@@ -2,6 +2,9 @@ name: Production Restore
 
 # CRITICAL: This workflow restores production data from backups
 # Use with extreme caution - this WILL OVERWRITE existing data
+#
+# SECURITY: Decrypted data never leaves the job that uses it.
+# Each restore job clones, decrypts, and restores in a single runner.
 on:
   workflow_dispatch:
     inputs:
@@ -43,10 +46,6 @@ jobs:
   validate:
     name: Validate Restore Request
     runs-on: ubuntu-latest
-    outputs:
-      backup_timestamp: ${{ inputs.backup_timestamp }}
-      restore_database: ${{ inputs.restore_database }}
-      restore_blobs: ${{ inputs.restore_blobs }}
 
     steps:
       - name: Validate confirmation
@@ -62,15 +61,21 @@ jobs:
           exit 1
 
       - name: Validate backup timestamp format
+        env:
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
         run: |
-          TIMESTAMP="${{ inputs.backup_timestamp }}"
-          if ! [[ "$TIMESTAMP" =~ ^[0-9]{14}$ ]]; then
+          if ! [[ "$BACKUP_TIMESTAMP" =~ ^[0-9]{14}$ ]]; then
             echo "::error::Invalid timestamp format. Use YYYYMMDDHHmmss (e.g., 20260111143052)"
             exit 1
           fi
-          echo "Backup timestamp: $TIMESTAMP"
+          echo "Backup timestamp: $BACKUP_TIMESTAMP"
 
       - name: Display restore warning
+        env:
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
+          TARGET_ENV: ${{ inputs.target_environment }}
+          RESTORE_DB: ${{ inputs.restore_database }}
+          RESTORE_BLOBS: ${{ inputs.restore_blobs }}
         run: |
           echo "::warning::PRODUCTION RESTORE INITIATED"
           echo ""
@@ -78,37 +83,43 @@ jobs:
           echo "  PRODUCTION RESTORE WARNING"
           echo "========================================"
           echo ""
-          echo "Target Environment: ${{ inputs.target_environment }}"
-          echo "Backup Timestamp: ${{ inputs.backup_timestamp }}"
-          echo "Restore Database: ${{ inputs.restore_database }}"
-          echo "Restore Blobs: ${{ inputs.restore_blobs }}"
+          echo "Target Environment: $TARGET_ENV"
+          echo "Backup Timestamp: $BACKUP_TIMESTAMP"
+          echo "Restore Database: $RESTORE_DB"
+          echo "Restore Blobs: $RESTORE_BLOBS"
           echo ""
           echo "This operation WILL OVERWRITE existing data!"
           echo "========================================"
 
       - name: Create validation summary
+        env:
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
+          TARGET_ENV: ${{ inputs.target_environment }}
+          RESTORE_DB: ${{ inputs.restore_database }}
+          RESTORE_BLOBS: ${{ inputs.restore_blobs }}
         run: |
           echo "## Restore Request Validated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Target Environment | \`${{ inputs.target_environment }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Backup Timestamp | \`${{ inputs.backup_timestamp }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Restore Database | ${{ inputs.restore_database }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Restore Blobs | ${{ inputs.restore_blobs }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target Environment | \`$TARGET_ENV\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backup Timestamp | \`$BACKUP_TIMESTAMP\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Restore Database | $RESTORE_DB |" >> $GITHUB_STEP_SUMMARY
+          echo "| Restore Blobs | $RESTORE_BLOBS |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "> **Warning**: This will OVERWRITE existing data in the target environment." >> $GITHUB_STEP_SUMMARY
 
   # ============================================
-  # Job 2: Download and Decrypt Backups
+  # Job 2: Restore Database (self-contained)
+  # Clones backup repo, decrypts, and restores
+  # in a single job — no decrypted artifacts
   # ============================================
-  download:
-    name: Download & Decrypt Backups
+  restore-database:
+    name: Restore Database
     runs-on: ubuntu-latest
     needs: [validate]
-    outputs:
-      has_database: ${{ steps.check-files.outputs.has_database }}
-      has_blobs: ${{ steps.check-files.outputs.has_blobs }}
+    if: ${{ inputs.restore_database }}
+    environment: ${{ inputs.target_environment }}
 
     steps:
       - name: Checkout repository
@@ -116,13 +127,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install Git LFS
+      - name: Install PostgreSQL 17 client
         run: |
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update
-          sudo apt-get install -y git-lfs
+          sudo apt-get install -y postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> $GITHUB_PATH
+          /usr/lib/postgresql/17/bin/psql --version
 
-      - name: Install GPG
-        run: sudo apt-get install -y gnupg
+      - name: Install Git LFS and GPG
+        run: |
+          sudo apt-get install -y git-lfs gnupg
 
       - name: Clone backup repository
         env:
@@ -134,164 +151,53 @@ jobs:
           git lfs install
           git lfs pull
 
-      - name: Check backup exists
-        id: check-backup
+      - name: Find and decrypt database backup
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
         run: |
-          BACKUP_DATE="${{ inputs.backup_timestamp }}"
-          BACKUP_PATH="backup-repo/backups/${BACKUP_DATE}"
+          BACKUP_PATH="backup-repo/backups/${BACKUP_TIMESTAMP}"
 
           if [ ! -d "$BACKUP_PATH" ]; then
-            echo "::error::Backup not found for date: ${BACKUP_DATE}"
+            echo "::error::Backup not found for timestamp: ${BACKUP_TIMESTAMP}"
             echo "Available backups:"
-            ls -la backup-repo/backups/ || echo "No backups directory found"
+            ls backup-repo/backups/ 2>/dev/null || echo "No backups directory found"
             exit 1
           fi
 
-          echo "Backup found at: $BACKUP_PATH"
-          ls -la "$BACKUP_PATH/"
+          # Find database backup file
+          DB_FILE=$(ls "$BACKUP_PATH"/database-*.sql.gz.gpg 2>/dev/null | head -1)
+          if [ -z "$DB_FILE" ]; then
+            echo "::error::No database backup found in $BACKUP_PATH"
+            ls -la "$BACKUP_PATH/"
+            exit 1
+          fi
 
-      - name: Create working directories
-        run: |
-          mkdir -p encrypted
+          echo "Found database backup: $DB_FILE"
           mkdir -p decrypted
-          mkdir -p restored
 
-      - name: Copy encrypted files
-        run: |
-          BACKUP_DATE="${{ inputs.backup_timestamp }}"
-          cp backup-repo/backups/${BACKUP_DATE}/*.gpg encrypted/
-          ls -la encrypted/
+          # Decrypt
+          printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
+            --decrypt --batch --yes --passphrase-fd 0 \
+            --output "decrypted/database.sql.gz" \
+            "$DB_FILE"
 
-      - name: Decrypt backup files
-        env:
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-        run: |
-          for f in encrypted/*.gpg; do
-            if [ -f "$f" ]; then
-              BASENAME=$(basename "$f" .gpg)
-              OUTPUT_FILE="decrypted/$BASENAME"
-              echo "Decrypting $f to $OUTPUT_FILE..."
-
-              # Use GPG directly to avoid interactive prompts in decrypt script
-              echo "$BACKUP_ENCRYPTION_KEY" | gpg \
-                --decrypt \
-                --batch \
-                --yes \
-                --passphrase-fd 0 \
-                --output "$OUTPUT_FILE" \
-                "$f"
-
-              echo "Decrypted: $OUTPUT_FILE"
-            fi
-          done
-
+          echo "Decrypted successfully"
           ls -la decrypted/
 
-      - name: Check which files are available
-        id: check-files
-        run: |
-          HAS_DATABASE="false"
-          HAS_BLOBS="false"
-
-          if ls decrypted/*.sql.gz 1> /dev/null 2>&1; then
-            HAS_DATABASE="true"
-            echo "Database backup found"
-          fi
-
-          if ls decrypted/blobs-*.tar 1> /dev/null 2>&1; then
-            HAS_BLOBS="true"
-            echo "Blobs backup found"
-          fi
-
-          echo "has_database=$HAS_DATABASE" >> $GITHUB_OUTPUT
-          echo "has_blobs=$HAS_BLOBS" >> $GITHUB_OUTPUT
-
-      - name: Extract blobs tarball
-        if: ${{ inputs.restore_blobs }}
-        run: |
-          BLOBS_TAR=$(ls decrypted/blobs-*.tar 2>/dev/null | head -1)
-          if [ -n "$BLOBS_TAR" ]; then
-            cd decrypted
-            tar -xvf "$(basename "$BLOBS_TAR")"
-            ls -la blobs/ || echo "No blobs directory after extraction"
-          else
-            echo "No blobs tarball found"
-          fi
-
-      - name: Upload decrypted database backup
-        if: ${{ inputs.restore_database }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: decrypted-database
-          path: decrypted/*.sql.gz
-          retention-days: 1
-
-      - name: Upload decrypted blobs backup
-        if: ${{ inputs.restore_blobs }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: decrypted-blobs
-          path: decrypted/blobs/
-          retention-days: 1
-
-  # ============================================
-  # Job 3: Restore Database (Conditional)
-  # ============================================
-  restore-database:
-    name: Restore Database
-    runs-on: ubuntu-latest
-    needs: [validate, download]
-    if: ${{ inputs.restore_database && needs.download.outputs.has_database == 'true' }}
-    environment: ${{ inputs.target_environment }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Download decrypted database backup
-        uses: actions/download-artifact@v4
-        with:
-          name: decrypted-database
-          path: backup/
-
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
       - name: Display restore warning
+        env:
+          TARGET_ENV: ${{ inputs.target_environment }}
         run: |
-          echo "::warning::DATABASE RESTORE - This will OVERWRITE the ${{ inputs.target_environment }} database!"
-          echo ""
-          echo "========================================"
-          echo "  DATABASE RESTORE"
-          echo "========================================"
-          echo ""
-          echo "Target: ${{ inputs.target_environment }}"
-          echo "Backup Timestamp: ${{ inputs.backup_timestamp }}"
-          echo ""
-          echo "This will DROP and RECREATE all tables!"
-          echo "========================================"
-
-      - name: Verify database backup file
-        run: |
-          ls -la backup/
-          BACKUP_FILE=$(ls backup/*.sql.gz | head -1)
-          echo "BACKUP_FILE=$BACKUP_FILE" >> $GITHUB_ENV
-          echo "Backup file: $BACKUP_FILE"
+          echo "::warning::DATABASE RESTORE - This will OVERWRITE the ${TARGET_ENV} database!"
 
       - name: Run database restore
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           chmod +x scripts/restore-database.sh
-
-          # In CI, we bypass the interactive confirmation with --confirm
-          # The workflow already has environment protection approval
           echo "Starting database restore..."
-          ./scripts/restore-database.sh "${{ env.BACKUP_FILE }}" --confirm
+          ./scripts/restore-database.sh "decrypted/database.sql.gz" --confirm
 
       - name: Verify restore
         env:
@@ -307,22 +213,31 @@ jobs:
             echo "::warning::Database appears empty after restore"
           fi
 
+      - name: Cleanup sensitive files
+        if: always()
+        run: rm -rf decrypted/ backup-repo/
+
       - name: Create restore summary
+        env:
+          TARGET_ENV: ${{ inputs.target_environment }}
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
         run: |
           echo "## Database Restore Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: ${{ inputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup Timestamp**: ${{ inputs.backup_timestamp }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: $TARGET_ENV" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Timestamp**: $BACKUP_TIMESTAMP" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: Success" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
-  # Job 4: Restore Blobs (Conditional)
+  # Job 3: Restore Blobs (self-contained)
+  # Clones backup repo, decrypts, and restores
+  # in a single job — no decrypted artifacts
   # ============================================
   restore-blobs:
     name: Restore Blobs
     runs-on: ubuntu-latest
-    needs: [validate, download]
-    if: ${{ inputs.restore_blobs && needs.download.outputs.has_blobs == 'true' }}
+    needs: [validate]
+    if: ${{ inputs.restore_blobs }}
     environment: ${{ inputs.target_environment }}
 
     steps:
@@ -342,66 +257,93 @@ jobs:
           node-version: 22.x
           cache: "pnpm"
 
-      - name: Get pnpm store directory
-        id: pnpm-store
-        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Download decrypted blobs backup
-        uses: actions/download-artifact@v4
-        with:
-          name: decrypted-blobs
-          path: backup/blobs/
-
-      - name: Display restore warning
+      - name: Install Git LFS and GPG
         run: |
-          echo "::warning::BLOB RESTORE - This will upload files to ${{ inputs.target_environment }} blob storage!"
-          echo ""
-          echo "========================================"
-          echo "  BLOB RESTORE"
-          echo "========================================"
-          echo ""
-          echo "Target: ${{ inputs.target_environment }}"
-          echo "Backup Timestamp: ${{ inputs.backup_timestamp }}"
-          echo ""
-          ls -la backup/blobs/ || echo "No files in blobs directory"
+          sudo apt-get update
+          sudo apt-get install -y git-lfs gnupg
+
+      - name: Clone backup repository
+        env:
+          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+          BACKUP_REPO: ${{ secrets.BACKUP_REPO }}
+        run: |
+          git clone "https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/${BACKUP_REPO}.git" backup-repo
+          cd backup-repo
+          git lfs install
+          git lfs pull
+
+      - name: Find and decrypt blobs backup
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
+        run: |
+          BACKUP_PATH="backup-repo/backups/${BACKUP_TIMESTAMP}"
+
+          if [ ! -d "$BACKUP_PATH" ]; then
+            echo "::error::Backup not found for timestamp: ${BACKUP_TIMESTAMP}"
+            echo "Available backups:"
+            ls backup-repo/backups/ 2>/dev/null || echo "No backups directory found"
+            exit 1
+          fi
+
+          # Find blobs backup file
+          BLOBS_FILE=$(ls "$BACKUP_PATH"/blobs-*.tar.gpg 2>/dev/null | head -1)
+          if [ -z "$BLOBS_FILE" ]; then
+            echo "::error::No blobs backup found in $BACKUP_PATH"
+            ls -la "$BACKUP_PATH/"
+            exit 1
+          fi
+
+          echo "Found blobs backup: $BLOBS_FILE"
+          mkdir -p decrypted
+
+          # Decrypt
+          printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
+            --decrypt --batch --yes --passphrase-fd 0 \
+            --output "decrypted/blobs.tar" \
+            "$BLOBS_FILE"
+
+          # Extract tarball
+          cd decrypted
+          tar -xf blobs.tar
+          ls -la blobs/ || echo "No blobs directory after extraction"
 
       - name: Verify blob backup files
         run: |
-          if [ ! -f backup/blobs/blobs-manifest.json ]; then
+          if [ ! -f decrypted/blobs/blobs-manifest.json ]; then
             echo "::error::Manifest file not found in blob backup"
             exit 1
           fi
           echo "Manifest found, proceeding with restore..."
-          cat backup/blobs/blobs-manifest.json | head -20
+          head -20 decrypted/blobs/blobs-manifest.json
 
       - name: Run blob restore
         env:
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
           echo "Starting blob restore..."
-          pnpm tsx scripts/restore-blobs.ts --input backup/blobs --confirm
+          pnpm tsx scripts/restore-blobs.ts --input decrypted/blobs --confirm
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: rm -rf decrypted/ backup-repo/
 
       - name: Create restore summary
+        env:
+          TARGET_ENV: ${{ inputs.target_environment }}
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
         run: |
           echo "## Blob Restore Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: ${{ inputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup Timestamp**: ${{ inputs.backup_timestamp }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: $TARGET_ENV" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Timestamp**: $BACKUP_TIMESTAMP" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: Success" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
-  # Job 5: Final Verification
+  # Job 4: Final Verification
   # ============================================
   verify:
     name: Verify Restore
@@ -411,20 +353,22 @@ jobs:
 
     steps:
       - name: Check restore results
+        env:
+          DB_RESULT: ${{ needs.restore-database.result }}
+          BLOB_RESULT: ${{ needs.restore-blobs.result }}
+          RESTORE_DB: ${{ inputs.restore_database }}
+          RESTORE_BLOBS: ${{ inputs.restore_blobs }}
         run: |
-          DB_RESULT="${{ needs.restore-database.result }}"
-          BLOB_RESULT="${{ needs.restore-blobs.result }}"
-
           echo "Database restore: $DB_RESULT"
           echo "Blob restore: $BLOB_RESULT"
 
           # Check if any required restore failed
-          if [ "${{ inputs.restore_database }}" == "true" ] && [ "$DB_RESULT" == "failure" ]; then
+          if [ "$RESTORE_DB" == "true" ] && [ "$DB_RESULT" == "failure" ]; then
             echo "::error::Database restore FAILED"
             exit 1
           fi
 
-          if [ "${{ inputs.restore_blobs }}" == "true" ] && [ "$BLOB_RESULT" == "failure" ]; then
+          if [ "$RESTORE_BLOBS" == "true" ] && [ "$BLOB_RESULT" == "failure" ]; then
             echo "::error::Blob restore FAILED"
             exit 1
           fi
@@ -432,17 +376,24 @@ jobs:
           echo "All requested restores completed successfully!"
 
       - name: Create final summary
+        env:
+          DB_RESULT: ${{ needs.restore-database.result }}
+          BLOB_RESULT: ${{ needs.restore-blobs.result }}
+          RESTORE_DB: ${{ inputs.restore_database }}
+          RESTORE_BLOBS: ${{ inputs.restore_blobs }}
+          TARGET_ENV: ${{ inputs.target_environment }}
+          BACKUP_TIMESTAMP: ${{ inputs.backup_timestamp }}
         run: |
           echo "## Production Restore Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ inputs.restore_database }}" == "true" ]; then
-            if [ "${{ needs.restore-database.result }}" == "success" ]; then
+          if [ "$RESTORE_DB" == "true" ]; then
+            if [ "$DB_RESULT" == "success" ]; then
               echo "| Database | Success |" >> $GITHUB_STEP_SUMMARY
-            elif [ "${{ needs.restore-database.result }}" == "skipped" ]; then
-              echo "| Database | Skipped (no backup found) |" >> $GITHUB_STEP_SUMMARY
+            elif [ "$DB_RESULT" == "skipped" ]; then
+              echo "| Database | Skipped (not requested or backup not found) |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| Database | **FAILED** |" >> $GITHUB_STEP_SUMMARY
             fi
@@ -450,11 +401,11 @@ jobs:
             echo "| Database | Not requested |" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ inputs.restore_blobs }}" == "true" ]; then
-            if [ "${{ needs.restore-blobs.result }}" == "success" ]; then
+          if [ "$RESTORE_BLOBS" == "true" ]; then
+            if [ "$BLOB_RESULT" == "success" ]; then
               echo "| Blobs | Success |" >> $GITHUB_STEP_SUMMARY
-            elif [ "${{ needs.restore-blobs.result }}" == "skipped" ]; then
-              echo "| Blobs | Skipped (no backup found) |" >> $GITHUB_STEP_SUMMARY
+            elif [ "$BLOB_RESULT" == "skipped" ]; then
+              echo "| Blobs | Skipped (not requested or backup not found) |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| Blobs | **FAILED** |" >> $GITHUB_STEP_SUMMARY
             fi
@@ -463,6 +414,6 @@ jobs:
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment**: ${{ inputs.target_environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Backup Timestamp**: ${{ inputs.backup_timestamp }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: $TARGET_ENV" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Timestamp**: $BACKUP_TIMESTAMP" >> $GITHUB_STEP_SUMMARY
           echo "**Completed**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

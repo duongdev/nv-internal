@@ -218,7 +218,7 @@ async function downloadWithConcurrency<T, R>(
 async function backupBlobs(
   blobs: ListBlobResultBlob[],
   options: CliOptions,
-): Promise<BlobManifest> {
+): Promise<{ manifest: BlobManifest; failed: number }> {
   const manifest: BlobManifest = {
     createdAt: new Date().toISOString(),
     totalBlobs: blobs.length,
@@ -293,7 +293,7 @@ async function backupBlobs(
     logWarning(`Failed: ${failed}`)
   }
 
-  return manifest
+  return { manifest, failed }
 }
 
 function saveManifest(manifest: BlobManifest, options: CliOptions): void {
@@ -345,12 +345,17 @@ async function main(): Promise<void> {
 
   // Download blobs
   logInfo('Starting blob download...')
-  const manifest = await backupBlobs(blobs, options)
+  const { manifest, failed } = await backupBlobs(blobs, options)
   console.log('')
 
   // Save manifest
   saveManifest(manifest, options)
   console.log('')
+
+  if (failed > 0) {
+    logError(`Blob backup completed with ${failed} failures`)
+    process.exit(1)
+  }
 
   logSuccess('Blob backup complete!')
   console.log('')

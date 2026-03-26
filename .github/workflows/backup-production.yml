@@ -10,11 +10,6 @@ on:
     # Twice daily: 2 AM and 2 PM UTC (9 AM and 9 PM Vietnam time)
     - cron: "0 2,14 * * *"
 
-  # Test on push to feature branch (dry-run mode)
-  push:
-    branches:
-      - "feature/psn-71-*"
-
   workflow_dispatch:
     inputs:
       skip_blobs:
@@ -30,6 +25,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: production-backup
+  cancel-in-progress: false
 
 jobs:
   # Single job to ensure no unencrypted data is ever uploaded as artifact
@@ -71,8 +70,9 @@ jobs:
       - name: Install PostgreSQL 17 client
         run: |
           # Add PostgreSQL APT repository for version 17
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17
 
@@ -100,7 +100,7 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           echo "Encrypting database backup..."
-          echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+          printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
             --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
             --output "encrypted/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz.gpg" \
             "backup-staging/database-${{ env.BACKUP_TIMESTAMP }}.sql.gz"
@@ -133,7 +133,7 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           echo "Encrypting blobs backup..."
-          echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+          printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
             --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
             --output "encrypted/blobs-${{ env.BACKUP_TIMESTAMP }}.tar.gpg" \
             "backup-staging/blobs.tar"
@@ -167,7 +167,7 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           echo "Encrypting env backup..."
-          echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+          printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
             --symmetric --cipher-algo AES256 --batch --yes --passphrase-fd 0 \
             --output "encrypted/env-${{ env.BACKUP_TIMESTAMP }}.txt.gpg" \
             "backup-staging/env-${{ env.BACKUP_TIMESTAMP }}.txt"
@@ -223,8 +223,7 @@ jobs:
     name: Upload to Backup Repo
     runs-on: ubuntu-latest
     needs: [backup]
-    # Skip on push (dry-run) or when dry_run input is true
-    if: ${{ github.event_name != 'push' && !inputs.dry_run }}
+    if: ${{ !inputs.dry_run }}
 
     steps:
       - name: Download encrypted backups
@@ -283,7 +282,7 @@ jobs:
             echo "- \`$(basename "$f")\` ($SIZE)" >> $GITHUB_STEP_SUMMARY
           done
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Repository**: \`${{ secrets.BACKUP_REPO }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository**: Backup repo (configured via secrets)" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
   # Dry Run Summary
@@ -292,7 +291,7 @@ jobs:
     name: Dry Run Summary
     runs-on: ubuntu-latest
     needs: [backup]
-    if: ${{ github.event_name == 'push' || inputs.dry_run }}
+    if: ${{ inputs.dry_run }}
 
     steps:
       - name: Download encrypted backups

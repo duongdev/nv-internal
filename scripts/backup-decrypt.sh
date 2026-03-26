@@ -151,7 +151,7 @@ decrypt_file() {
   fi
 
   # Use passphrase from environment variable via stdin
-  if echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+  if printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
     --decrypt \
     --batch \
     --yes \

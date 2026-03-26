@@ -173,7 +173,7 @@ verify_gpg() {
 
   log_info "Testing GPG decryption..."
 
-  if echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+  if printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
     --decrypt \
     --batch \
     --yes \
@@ -193,12 +193,6 @@ verify_gpg() {
 # Verify gzip compression (if applicable)
 verify_gzip() {
   local file="$1"
-
-  if [[ "$file" != *.gz ]]; then
-    log_info "Skipping gzip verification (not compressed)"
-    echo "$file"
-    return 0
-  fi
 
   log_info "Testing gzip integrity..."
 
@@ -355,16 +349,22 @@ main() {
   check_file_format
 
   # 4. GPG decryption (if encrypted)
+  # Track the original name to determine file type after decryption
+  # (temp files from GPG lose their extension)
+  local original_name="$BACKUP_FILE"
   local working_file="$BACKUP_FILE"
   if [[ "$BACKUP_FILE" == *.gpg ]]; then
     decrypted=$(verify_gpg)
     if [ -n "$decrypted" ]; then
       working_file="$decrypted"
     fi
+    # Strip .gpg from original name for subsequent format checks
+    original_name="${BACKUP_FILE%.gpg}"
   fi
 
   # 5. Gzip integrity (if compressed)
-  if [[ "$working_file" == *.gz ]]; then
+  # Use original_name for extension check since temp files lose extensions
+  if [[ "$original_name" == *.gz ]]; then
     decompressed=$(verify_gzip "$working_file")
     if [ -n "$decompressed" ]; then
       working_file="$decompressed"

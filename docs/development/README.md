@@ -59,6 +59,7 @@ nv-internal/
 │   └── validation/       # Shared Zod schemas
 ├── docs/
 │   ├── architecture/patterns/  # Implementation patterns
+│   ├── deployment/             # Backup, build & submit guides
 │   ├── development/            # This guide
 │   └── testing/                # Testing guides
 └── .claude/

@@ -152,8 +152,30 @@ run_backup() {
     return
   fi
 
-  # Run pg_dump with gzip compression
-  if pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > "$output_file"; then
+  # Run pg_dump to temp file first to validate exit code,
+  # then compress. This prevents truncated dumps from network
+  # timeouts being silently accepted.
+  local temp_sql=$(mktemp)
+
+  if pg_dump "$DATABASE_URL" --no-owner --no-acl > "$temp_sql"; then
+    log_success "pg_dump completed successfully"
+  else
+    log_error "pg_dump failed"
+    rm -f "$temp_sql" "$output_file"
+    exit 1
+  fi
+
+  # Verify dump is non-empty and looks like SQL
+  local dump_size=$(stat -f%z "$temp_sql" 2>/dev/null || stat -c%s "$temp_sql" 2>/dev/null)
+  if [ "$dump_size" -lt 100 ]; then
+    log_error "pg_dump produced suspiciously small output ($dump_size bytes)"
+    rm -f "$temp_sql" "$output_file"
+    exit 1
+  fi
+
+  # Compress
+  if gzip -c "$temp_sql" > "$output_file"; then
+    rm -f "$temp_sql"
     local file_size=$(ls -lh "$output_file" | awk '{print $5}')
     log_success "Backup completed successfully"
     log_info "File: $output_file"
@@ -163,8 +185,8 @@ run_backup() {
     echo ""
     echo "BACKUP_FILE=$output_file"
   else
-    log_error "Backup failed"
-    rm -f "$output_file"
+    log_error "Compression failed"
+    rm -f "$temp_sql" "$output_file"
     exit 1
   fi
 }

@@ -153,6 +153,8 @@ The NV Internal project uses a structured documentation system designed to track
 - `03-monthly-reports.md` - Employee reports specifications
 - `04-task-crud.md` - Task editing specifications
 - `05-employee-management.md` - Employee CRUD specifications
+- `06-admin-dashboard.md` - Admin dashboard specifications
+- `07-task-comments.md` - Task comments specifications
 
 **Updates allowed**:
 - Status changes (⏳ → ✅)
@@ -531,7 +533,7 @@ Before committing documentation:
 
 ### CLAUDE.md Reorganization
 
-The main CLAUDE.md file was reorganized from 969 lines to 290 lines (70% reduction) by extracting content to specialized files:
+The main CLAUDE.md file was reorganized from 969 lines down to ~50 lines by extracting content to specialized files:
 
 **New Files Created**:
 - `.claude/agents/*.md` - Individual agent documentation (5 files)
@@ -541,10 +543,9 @@ The main CLAUDE.md file was reorganized from 969 lines to 290 lines (70% reducti
 - `docs/development/environment-setup.md` - Environment variable management
 
 **CLAUDE.md Now Serves As**:
-- Quick reference and navigation hub
-- Links to detailed documentation
-- Critical patterns summary only
-- Agent quick reference table
+- Quick reference for stack, commands, and critical patterns
+- File location guide
+- Concise (~50 lines) essential-only reference
 
 **Benefits**:
 - Faster to navigate and understand
@@ -648,7 +649,7 @@ When agent context changes:
 
 1. Update relevant file in `.claude/agents/`
 2. Update `.claude/docs/agent-workflows.md` if workflows change
-3. Keep CLAUDE.md agent table up to date
+3. Update CLAUDE.md if agent changes affect critical patterns
 
 ### Keeping CLAUDE.md Concise
 
@@ -661,10 +662,10 @@ When agent context changes:
 
 **DO add to CLAUDE.md**:
 - Critical must-know patterns (with link to details)
-- New specialized agents (in quick reference table)
-- New major documentation sections (in navigation)
+- New critical patterns that all contributors must know
+- Changes to file locations or stack
 
-**Target**: Keep CLAUDE.md under 400 lines
+**Target**: Keep CLAUDE.md under 100 lines
 
 ---
 
@@ -673,6 +674,7 @@ When agent context changes:
 - **v1.0** (2025-10-30): Initial documentation structure established
 - **v2.0** (2025-11-07): Major reorganization - extracted content from CLAUDE.md, created specialized documentation files, established agent documentation structure, added pattern CHANGELOG
 - **v2.1** (2026-03-26): Updated file listings for `.claude/docs/`, `docs/development/`, added `docs/deployment/` section, fixed stale review dates
+- **v2.2** (2026-03-26): Added v1 plans 06-07, updated CLAUDE.md description to reflect ~50-line streamlined version, removed stale agent table references
 
 ---
 

@@ -20,7 +20,7 @@
 #   ./scripts/backup-env.sh --include-values
 #   ./scripts/backup-env.sh --environment preview --dry-run
 
-set -e
+set -eo pipefail
 
 # Colors for output
 RED='\033[0;31m'

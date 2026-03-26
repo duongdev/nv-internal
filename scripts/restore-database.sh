@@ -26,7 +26,7 @@
 #   ./scripts/restore-database.sh backups/database-2024-01-01-120000.sql.gz.gpg --confirm
 #   ./scripts/restore-database.sh backup.sql.gz --dry-run
 
-set -e
+set -eo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -250,7 +250,7 @@ prepare_restore_file() {
       return
     fi
 
-    if echo "$BACKUP_ENCRYPTION_KEY" | gpg \
+    if printf '%s' "$BACKUP_ENCRYPTION_KEY" | gpg \
       --decrypt \
       --batch \
       --yes \
@@ -306,6 +306,35 @@ cleanup() {
 
 # Set trap for cleanup
 trap cleanup EXIT
+
+# Validate SQL file before destructive operations
+validate_sql_file() {
+  local sql_file="$1"
+
+  if [ "$DRY_RUN" = true ]; then
+    return
+  fi
+
+  log_info "Validating backup file before restore..."
+
+  if [ ! -s "$sql_file" ]; then
+    log_error "SQL file is empty"
+    exit 1
+  fi
+
+  # Check for basic SQL markers (pg_dump output or SQL statements)
+  if ! head -100 "$sql_file" | grep -q -i -E "(postgresql|pg_dump|SET|CREATE|INSERT)" 2>/dev/null; then
+    log_error "File does not appear to be a valid SQL dump"
+    log_info "First 5 lines:"
+    head -5 "$sql_file" | while read -r line; do
+      log_info "  > $line"
+    done
+    exit 1
+  fi
+
+  local file_size=$(stat -f%z "$sql_file" 2>/dev/null || stat -c%s "$sql_file" 2>/dev/null)
+  log_success "Backup file validated ($file_size bytes, contains SQL statements)"
+}
 
 # Drop existing schema (optional)
 drop_existing_schema() {
@@ -402,8 +431,8 @@ main() {
   get_database_info
   echo ""
 
-  # Final confirmation for non-dry-run
-  if [ "$DRY_RUN" = false ]; then
+  # Final confirmation for non-dry-run (skip if --confirm was passed)
+  if [ "$DRY_RUN" = false ] && [ "$CONFIRMED" = false ]; then
     echo ""
     log_critical "========================================="
     log_critical "  FINAL CONFIRMATION"
@@ -422,6 +451,10 @@ main() {
   # Prepare file
   log_info "Preparing backup file..."
   local sql_file=$(prepare_restore_file)
+  echo ""
+
+  # Validate SQL content BEFORE dropping schema
+  validate_sql_file "$sql_file"
   echo ""
 
   # Drop existing schema
