@@ -31,6 +31,8 @@ See **[CHANGELOG.md](./CHANGELOG.md)** for recently established patterns and upd
 - **[FormData Validation](./formdata-validation.md)** - Zod schemas for multipart/form-data handling
 - **[Timezone Handling](./timezone-handling.md)** - Modern timezone-aware date operations with TZDate
 - **[Vietnamese Search](./vietnamese-search.md)** - Accent-insensitive search for Vietnamese text
+- **[SearchableText](./searchable-text.md)** - Pre-computed field for multi-field search
+- **[Batch Queries](./batch-queries.md)** - Replace N+1 queries with batch fetching
 
 ### Utilities
 
@@ -38,9 +40,16 @@ See **[CHANGELOG.md](./CHANGELOG.md)** for recently established patterns and upd
 
 ## Mobile Patterns
 
+- **[Tabs Navigation](./tabs-navigation.md)** - Stable Tabs component usage (replaces NativeTabs)
+- **[Mobile Accessibility](./mobile-accessibility.md)** - Required accessibility props on interactive elements
+- **[FlatList Optimization](./flatlist-optimization.md)** - Virtualized list performance patterns
 - **[File Upload Limitations](./file-upload.md)** - Hono RPC limitations and workarounds for React Native
 - **[Cache Invalidation](./cache-invalidation.md)** - TanStack Query patterns for mutations
 - **[OTA Updates](./ota-updates.md)** - Hook-Only pattern for Expo Updates with graceful degradation
+
+### Deprecated
+
+- **[NativeTabs Navigation (Deprecated)](./nativetabs-navigation-deprecated.md)** - Replaced by stable Tabs component
 
 ## Pattern Selection Guide
 
@@ -68,9 +77,17 @@ See **[CHANGELOG.md](./CHANGELOG.md)** for recently established patterns and upd
 
 ### When implementing search:
 - Use [Vietnamese Search](./vietnamese-search.md) for accent-insensitive text search
+- Use [SearchableText](./searchable-text.md) for pre-computed search fields
 
 ### When implementing OTA updates:
 - Use [OTA Updates](./ota-updates.md) for Expo Updates with Hook-Only pattern
+
+### When implementing navigation:
+- Use [Tabs Navigation](./tabs-navigation.md) for tab-based navigation
+
+### When optimizing lists:
+- Use [FlatList Optimization](./flatlist-optimization.md) for virtualized list performance
+- Use [Batch Queries](./batch-queries.md) to avoid N+1 queries
 
 ## Adding New Patterns
 

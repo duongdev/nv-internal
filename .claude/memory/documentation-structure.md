@@ -522,8 +522,8 @@ Before committing documentation:
 
 ---
 
-**Document Version**: 1.0
-**Next Review**: 2025-01-30
+**Document Version**: 2.1
+**Next Review**: 2026-06-30
 **Maintainer**: Task Documentation Tracker Agent
 ---
 
@@ -556,10 +556,15 @@ The main CLAUDE.md file was reorganized from 969 lines to 290 lines (70% reducti
 
 **Purpose**: Project-wide documentation that doesn't fit in other directories
 
-**Files** (as of 2025-11-07):
+**Key Files** (non-exhaustive):
 - `agent-workflows.md` - Detailed agent coordination patterns
 - `feature-flags-guide.md` - PostHog feature flag patterns
 - `error-tracking-guide.md` - Error tracking implementation
+- `app-review-testing-instructions.md` - App store review testing
+- `ota-updates-guide.md` - OTA update guide
+- `linear-migration-guide.md` - PM workflow migration
+- `play-app-signing-setup.md` - Play Store signing setup
+- `build-number-management.md` - Build number conventions
 
 **When to use**:
 - Guides that span multiple concerns
@@ -576,6 +581,14 @@ The main CLAUDE.md file was reorganized from 969 lines to 290 lines (70% reducti
 - `patterns/CHANGELOG.md` - Recently established patterns
 - `patterns/README.md` - Pattern navigation and selection guide
 - `database-patterns.md` - Database design and optimization
+
+### `docs/deployment/`
+
+**Purpose**: Deployment and infrastructure documentation
+
+**Files**:
+- `backup-restore.md` - Production backup and restore system
+- `eas-build-submit.md` - EAS build and App Store/Play Store submission
 
 **Pattern File Format** (updated 2025-11-07):
 Each pattern file now includes metadata header:
@@ -602,11 +615,13 @@ Organized by date (descending), each entry includes:
 
 **Purpose**: Developer guides and setup documentation
 
-**Files** (as of 2025-11-07):
+**Files**:
 - `setup.md` - Complete environment setup
 - `environment-setup.md` - Environment variable management
 - `commands.md` - Command reference
 - `quality-workflow.md` - Quality standards
+- `apk-build-guide.md` - APK build for direct distribution
+- `ota-troubleshooting.md` - OTA update troubleshooting
 - `README.md` - Development guide navigation
 
 **When to add new files**:
@@ -657,6 +672,7 @@ When agent context changes:
 
 - **v1.0** (2025-10-30): Initial documentation structure established
 - **v2.0** (2025-11-07): Major reorganization - extracted content from CLAUDE.md, created specialized documentation files, established agent documentation structure, added pattern CHANGELOG
+- **v2.1** (2026-03-26): Updated file listings for `.claude/docs/`, `docs/development/`, added `docs/deployment/` section, fixed stale review dates
 
 ---
 
